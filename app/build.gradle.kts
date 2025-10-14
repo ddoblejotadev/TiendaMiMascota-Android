@@ -1,15 +1,17 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    // No existe un alias para compose en el archivo original, lo quitamos
+    // alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.kapt") // Plugin de Kapt para Room
 }
 
 android {
-    namespace = "com.example.mimascota"
+    namespace = "com.mimascota.tienda" // Cambiado según tu requisito
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.mimascota"
+        applicationId = "com.mimascota.tienda" // Cambiado según tu requisito
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -37,6 +39,14 @@ android {
     buildFeatures {
         compose = true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1" // Asegúrate de tener una versión compatible
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
 }
 
 dependencies {
@@ -49,6 +59,19 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    // Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // ViewModel Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
+
+    // Room
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
