@@ -1,17 +1,17 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    // No existe un alias para compose en el archivo original, lo quitamos
-    // alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.compose.compiler)
     id("org.jetbrains.kotlin.kapt") // Plugin de Kapt para Room
 }
 
 android {
-    namespace = "com.mimascota.tienda" // Cambiado según tu requisito
+    namespace = "com.example.mimascota" // Cambiado según tu requisito
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.mimascota.tienda" // Cambiado según tu requisito
+        applicationId = "com.example.mimascota" // Cambiado según tu requisito
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -39,9 +39,7 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1" // Asegúrate de tener una versión compatible
-    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
