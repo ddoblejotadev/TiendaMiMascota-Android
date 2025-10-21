@@ -1,6 +1,6 @@
-package com.example.mimascota.Model
+package com.example.mimascota.model
 
-open class Product(
+open class Producto(
     val id: String,
     val name: String,
     val description: String,
