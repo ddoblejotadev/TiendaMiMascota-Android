@@ -1,4 +1,4 @@
-package com.example.mimascota.model
+package com.example.mimascota.Model
 
 data class User(
     val id: Int,
