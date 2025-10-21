@@ -4,7 +4,7 @@ data class Higiene(
     val idPro: String,
     val namePro: String,
     val descriptionPro: String,
-    val pricePro: Double,
+    val pricePro: Int,
     val tipoHigiene: String,
     val fragancia: String
 ) : Product(idPro, namePro, descriptionPro, pricePro) {
