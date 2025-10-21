@@ -1,4 +1,4 @@
-package com.example.mimascota.Model
+package com.example.mimascota.model
 
 data class Alimento(
     val idPro: String,
@@ -8,6 +8,6 @@ data class Alimento(
     val marca: String,
     val tipo: String,
     val peso: Double
-) : Product(idPro, namePro, descriptionPro, pricePro) {
+) : Producto(idPro, namePro, descriptionPro, pricePro) {
 
 }

@@ -1,4 +1,4 @@
-package com.example.mimascota.Model
+package com.example.mimascota.model
 
 data class Accesorios(
     val idPro: String,
@@ -7,5 +7,5 @@ data class Accesorios(
     val pricePro: Int,
     val tipoAccesorio: String,
     val material: String
-) : Product(idPro, namePro, descriptionPro, pricePro) {
+) : Producto(idPro, namePro, descriptionPro, pricePro) {
 }
