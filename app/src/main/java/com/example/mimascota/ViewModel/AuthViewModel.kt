@@ -4,67 +4,63 @@ import android.app.Application
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.mimascota.Model.User
+import com.example.mimascota.repository.UserRepository
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
-class AuthViewModel(application: Application) : AndroidViewModel(application) {
-    private val gson = Gson()
-    private val fileName = "users.json"
-    var mensaje = mutableStateOf("")
-    var userActual = mutableStateOf<String?>(null)
 
-    private fun copyAssetToInternalIfNeeded() {
-        val file = File(getApplication<Application>().filesDir, fileName)
-        if (!file.exists()) {
-            getApplication<Application>().assets.open(fileName).use { input ->
-                file.outputStream().use { output ->
-                    input.copyTo(output)
-                }
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repo = UserRepository()
+    var registroState = mutableStateOf<String>("")
+    var loginState = mutableStateOf<String>("")
+    var usuarioActual = mutableStateOf<String?>(null)
+
+    fun registrarUsuario(run: String, username: String, email: String, password: String, direccion: String) {
+        viewModelScope.launch {
+            val contexto = getApplication<Application>()
+            val nuevoUsuario = User(
+                id = repo.generarNuevoId(contexto),
+                run = run,
+                username = username,
+                email = email,
+                password = password,
+                direccion = direccion
+            )
+
+            val resultado = withContext(Dispatchers.IO) {
+                repo.guardarUsuarioEnArchivo(contexto, nuevoUsuario)
+            }
+
+            registroState.value = if (resultado) {
+                "Registro completado ✅"
+            } else {
+                "El usuario ya existe ❌"
             }
         }
     }
-    private fun readUsers(): MutableList<User> {
-        copyAssetToInternalIfNeeded()
-        val file = File(getApplication<Application>().filesDir, fileName)
-        if (!file.exists()) return mutableListOf()
-        val json = file.readText()
-        if (json.isBlank()) return mutableListOf()
-        val type = object : TypeToken<List<User>>() {}.type
-        return gson.fromJson<List<User>>(json, type).toMutableList()
-    }
 
-    private fun saveUsers(users: List<User>) {
-        val file = File(getApplication<Application>().filesDir, fileName)
-        file.writeText(gson.toJson(users))
-    }
+    fun loginUsuario(email: String, password: String) {
+        viewModelScope.launch {
+            val contexto = getApplication<Application>()
+            val usuarioEncontrado = withContext(Dispatchers.IO) {
+                repo.obtenerUsuarios(contexto).find {
+                    it.email.equals(email, ignoreCase = true) && it.password == password
+                }
+            }
 
-    fun register(run: String, username: String, email: String, password: String, direccion: String) {
-        val users = readUsers()
-        if (users.any { it.run == run }) {
-            mensaje.value = "Run ya registrado"
-            return
-        }
-        if (users.any { it.email.equals(email, ignoreCase = true) }) {
-            mensaje.value = "Email ya registrado"
-            return
-        }
-        val nextId = (users.maxOfOrNull { it.id } ?: 0) + 1
-        val nuevo = User(nextId, run, username, email, password, direccion)
-        users.add(nuevo)
-        saveUsers(users)
-        mensaje.value = "Registro exitoso"
-        userActual.value = username
-    }
-    fun login(email: String, password: String) {
-        val users = readUsers()
-        val user = users.find { it.email.equals(email, ignoreCase = true) && it.password == password }
-        if (user != null) {
-            mensaje.value = "Login exitoso"
-            userActual.value = user.username
-        } else {
-            mensaje.value = "Email o contraseña incorrectos"
+            loginState.value = if (usuarioEncontrado != null) {
+                usuarioActual.value = usuarioEncontrado.username
+                "Login exitoso 🎉"
+            } else {
+                "Credenciales inválidas ❌"
+            }
         }
     }
 }

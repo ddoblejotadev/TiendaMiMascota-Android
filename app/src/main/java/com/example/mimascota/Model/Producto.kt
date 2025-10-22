@@ -2,15 +2,16 @@ package com.example.mimascota.Model
 
 import com.google.gson.annotations.SerializedName
 
-data class Producto(
+open class Producto(
     @SerializedName("producto_id")
     val id: Int,
     @SerializedName("producto_nombre")
     val name: String,
-    val description: String,
+    val description: String?,
     val price: Int,
+    val stock: Int,
     val category: String,
-    val imageUrl: String
+    val imageUrl: String?
 
 ) {
 }

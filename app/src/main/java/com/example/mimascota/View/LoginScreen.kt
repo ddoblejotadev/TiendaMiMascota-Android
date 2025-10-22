@@ -17,33 +17,16 @@ import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
-    var nombre by remember { mutableStateOf("") }
-    var run by remember { mutableStateOf("") }
+fun loginScreen(navController: NavController, viewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var direccion by remember { mutableStateOf("") }
-    var registroState by remember { viewModel.registroState }
+    var loginState by remember { viewModel.loginState }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        OutlinedTextField(
-            value = nombre,
-            onValueChange = { nombre = it },
-            label = { Text("Nombre de usuario") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = run,
-            onValueChange = { run = it },
-            label = { Text("RUN") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -58,30 +41,22 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = direccion,
-            onValueChange = { direccion = it },
-            label = { Text("Dirección") },
-            modifier = Modifier.fillMaxWidth()
-        )
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                viewModel.registrarUsuario(run, nombre, email, password, direccion)
+                viewModel.loginUsuario(email, password)
+                navController.navigate("home/$email")
             },
             modifier = Modifier.fillMaxWidth()
-        ) { Text("Registrar") }
+        ) { Text("Entrar") }
         Spacer(modifier = Modifier.height(8.dp))
-        Text(registroState)
+        Text(text = loginState)
         Spacer(modifier = Modifier.height(16.dp))
         TextButton(
             onClick = {
-                navController.navigate("login")
+                navController.navigate("register")
             },
             modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("¿Ya tienes una cuenta? Inicia sesión")
-        }
+        ) { Text("¿No tienes una cuenta? Regístrate") }
     }
 }

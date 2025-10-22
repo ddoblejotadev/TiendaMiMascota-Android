@@ -11,25 +11,40 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.mimascota.ui.theme.MiMascotaTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
+import com.example.mimascota.View.registerScreen
+import com.example.mimascota.ViewModel.AuthViewModel
+import androidx.navigation.compose.*
+import com.example.mimascota.View.HomeScreen
+import com.example.mimascota.View.loginScreen
+
+//import com.example.mimascota.ui.theme.MiMascotaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MiMascotaTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+            val navController = rememberNavController()
+            val viewModel: AuthViewModel = viewModel()
+            NavHost(navController, startDestination = "register") {
+                composable("register") {
+                    registerScreen(navController, viewModel)
+                }
+                composable("login") {
+                    loginScreen(navController, viewModel)
+                }
+                composable("home/{email}") { backStack ->
+                    val email = backStack.arguments?.getString("email")
+                    HomeScreen(email)
                 }
             }
         }
     }
 }
 
+/*
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
@@ -45,3 +60,4 @@ fun GreetingPreview() {
         Greeting("Android")
     }
 }
+*/

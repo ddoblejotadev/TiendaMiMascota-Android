@@ -4,15 +4,22 @@
     "producto_nombre": "Alimento Seco para Perro Adulto",
     "description": "Croquetas nutritivas con sabor a pollo, bolsa de 15kg. Ideal para razas medianas y grandes.",
     "price": 25990,
-    "category": "alimento",
-    "imageUrl": "url_de_la_imagen_del_alimento_1"
+    "stock": 50,
+    "marca": "PetCare",
+    "Tipo": "Seco",
+    "peso": "15kg",
+    "category": "Alimento",
+    "imageUrl": "url_de_la_imagen_del_alimento_1",
   },
   {
     "producto_id": 2,
-    "producto_nombre": "Juguete Hueso de Goma Resistente",
-    "description": "Juguete masticable para perros, ayuda a la limpieza dental y alivia la ansiedad.",
-    "price": 7990,
-    "category": "juguetes",
+    "producto_nombre": "Accesorio collar con placa identificativa",
+    "description": "Collar ajustable de nylon resistente con placa metálica grabada con el nombre y teléfono del dueño.",
+    "price": 12499,
+    "stock": 100,
+    "tipoAccesorio": "Collar",
+    "material": "Nylon",
+    "category": "Accesorios",
     "imageUrl": "url_de_la_imagen_del_juguete_1"
   },
   {
@@ -20,15 +27,21 @@
     "producto_nombre": "Arena Sanitaria para Gatos",
     "description": "Arena aglomerante con control de olores, bolsa de 10kg. Máxima absorción.",
     "price": 12490,
-    "category": "higiene",
+    "stock": 75,
+    "tipoHigiene": "Arena Aglomerante",
+    "fragancia": "Lavanda",
+    "category": "Higiene",
     "imageUrl": "url_de_la_imagen_de_la_arena_1"
   },
   {
     "producto_id": 4,
-    "producto_nombre": "Shampoo Antipulgas para Perros",
-    "description": "Fórmula suave que elimina pulgas y garrapatas, dejando un pelaje brillante. 500ml.",
-    "price": 9990,
-    "category": "higiene",
-    "imageUrl": "url_de_la_imagen_del_shampoo_1"
+    "producto_nombre": "Juguete interactivo para gatos",
+    "description": "Ratón de juguete con plumas y sonido para mantener a tu gato entretenido durante horas.",
+    "price": 7990,
+    "stock": 200,
+    "material": "Plástico y plumas",
+    "tamano": "Pequeño",
+    "category": "Juguete",
+    "imageUrl": "url_de_la_imagen_del_juguete_2"
   }
 ]
