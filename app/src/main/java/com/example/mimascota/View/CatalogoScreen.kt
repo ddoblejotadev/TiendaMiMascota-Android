@@ -28,16 +28,22 @@ import androidx.compose.material3.*
 import android.annotation.SuppressLint
 import java.util.Locale
 
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import com.example.mimascota.ViewModel.CartViewModel
+import java.util.*
+import androidx.compose.material.icons.filled.*
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel) {
+fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, cartViewModel: CartViewModel) {
     val context = LocalContext.current
     val productos by viewModel.productos.collectAsState()
     val loading by viewModel.loading.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.cargarProductos(context) }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Catálogo") }) }) { padding ->
+    Scaffold(topBar = { TopAppBar(title = { Text("Catálogo") },) }) { padding ->
         Box(Modifier.padding(padding)) {
             if (loading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -50,9 +56,11 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(productos, key = { it.id }) { producto ->
-                        ProductoCard(producto) {
-                            navController.navigate("detalle/${producto.id}")
-                        }
+                        ProductoCard(
+                            producto,
+                            { navController.navigate("Detalle/${producto.id}") },
+                            { cartViewModel.agregarAlCarrito(producto) }
+                        )
                     }
                 }
             }
@@ -62,7 +70,10 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel) {
 
 @SuppressLint("DefaultLocale")
 @Composable
-fun ProductoCard(producto: Producto, onClick: () -> Unit) {
+fun ProductoCard(
+                 producto: Producto,
+                 onClick: () -> Unit,
+                 onAddToCart: (() -> Unit)? = null) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -89,6 +100,13 @@ fun ProductoCard(producto: Producto, onClick: () -> Unit) {
                 )
                 producto.description?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                }
+            }
+            if (onAddToCart != null) {
+                IconButton(onClick = onAddToCart) {
+                    Icon(
+                        Icons.Default.Add, contentDescription = "Agregar al carrito"
+                    )
                 }
             }
         }

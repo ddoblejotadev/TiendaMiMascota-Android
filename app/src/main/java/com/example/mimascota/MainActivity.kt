@@ -19,11 +19,13 @@ import com.example.mimascota.View.registerScreen
 import com.example.mimascota.ViewModel.AuthViewModel
 import androidx.navigation.compose.*
 import com.example.mimascota.Model.Producto
+import com.example.mimascota.View.CarritoScreen
 import com.example.mimascota.View.CatalogoScreen
 import com.example.mimascota.View.DetalleProductoScreen
 import com.example.mimascota.View.HomeScreen
 import com.example.mimascota.View.ProductoCard
 import com.example.mimascota.View.loginScreen
+import com.example.mimascota.ViewModel.CartViewModel
 import com.example.mimascota.ViewModel.CatalogoViewModel
 
 //import com.example.mimascota.ui.theme.MiMascotaTheme
@@ -36,6 +38,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val viewModel: AuthViewModel = viewModel()
             val viewModelC = remember{ CatalogoViewModel() }
+            val cartViewModel = remember { CartViewModel() }
             NavHost(navController, startDestination = "register") {
                 composable("register") {
                     registerScreen(navController, viewModel)
@@ -48,15 +51,15 @@ class MainActivity : ComponentActivity() {
                     HomeScreen(navController,name)
                 }
                 composable("Catalogo") {
-                    CatalogoScreen(navController, viewModelC)
+                    CatalogoScreen(navController, viewModelC, cartViewModel)
                 }
                 composable("Detalle/{id}") { backStack ->
                     val idStr = backStack.arguments?.getString("id")
                     val id = idStr?.toIntOrNull() ?: -1
-                    DetalleProductoScreen(id, viewModelC)
+                    DetalleProductoScreen(id, viewModelC, cartViewModel)
                 }
-                composable("Carrito") { backStack ->
-                    val products = listOf<Producto>() // Aquí iría la lógica para obtener los productos del carrito
+                composable("Carrito") {
+                    CarritoScreen(cartViewModel)
                 }
             }
         }
