@@ -25,76 +25,70 @@ import com.example.mimascota.Model.Producto
 import com.example.mimascota.ViewModel.CatalogoViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.material3.*
+import android.annotation.SuppressLint
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel) {
     val context = LocalContext.current
     val productos by viewModel.productos.collectAsState()
     val loading by viewModel.loading.collectAsState()
 
-    LaunchedEffect(Unit){
-        viewModel.cargarProductos(context)
-    }
+    LaunchedEffect(Unit) { viewModel.cargarProductos(context) }
 
-    Scaffold(topBar = {
-        SmallTopAppBar(title = { Text("Catálogo de Productos")})
-    }) { padding ->
-        Box( modifier = Modifier.padding(padding)) {
-            if(loading) {
-                Box(
-                    Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+    Scaffold(topBar = { TopAppBar(title = { Text("Catálogo") }) }) { padding ->
+        Box(Modifier.padding(padding)) {
+            if (loading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-                return@Box
-            }
-            LazyColumn(modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp))
-            { items(items = productos, key = {it.id}){
-                producto ->
-                ProductoCard(producto = producto, onClick = {
-                    navController.navigate("detalle/${producto.id}")
-                } )
-            }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(productos, key = { it.id }) { producto ->
+                        ProductoCard(producto) {
+                            navController.navigate("detalle/${producto.id}")
+                        }
+                    }
+                }
             }
         }
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
-fun SmallTopAppBar(title: @Composable () -> Unit) {
-    TODO("Not yet implemented")
-}
-
-@Composable
-fun ProductoCard(producto: Producto, onClick: () -> Unit){
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .clickable{ onClick() }
-        .padding(4.dp),
+fun ProductoCard(producto: Producto, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ){
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            val painter = rememberAsyncImagePainter(producto.imageUrl)
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Row(
+            Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Image(
-                painter = painter,
+                painter = rememberAsyncImagePainter(producto.imageUrl),
                 contentDescription = producto.name,
-                modifier = Modifier
-                    .size(80.dp),
+                modifier = Modifier.size(80.dp),
                 contentScale = ContentScale.Crop
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(text = producto.name, style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Precio: $${producto.price}", style = MaterialTheme.typography.bodyMedium)
+                Text(producto.name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = "Precio: $${String.format(Locale("es", "CL"), "%,d", producto.price.toInt())}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
                 producto.description?.let {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                    Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
                 }
             }
         }

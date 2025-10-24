@@ -9,13 +9,20 @@ import androidx.compose.ui.Modifier
 import coil.compose.rememberAsyncImagePainter
 import com.example.mimascota.ViewModel.CatalogoViewModel
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleProductoScreen(productoId: Int, viewModel: CatalogoViewModel) {
     val producto = remember { viewModel.buscarProductoPorId(productoId) }
 
     Scaffold(topBar = {
-        SmallTopAppBar(title = { Text(producto?.name ?: "Detalle") })
+        TopAppBar(title = { Text(producto?.name ?: "Detalle") })
     }) { padding ->
         producto?.let { p ->
             Column(modifier = Modifier

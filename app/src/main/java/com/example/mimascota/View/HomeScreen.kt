@@ -19,7 +19,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun HomeScreen(navController: NavController, email: String?) {
+fun HomeScreen(navController: NavController, name: String?) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -27,13 +27,18 @@ fun HomeScreen(navController: NavController, email: String?) {
         verticalArrangement = Arrangement.Center
     ) {
         Text("Bienvenido 👋", style = MaterialTheme.typography.titleLarge)
-        Text("Has iniciado sesión como: $email")
+        Text("Has iniciado sesión como: $name")
         Spacer(modifier = Modifier.height(16.dp))
         TextButton(
             onClick = {
-                navController.navigate("CatalogoScreen")
+                navController.navigate("Catalogo")
             },
             modifier = Modifier.fillMaxWidth()
         ) { Text("Ir a Productos") }
+        TextButton(onClick = {
+            navController.navigate("Carrito")
+        },
+            modifier = Modifier.fillMaxWidth()
+        ) { Text("Ir a Carrito") }
     }
 }

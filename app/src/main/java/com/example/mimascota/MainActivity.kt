@@ -12,14 +12,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.mimascota.View.registerScreen
 import com.example.mimascota.ViewModel.AuthViewModel
 import androidx.navigation.compose.*
+import com.example.mimascota.Model.Producto
 import com.example.mimascota.View.CatalogoScreen
 import com.example.mimascota.View.DetalleProductoScreen
 import com.example.mimascota.View.HomeScreen
+import com.example.mimascota.View.ProductoCard
 import com.example.mimascota.View.loginScreen
 import com.example.mimascota.ViewModel.CatalogoViewModel
 
@@ -40,9 +43,9 @@ class MainActivity : ComponentActivity() {
                 composable("login") {
                     loginScreen(navController, viewModel)
                 }
-                composable("home/{email}") { backStack ->
-                    val email = backStack.arguments?.getString("email")
-                    HomeScreen(navController,email)
+                composable("home/{name}") { backStack ->
+                    val name = backStack.arguments?.getString("name")
+                    HomeScreen(navController,name)
                 }
                 composable("Catalogo") {
                     CatalogoScreen(navController, viewModelC)
@@ -51,6 +54,9 @@ class MainActivity : ComponentActivity() {
                     val idStr = backStack.arguments?.getString("id")
                     val id = idStr?.toIntOrNull() ?: -1
                     DetalleProductoScreen(id, viewModelC)
+                }
+                composable("Carrito") { backStack ->
+                    val products = listOf<Producto>() // Aquí iría la lógica para obtener los productos del carrito
                 }
             }
         }
