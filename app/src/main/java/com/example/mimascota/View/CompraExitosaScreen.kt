@@ -21,6 +21,7 @@ import com.example.mimascota.Model.CartItem
 import com.example.mimascota.ViewModel.CartViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import com.example.mimascota.util.formatCurrencyCLP
 
 @Suppress("DEPRECATION")
 // Composable Wrapper: Obtiene los datos del ViewModel y los pasa a la pantalla
@@ -53,7 +54,8 @@ fun CompraExitosaScreen(
 ) {
     // Obtener la fecha y hora actual
     val fechaActual = remember {
-        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("es", "CL")).format(Date())
+        // Usamos Locale.forLanguageTag para evitar el constructor deprecated
+        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.forLanguageTag("es-CL")).format(Date())
     }
 
     // Pantalla principal
@@ -205,7 +207,7 @@ fun CompraExitosaScreen(
                                 }
                                 // Columna derecha: Subtotal
                                 Text(
-                                    text = "$${String.format(Locale("es", "CL"), "%,d", item.subtotal)}",
+                                    text = "$${formatCurrencyCLP(item.subtotal)}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
@@ -233,7 +235,7 @@ fun CompraExitosaScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "$${String.format(Locale("es", "CL"), "%,d", totalPedido)}",
+                            text = "$${formatCurrencyCLP(totalPedido)}",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -311,4 +313,3 @@ fun CompraExitosaScreen(
         }
     }
 }
-

@@ -21,7 +21,7 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.mimascota.Model.Producto
 import com.example.mimascota.ViewModel.CatalogoViewModel
-import java.util.Locale
+import com.example.mimascota.util.formatCurrencyCLP
 
 @Suppress("DEPRECATION")
 // Pantalla principal del Back Office - Lista de productos
@@ -188,7 +188,7 @@ fun ProductoBackOfficeCard(producto: Producto) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "$${String.format(Locale("es", "CL"), "%,d", producto.price)}",
+                            text = "$${formatCurrencyCLP(producto.price)}",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -226,4 +226,3 @@ fun ProductoBackOfficeCard(producto: Producto) {
         }
     }
 }
-
