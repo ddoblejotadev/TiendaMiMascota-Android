@@ -41,9 +41,9 @@ fun BackOfficeScreen(navController: NavController, viewModel: CatalogoViewModel)
             TopAppBar(
                 title = {
                     Column {
-                        Text("Back Office")
+                        Text("Panel Administrativo")
                         Text(
-                            "Panel de Administración",
+                            "Gestión de Productos",
                             style = MaterialTheme.typography.bodySmall
                         )
                     }

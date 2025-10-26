@@ -310,7 +310,7 @@ fun AgregarProductoScreen(navController: NavController) {
                         TextButton(
                             onClick = { navController.popBackStack() }
                         ) {
-                            Text("Volver al Back Office")
+                            Text("Volver al Panel Administrativo")
                         }
                     }
                 }

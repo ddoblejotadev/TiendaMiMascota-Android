@@ -152,10 +152,10 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                 ) {
                     Icon(
                         imageVector = Icons.Default.Store,
-                        contentDescription = "Back Office"
+                        contentDescription = "Panel Administrativo"
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Back Office")
+                    Text("Panel Administrativo")
                 }
             }
 
