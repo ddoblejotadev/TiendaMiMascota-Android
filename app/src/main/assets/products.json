@@ -1,0 +1,47 @@
+[
+  {
+    "producto_id": 1,
+    "producto_nombre": "Pelota para perro",
+    "description": "Pelota de goma resistente ideal para perros medianos",
+    "price": 3990,
+    "stock": 3,
+    "category": "Juguete",
+    "imageUrl": "https://http2.mlstatic.com/D_Q_NP_922335-MLU73681863722_012024-O.webp",
+    "material": "Goma",
+    "tamano": "Mediano"
+  },
+  {
+    "producto_id": 2,
+    "producto_nombre": "Shampoo para gato",
+    "description": "Suaviza el pelaje y elimina olores",
+    "price": 5990,
+    "stock": 2,
+    "category": "Higiene",
+    "imageUrl": "https://menforsan.com/2952-medium_default/champu-muy-suave-para-gatos-300ml.jpg",
+    "tipoHigiene": "Shampoo",
+    "fragancia": "Lavanda"
+  },
+  {
+    "producto_id": 3,
+    "producto_nombre": "Alimento Premium para perro",
+    "description": "Rico en proteínas, sabor carne",
+    "price": 15990,
+    "stock": 5,
+    "category": "Alimento",
+    "imageUrl": "https://www.distribuidoralira.cl/wp-content/uploads/2025/07/21P851.jpg",
+    "marca": " Gran Campeón Perro",
+    "tipo": "Seco",
+    "peso": 3.5
+  },
+  {
+    "producto_id": 4,
+    "producto_nombre": "Collar de cuero",
+    "description": "Collar ajustable hecho de cuero resistente",
+    "price": 8990,
+    "stock": 4,
+    "category": "Accesorios",
+    "imageUrl": "https://m.media-amazon.com/images/I/81UMN5z4etL._AC_UF1000,1000_QL80_.jpg",
+    "tipoAccesorio": "Collar",
+    "material": "Cuero"
+  }
+]
