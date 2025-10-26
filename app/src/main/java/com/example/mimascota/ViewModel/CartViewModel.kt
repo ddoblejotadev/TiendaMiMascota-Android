@@ -12,39 +12,40 @@ class CartViewModel: ViewModel()  {
     private val _carrito = MutableStateFlow<List<CartItem>>(emptyList())
     val carrito: StateFlow<List<CartItem>> = _carrito.asStateFlow()
 
-    // Obtener la cantidad de un producto específico
-    fun getCantidadProducto(productoId: Int): Int {
-        return _carrito.value.find { it.producto.id == productoId }?.cantidad ?: 0
-    }
-
     // Agregar un producto (incrementa la cantidad si ya existe)
     fun agregarAlCarrito(producto: Producto) {
-        val carritoActual = _carrito.value.toMutableList()
-        val itemExistente = carritoActual.find { it.producto.id == producto.id }
-
-        if (itemExistente != null) {
-            itemExistente.cantidad++
-        } else {
-            carritoActual.add(CartItem(producto, 1))
+        _carrito.value = _carrito.value.map { item ->
+            if (item.producto.id == producto.id) {
+                // Crear nueva instancia con cantidad incrementada
+                CartItem(item.producto, item.cantidad + 1)
+            } else {
+                item
+            }
+        }.let { lista ->
+            // Si el producto no existía, agregarlo
+            if (lista.none { it.producto.id == producto.id }) {
+                lista + CartItem(producto, 1)
+            } else {
+                lista
+            }
         }
-
-        _carrito.value = carritoActual
     }
 
     // Disminuir cantidad de un producto
     fun disminuirCantidad(producto: Producto) {
-        val carritoActual = _carrito.value.toMutableList()
-        val itemExistente = carritoActual.find { it.producto.id == producto.id }
-
-        if (itemExistente != null) {
-            if (itemExistente.cantidad > 1) {
-                itemExistente.cantidad--
+        _carrito.value = _carrito.value.mapNotNull { item ->
+            if (item.producto.id == producto.id) {
+                // Si la cantidad es mayor a 1, crear nueva instancia con cantidad decrementada
+                if (item.cantidad > 1) {
+                    CartItem(item.producto, item.cantidad - 1)
+                } else {
+                    // Si la cantidad es 1, eliminarlo (retornar null)
+                    null
+                }
             } else {
-                carritoActual.remove(itemExistente)
+                item
             }
         }
-
-        _carrito.value = carritoActual
     }
 
     // Eliminar un producto completamente del carrito
