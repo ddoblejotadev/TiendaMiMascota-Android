@@ -20,6 +20,8 @@ import com.example.mimascota.ViewModel.AuthViewModel
 import androidx.navigation.compose.*
 import com.example.mimascota.Model.Producto
 import com.example.mimascota.View.AboutUsScreen
+import com.example.mimascota.View.AgregarProductoScreen
+import com.example.mimascota.View.BackOfficeScreen
 import com.example.mimascota.View.CarritoScreen
 import com.example.mimascota.View.CatalogoScreen
 import com.example.mimascota.View.CompraExitosaScreenWrapper
@@ -51,7 +53,7 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("home/{name}") { backStack ->
                     val name = backStack.arguments?.getString("name")
-                    HomeScreen(navController,name)
+                    HomeScreen(navController, name, viewModel)
                 }
                 composable("Catalogo") {
                     CatalogoScreen(navController, viewModelC, cartViewModel)
@@ -73,6 +75,12 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("Acerca"){
                     AboutUsScreen(navController)
+                }
+                composable("backOffice") {
+                    BackOfficeScreen(navController, viewModelC)
+                }
+                composable("agregarProducto") {
+                    AgregarProductoScreen(navController)
                 }
             }
         }

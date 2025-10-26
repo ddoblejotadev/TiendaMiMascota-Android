@@ -49,6 +49,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun loginUsuario(email: String, password: String) {
         viewModelScope.launch {
             val contexto = getApplication<Application>()
+
+            // Verificar si es el admin (credenciales hardcodeadas)
+            if (email.equals("admin", ignoreCase = true) && password == "admin") {
+                usuarioActual.value = "admin"
+                loginState.value = "Login exitoso 🎉 (Administrador)"
+                return@launch
+            }
+
+            // Si no es admin, buscar en usuarios normales
             val usuarioEncontrado = withContext(Dispatchers.IO) {
                 repo.obtenerUsuarios(contexto).find {
                     it.email.equals(email, ignoreCase = true) && it.password == password
@@ -62,5 +71,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 "Credenciales inválidas ❌"
             }
         }
+    }
+
+    // Función para verificar si el usuario actual es administrador
+    fun esAdmin(): Boolean {
+        return usuarioActual.value?.equals("admin", ignoreCase = true) == true
     }
 }

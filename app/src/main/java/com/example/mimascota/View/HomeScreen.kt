@@ -16,10 +16,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.R
+import com.example.mimascota.ViewModel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, name: String?) {
+fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthViewModel) {
+    // Verificar si el usuario es administrador
+    val esAdmin = authViewModel.esAdmin()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -115,6 +119,43 @@ fun HomeScreen(navController: NavController, name: String?) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Ver Sobre Nosotros")
+            }
+
+            // Mostrar sección de administración solo si es admin
+            if (esAdmin) {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Separador visual
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Sección de administración
+                Text(
+                    text = "Panel de Administración",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { navController.navigate("backOffice") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Store,
+                        contentDescription = "Back Office"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Back Office")
+                }
             }
         }
     }
