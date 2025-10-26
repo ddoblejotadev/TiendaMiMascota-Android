@@ -125,12 +125,19 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                             cantidad = cantidad,
                             onClick = { navController.navigate("Detalle/${producto.id}") },
                             onAgregar = {
-                                cartViewModel.agregarAlCarrito(producto)
+                                val agregado = cartViewModel.agregarAlCarrito(producto)
                                 scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "✅ ${producto.name} agregado",
-                                        duration = SnackbarDuration.Short
-                                    )
+                                    if (agregado) {
+                                        snackbarHostState.showSnackbar(
+                                            message = "✅ ${producto.name} agregado",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    } else {
+                                        snackbarHostState.showSnackbar(
+                                            message = "⚠️ Stock insuficiente de ${producto.name}",
+                                            duration = SnackbarDuration.Long
+                                        )
+                                    }
                                 }
                             },
                             onDisminuir = {
@@ -182,6 +189,22 @@ fun ProductoCard(
                         text = "$${String.format(Locale("es", "CL"), "%,d", producto.price)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
+                    )
+                    // Mostrar stock disponible
+                    val stockDisponible = producto.stock - cantidad
+                    Text(
+                        text = if (stockDisponible > 0) {
+                            "Stock: $stockDisponible disponible${if (stockDisponible <= 5) " ⚠️" else ""}"
+                        } else {
+                            "Sin stock disponible ❌"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = when {
+                            stockDisponible == 0 -> MaterialTheme.colorScheme.error
+                            stockDisponible <= 5 -> MaterialTheme.colorScheme.tertiary
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        fontWeight = if (stockDisponible <= 5) FontWeight.Bold else FontWeight.Normal
                     )
                     producto.description?.let {
                         Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)

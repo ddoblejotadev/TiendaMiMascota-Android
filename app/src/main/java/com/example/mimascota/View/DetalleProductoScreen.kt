@@ -60,6 +60,10 @@ fun DetalleProductoScreen(navController: NavController, productoId: Int, viewMod
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         producto?.let { p ->
+            // Calcular cantidad en carrito y stock disponible
+            val cantidadEnCarrito = carrito.find { it.producto.id == p.id }?.cantidad ?: 0
+            val stockDisponible = p.stock - cantidadEnCarrito
+
             Column(
                 modifier = Modifier
                     .padding(padding)
@@ -77,22 +81,72 @@ fun DetalleProductoScreen(navController: NavController, productoId: Int, viewMod
                 )
                 Text(text = p.name, style = MaterialTheme.typography.titleLarge)
                 Text(text = "$${p.price}", style = MaterialTheme.typography.titleMedium)
+
+                // Mostrar stock disponible
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = when {
+                            stockDisponible == 0 -> MaterialTheme.colorScheme.errorContainer
+                            stockDisponible <= 5 -> MaterialTheme.colorScheme.tertiaryContainer
+                            else -> MaterialTheme.colorScheme.secondaryContainer
+                        }
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (stockDisponible > 0) {
+                                "Stock disponible: $stockDisponible unidades"
+                            } else {
+                                "Sin stock disponible"
+                            },
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        if (stockDisponible <= 5 && stockDisponible > 0) {
+                            Text("⚠️", style = MaterialTheme.typography.titleMedium)
+                        } else if (stockDisponible == 0) {
+                            Text("❌", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                }
+
+                if (cantidadEnCarrito > 0) {
+                    Text(
+                        text = "Ya tienes $cantidadEnCarrito en tu carrito",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
                 Text(text = p.description ?: "", style = MaterialTheme.typography.bodyMedium)
+
                 Button(
                     onClick = {
-                        cartViewModel.agregarAlCarrito(p)
+                        val agregado = cartViewModel.agregarAlCarrito(p)
                         scope.launch {
-                            snackbarHostState.showSnackbar(
-                                message = "✅ Producto agregado al carrito",
-                                duration = SnackbarDuration.Short
-                            )
+                            if (agregado) {
+                                snackbarHostState.showSnackbar(
+                                    message = "✅ Producto agregado al carrito",
+                                    duration = SnackbarDuration.Short
+                                )
+                            } else {
+                                snackbarHostState.showSnackbar(
+                                    message = "⚠️ No hay más stock disponible",
+                                    duration = SnackbarDuration.Long
+                                )
+                            }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = stockDisponible > 0  // Deshabilitar si no hay stock
                 ) {
                     Icon(Icons.Default.ShoppingCart, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Agregar al carrito")
+                    Text(if (stockDisponible > 0) "Agregar al carrito" else "Sin stock")
                 }
             }
         } ?: Box(

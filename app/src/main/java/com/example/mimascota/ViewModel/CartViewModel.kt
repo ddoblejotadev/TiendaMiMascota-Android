@@ -24,7 +24,16 @@ class CartViewModel: ViewModel()  {
     val numeroUltimoPedido: StateFlow<String> = _numeroUltimoPedido.asStateFlow()
 
     // Agregar un producto (incrementa la cantidad si ya existe)
-    fun agregarAlCarrito(producto: Producto) {
+    // Retorna true si se agregó, false si no hay stock suficiente
+    fun agregarAlCarrito(producto: Producto): Boolean {
+        // Verificar stock disponible
+        val cantidadActual = _carrito.value.find { it.producto.id == producto.id }?.cantidad ?: 0
+
+        if (cantidadActual >= producto.stock) {
+            // No hay más stock disponible
+            return false
+        }
+
         _carrito.value = _carrito.value.map { item ->
             if (item.producto.id == producto.id) {
                 // Crear nueva instancia con cantidad incrementada
@@ -40,6 +49,8 @@ class CartViewModel: ViewModel()  {
                 lista
             }
         }
+
+        return true // Se agregó exitosamente
     }
 
     // Disminuir cantidad de un producto
@@ -99,23 +110,30 @@ class CartViewModel: ViewModel()  {
         vaciarCarrito()
     }
 
-    // Intentar procesar compra con simulación de errores aleatorios
+    // Intentar procesar compra con validación de stock y simulación de errores
     // Retorna: null si es exitosa, o el tipo de error si falla
     fun intentarProcesarCompra(): String? {
+        // PASO 1: Validar stock PRIMERO (esto es real, no simulado)
+        val sinStock = _carrito.value.any { item ->
+            item.cantidad > item.producto.stock
+        }
+
+        if (sinStock) {
+            // Si hay productos sin stock suficiente, retornar error de stock
+            return "STOCK"
+        }
+
+        // PASO 2: Si el stock es suficiente, simular otros errores aleatorios
         // Generar número aleatorio entre 1 y 10
         val probabilidad = Random.nextInt(1, 11)
 
-        // 70% de probabilidad de éxito (1-7)
-        // 30% de probabilidad de error (8-10)
+        // 80% de probabilidad de éxito (1-8)
+        // 20% de probabilidad de error (9-10)
         return when {
-            probabilidad <= 7 -> {
+            probabilidad <= 8 -> {
                 // Compra exitosa
                 procesarCompra()
                 null // Sin error
-            }
-            probabilidad == 8 -> {
-                // Error de stock (10% probabilidad)
-                "STOCK"
             }
             probabilidad == 9 -> {
                 // Error de pago (10% probabilidad)
@@ -126,5 +144,17 @@ class CartViewModel: ViewModel()  {
                 "CONEXION"
             }
         }
+    }
+
+    // Verificar si un producto tiene stock suficiente
+    fun tieneStockSuficiente(producto: Producto): Boolean {
+        val cantidadEnCarrito = _carrito.value.find { it.producto.id == producto.id }?.cantidad ?: 0
+        return cantidadEnCarrito < producto.stock
+    }
+
+    // Obtener stock disponible de un producto (considerando lo que ya está en el carrito)
+    fun getStockDisponible(producto: Producto): Int {
+        val cantidadEnCarrito = _carrito.value.find { it.producto.id == producto.id }?.cantidad ?: 0
+        return producto.stock - cantidadEnCarrito
     }
 }
