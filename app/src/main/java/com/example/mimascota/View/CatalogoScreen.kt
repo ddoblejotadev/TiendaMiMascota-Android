@@ -34,6 +34,12 @@ import com.example.mimascota.ViewModel.CartViewModel
 import java.util.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,22 +47,46 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
     val context = LocalContext.current
     val productos by viewModel.productos.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val carrito by cartViewModel.carrito.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) { viewModel.cargarProductos(context) }
 
-    Scaffold(topBar = {
-        TopAppBar(
-            title = { Text("Catálogo") },
-            navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver"
-                    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Catálogo") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
+                    }
+                },
+                actions = {
+                    BadgedBox(
+                        badge = {
+                            if (carrito.isNotEmpty()) {
+                                    Text("${cartViewModel.getTotalItems()}")
+                                    Text("${carrito.size}")
+                                }
+                            }
+                        }
+                    ) {
+                        IconButton(onClick = { navController.navigate("Carrito") }) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = "Carrito"
+                            )
+                        }
+                    }
                 }
-            }
-        )
-    }) { padding ->
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
         Box(Modifier.padding(padding)) {
             if (loading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -69,57 +99,213 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(productos, key = { it.id }) { producto ->
-                        ProductoCard(
-                            producto,
-                            { navController.navigate("Detalle/${producto.id}") },
-                            { cartViewModel.agregarAlCarrito(producto) }
-                        )
-                    }
-                }
+                            producto = producto,
+                            cantidad = cartViewModel.getCantidadProducto(producto.id),
+                            onClick = { navController.navigate("Detalle/${producto.id}") },
+                            onAgregar = {
+                            onClick = { navController.navigate("Detalle/${producto.id}") },
+                            onAgregar = {
+                                cartViewModel.agregarAlCarrito(producto)
+                                        message = "✅ ${producto.name} agregado",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            },
+                            onDisminuir = {
+                                cartViewModel.disminuirCantidad(producto)
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "➖ ${producto.name} disminuido",
+                                    snackbarHostState.showSnackbar(
+                                        message = "✅ ${producto.name} agregado",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            },
+                            onDisminuir = {
+                                cartViewModel.disminuirCantidad(producto)
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "➖ ${producto.name} disminuido",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+    producto: Producto,
+    cantidad: Int,
+    onClick: () -> Unit,
+    onAgregar: () -> Unit,
+    onDisminuir: () -> Unit
+) {
             }
-        }
-    }
-}
+        modifier = Modifier.fillMaxWidth(),
 
 @SuppressLint("DefaultLocale")
 @Composable
-fun ProductoCard(
-                 producto: Producto,
-                 onClick: () -> Unit,
-                 onAddToCart: (() -> Unit)? = null) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Row(
-            Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = rememberAsyncImagePainter(producto.imageUrl),
-                contentDescription = producto.name,
-                modifier = Modifier.size(80.dp),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(producto.name, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = "Precio: $${String.format(Locale("es", "CL"), "%,d", producto.price.toInt())}",
-                    style = MaterialTheme.typography.bodyMedium
+        Column(Modifier.padding(12.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onClick() }
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(producto.imageUrl),
+                    contentDescription = producto.name,
+                    modifier = Modifier.size(80.dp),
+                    contentScale = ContentScale.Crop
                 )
-                producto.description?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(producto.name, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "$${String.format(Locale("es", "CL"), "%,d", producto.price.toInt())}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    producto.description?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                    }
+                    contentDescription = producto.name,
+                    modifier = Modifier.size(80.dp),
+
+            // Controles de cantidad
+            if (cantidad > 0) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        IconButton(
+                            onClick = onDisminuir,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Remove,
+                                contentDescription = "Disminuir",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        ) {
+                            Text(
+                                text = "$cantidad",
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onAgregar,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "Agregar",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Total: $${String.format(Locale("es", "CL"), "%,d", (producto.price * cantidad).toInt())}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    Text(producto.name, style = MaterialTheme.typography.titleMedium)
+                }
+            } else {
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = onAgregar,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Agregar al carrito")
+                    Text(
+                        text = "$${String.format(Locale("es", "CL"), "%,d", producto.price.toInt())}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    producto.description?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                    }
                 }
             }
-            if (onAddToCart != null) {
-                IconButton(onClick = onAddToCart) {
-                    Icon(
-                        Icons.Default.Add, contentDescription = "Agregar al carrito"
+
+            // Controles de cantidad
+            if (cantidad > 0) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        IconButton(
+                            onClick = onDisminuir,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Remove,
+                                contentDescription = "Disminuir",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        ) {
+                            Text(
+                                text = "$cantidad",
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onAgregar,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "Agregar",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Total: $${String.format(Locale("es", "CL"), "%,d", (producto.price * cantidad).toInt())}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
+                }
+            } else {
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = onAgregar,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Agregar al carrito")
                 }
             }
         }

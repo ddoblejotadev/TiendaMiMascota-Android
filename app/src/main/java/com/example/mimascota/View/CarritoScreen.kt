@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,13 +15,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.ViewModel.CartViewModel
-import com.example.mimascota.Model.Producto
+import com.example.mimascota.Model.CartItem
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarritoScreen(navController: NavController, cartViewModel: CartViewModel) {
     val carrito by cartViewModel.carrito.collectAsState()
-    val total = carrito.sumOf { it.price }
+    val total = cartViewModel.getTotal()
 
     Scaffold(
         topBar = {
@@ -43,7 +46,13 @@ fun CarritoScreen(navController: NavController, cartViewModel: CartViewModel) {
                     .padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Tu carrito está vacío 🐾")
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Tu carrito está vacío 🐾", style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.height(16.dp))
+                    Button(onClick = { navController.navigate("Catalogo") }) {
+                        Text("Ir al catálogo")
+                    }
+                }
             }
         } else {
             Column(
@@ -55,15 +64,46 @@ fun CarritoScreen(navController: NavController, cartViewModel: CartViewModel) {
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    items(carrito) { producto ->
-                        ProductoItemCarrito(producto) {
-                            cartViewModel.eliminarDelCarrito(producto)
-                        }
+                    items(carrito) { cartItem ->
+                        CartItemCard(
+                            cartItem = cartItem,
+                            onAgregar = { cartViewModel.agregarAlCarrito(cartItem.producto) },
+                            onDisminuir = { cartViewModel.disminuirCantidad(cartItem.producto) },
+                            onEliminar = { cartViewModel.eliminarDelCarrito(cartItem.producto) }
+                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Total: $${total}", style = MaterialTheme.typography.titleLarge)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Total items:", style = MaterialTheme.typography.titleMedium)
+                            Text("${cartViewModel.getTotalItems()}", style = MaterialTheme.typography.titleMedium)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Total a pagar:", style = MaterialTheme.typography.titleLarge)
+                            Text(
+                                "$${String.format(Locale("es", "CL"), "%,d", total)}",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { cartViewModel.vaciarCarrito() },
                     modifier = Modifier.fillMaxWidth()
@@ -76,23 +116,64 @@ fun CarritoScreen(navController: NavController, cartViewModel: CartViewModel) {
 }
 
 @Composable
-fun ProductoItemCarrito(producto: Producto, onEliminar: () -> Unit) {
+fun CartItemCard(
+    cartItem: CartItem,
+    onAgregar: () -> Unit,
+    onDisminuir: () -> Unit,
+    onEliminar: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(producto.name, style = MaterialTheme.typography.titleMedium)
-                Text("Precio: $${producto.price}")
+        Column(Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(cartItem.producto.name, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Precio unitario: $${String.format(Locale("es", "CL"), "%,d", cartItem.producto.price)}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        "Subtotal: $${String.format(Locale("es", "CL"), "%,d", cartItem.subtotal)}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(onClick = onEliminar) {
+                    Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+                }
             }
-            IconButton(onClick = onEliminar) {
-                Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(onClick = onDisminuir) {
+                    Icon(Icons.Default.Remove, contentDescription = "Disminuir", tint = MaterialTheme.colorScheme.error)
+                }
+
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "${cartItem.cantidad}",
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
+                IconButton(onClick = onAgregar) {
+                    Icon(Icons.Default.Add, contentDescription = "Agregar", tint = MaterialTheme.colorScheme.primary)
+                }
             }
         }
     }
