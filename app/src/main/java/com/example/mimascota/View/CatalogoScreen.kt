@@ -84,9 +84,12 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(productos, key = { it.id }) { producto ->
+                        // Calcular cantidad desde el estado del carrito
+                        val cantidad = carrito.find { it.producto.id == producto.id }?.cantidad ?: 0
+
                         ProductoCard(
                             producto = producto,
-                            cantidad = cartViewModel.getCantidadProducto(producto.id),
+                            cantidad = cantidad,
                             onClick = { navController.navigate("Detalle/${producto.id}") },
                             onAgregar = {
                                 cartViewModel.agregarAlCarrito(producto)
