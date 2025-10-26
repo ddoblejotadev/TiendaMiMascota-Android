@@ -98,4 +98,33 @@ class CartViewModel: ViewModel()  {
         _numeroUltimoPedido.value = generarNumeroPedido()
         vaciarCarrito()
     }
+
+    // Intentar procesar compra con simulación de errores aleatorios
+    // Retorna: null si es exitosa, o el tipo de error si falla
+    fun intentarProcesarCompra(): String? {
+        // Generar número aleatorio entre 1 y 10
+        val probabilidad = Random.nextInt(1, 11)
+
+        // 70% de probabilidad de éxito (1-7)
+        // 30% de probabilidad de error (8-10)
+        return when {
+            probabilidad <= 7 -> {
+                // Compra exitosa
+                procesarCompra()
+                null // Sin error
+            }
+            probabilidad == 8 -> {
+                // Error de stock (10% probabilidad)
+                "STOCK"
+            }
+            probabilidad == 9 -> {
+                // Error de pago (10% probabilidad)
+                "PAGO"
+            }
+            else -> {
+                // Error de conexión (10% probabilidad)
+                "CONEXION"
+            }
+        }
+    }
 }

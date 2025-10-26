@@ -23,6 +23,7 @@ import com.example.mimascota.View.AboutUsScreen
 import com.example.mimascota.View.CarritoScreen
 import com.example.mimascota.View.CatalogoScreen
 import com.example.mimascota.View.CompraExitosaScreenWrapper
+import com.example.mimascota.View.CompraRechazadaScreenWrapper
 import com.example.mimascota.View.DetalleProductoScreen
 import com.example.mimascota.View.HomeScreen
 import com.example.mimascota.View.ProductoCard
@@ -65,6 +66,10 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("compraExitosa") {
                     CompraExitosaScreenWrapper(navController, cartViewModel)
+                }
+                composable("compraRechazada/{tipoError}") { backStack ->
+                    val tipoError = backStack.arguments?.getString("tipoError") ?: "PAGO"
+                    CompraRechazadaScreenWrapper(navController, tipoError)
                 }
                 composable("Acerca"){
                     AboutUsScreen(navController)

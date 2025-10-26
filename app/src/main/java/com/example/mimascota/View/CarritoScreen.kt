@@ -106,12 +106,19 @@ fun CarritoScreen(navController: NavController, cartViewModel: CartViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = {
-                        // Procesar la compra (guarda los datos y vacía el carrito)
-                        cartViewModel.procesarCompra()
+                        // Intentar procesar la compra (puede fallar aleatoriamente)
+                        val error = cartViewModel.intentarProcesarCompra()
 
-                        // Navegar a la pantalla de compra exitosa
-                        navController.navigate("compraExitosa") {
-                            popUpTo("Carrito") { inclusive = true }
+                        if (error == null) {
+                            // Compra exitosa - navegar a pantalla de éxito
+                            navController.navigate("compraExitosa") {
+                                popUpTo("Carrito") { inclusive = true }
+                            }
+                        } else {
+                            // Compra rechazada - navegar a pantalla de error
+                            navController.navigate("compraRechazada/$error") {
+                                popUpTo("Carrito") { inclusive = false }
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
