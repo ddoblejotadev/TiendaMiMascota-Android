@@ -6,7 +6,7 @@
     "price": 3990,
     "stock": 25,
     "category": "Juguete",
-    "imageUrl": "https://ejemplo.com/pelota.jpg",
+    "imageUrl": "https://http2.mlstatic.com/D_Q_NP_922335-MLU73681863722_012024-O.webp",
     "material": "Goma",
     "tamano": "Mediano"
   },
@@ -17,7 +17,7 @@
     "price": 5990,
     "stock": 15,
     "category": "Higiene",
-    "imageUrl": "https://ejemplo.com/shampoo.jpg",
+    "imageUrl": "https://menforsan.com/2952-medium_default/champu-muy-suave-para-gatos-300ml.jpg",
     "tipoHigiene": "Shampoo",
     "fragancia": "Lavanda"
   },
@@ -28,8 +28,8 @@
     "price": 15990,
     "stock": 40,
     "category": "Alimento",
-    "imageUrl": "https://ejemplo.com/alimento.jpg",
-    "marca": "DogChow",
+    "imageUrl": "https://www.distribuidoralira.cl/wp-content/uploads/2025/07/21P851.jpg",
+    "marca": " Gran Campeón Perro",
     "tipo": "Seco",
     "peso": 3.5
   },
@@ -40,7 +40,7 @@
     "price": 8990,
     "stock": 20,
     "category": "Accesorios",
-    "imageUrl": "https://ejemplo.com/collar.jpg",
+    "imageUrl": "https://m.media-amazon.com/images/I/81UMN5z4etL._AC_UF1000,1000_QL80_.jpg",
     "tipoAccesorio": "Collar",
     "material": "Cuero"
   }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Portrait
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.*
@@ -42,7 +43,6 @@ fun HomeScreen(navController: NavController, name: String?) {
             verticalArrangement = Arrangement.Center
         ) {
 
-            // Imagen opcional (si tienes un recurso)
             Image(
                 painter = painterResource(id = R.drawable.logo1),
                 contentDescription = "Logo Mi Mascota",
@@ -98,6 +98,23 @@ fun HomeScreen(navController: NavController, name: String?) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Ver Carrito")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = { navController.navigate("Acerca") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Portrait,
+                    contentDescription = "Sobre Nosotros"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Ver Sobre Nosotros")
             }
         }
     }

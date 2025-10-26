@@ -19,6 +19,7 @@ import com.example.mimascota.View.registerScreen
 import com.example.mimascota.ViewModel.AuthViewModel
 import androidx.navigation.compose.*
 import com.example.mimascota.Model.Producto
+import com.example.mimascota.View.AboutUsScreen
 import com.example.mimascota.View.CarritoScreen
 import com.example.mimascota.View.CatalogoScreen
 import com.example.mimascota.View.DetalleProductoScreen
@@ -60,6 +61,9 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("Carrito") {
                     CarritoScreen(cartViewModel)
+                }
+                composable("Acerca"){
+                    AboutUsScreen(navController)
                 }
             }
         }
