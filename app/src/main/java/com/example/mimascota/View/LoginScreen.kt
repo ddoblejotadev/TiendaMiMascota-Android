@@ -23,10 +23,21 @@ import androidx.navigation.NavController
 import com.example.mimascota.ViewModel.AuthViewModel
 
 @Composable
-fun loginScreen(navController: NavController, viewModel: AuthViewModel) {
+fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loginState by remember { viewModel.loginState }
+
+    // Observar cambios en el estado de login para navegar solo si es exitoso
+    LaunchedEffect(loginState) {
+        if (loginState.contains("exitoso", ignoreCase = true)) {
+            val username = viewModel.usuarioActual.value ?: "Invitado"
+            navController.navigate("home/$username") {
+                // Evitar volver al login presionando atrás
+                popUpTo("login") { inclusive = true }
+            }
+        }
+    }
 
     // Fondo con gradiente
     Box(
@@ -143,8 +154,11 @@ fun loginScreen(navController: NavController, viewModel: AuthViewModel) {
                     // Botón de login
                     Button(
                         onClick = {
-                            viewModel.loginUsuario(email, password)
-                            navController.navigate("home/$email")
+                            if (email.isNotBlank() && password.isNotBlank()) {
+                                viewModel.loginUsuario(email, password)
+                            } else {
+                                viewModel.loginState.value = "Por favor completa todos los campos ❌"
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()

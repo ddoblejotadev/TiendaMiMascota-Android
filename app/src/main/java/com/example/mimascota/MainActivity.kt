@@ -7,7 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.mimascota.View.registerScreen
-import com.example.mimascota.View.loginScreen
+import com.example.mimascota.View.LoginScreen
 import com.example.mimascota.View.AboutUsScreen
 import com.example.mimascota.View.AgregarProductoScreen
 import com.example.mimascota.View.BackOfficeScreen
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
                     registerScreen(navController, viewModel)
                 }
                 composable("login") {
-                    loginScreen(navController, viewModel)
+                    LoginScreen(navController, viewModel)
                 }
                 composable("home/{name}") { backStack ->
                     val name = backStack.arguments?.getString("name")
