@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import com.example.mimascota.ViewModel.CartViewModel
 import java.util.*
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +44,19 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
 
     LaunchedEffect(Unit) { viewModel.cargarProductos(context) }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Catálogo") },) }) { padding ->
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text("Catálogo") },
+            navigationIcon = {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver"
+                    )
+                }
+            }
+        )
+    }) { padding ->
         Box(Modifier.padding(padding)) {
             if (loading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -5,23 +5,35 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.mimascota.ViewModel.CartViewModel
 import com.example.mimascota.Model.Producto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CarritoScreen(cartViewModel: CartViewModel) {
+fun CarritoScreen(navController: NavController, cartViewModel: CartViewModel) {
     val carrito by cartViewModel.carrito.collectAsState()
     val total = carrito.sumOf { it.price }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("🛒 Carrito de Compras") })
+            TopAppBar(
+                title = { Text("🛒 Carrito de Compras") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
+                    }
+                }
+            )
         }
     ) { padding ->
         if (carrito.isEmpty()) {

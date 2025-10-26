@@ -16,15 +16,28 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.mimascota.ViewModel.CartViewModel
+import androidx.navigation.NavController
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetalleProductoScreen(productoId: Int, viewModel: CatalogoViewModel, cartViewModel: CartViewModel) {
+fun DetalleProductoScreen(navController: NavController, productoId: Int, viewModel: CatalogoViewModel, cartViewModel: CartViewModel) {
     val producto = remember { viewModel.buscarProductoPorId(productoId) }
     var mensaje by remember { mutableStateOf("") }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text(producto?.name ?: "Detalle") })
+        TopAppBar(
+            title = { Text(producto?.name ?: "Detalle") },
+            navigationIcon = {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver"
+                    )
+                }
+            }
+        )
     }) { padding ->
         producto?.let { p ->
             Column(modifier = Modifier

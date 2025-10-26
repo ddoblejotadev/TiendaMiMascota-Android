@@ -57,10 +57,10 @@ class MainActivity : ComponentActivity() {
                 composable("Detalle/{id}") { backStack ->
                     val idStr = backStack.arguments?.getString("id")
                     val id = idStr?.toIntOrNull() ?: -1
-                    DetalleProductoScreen(id, viewModelC, cartViewModel)
+                    DetalleProductoScreen(navController, id, viewModelC, cartViewModel)
                 }
                 composable("Carrito") {
-                    CarritoScreen(cartViewModel)
+                    CarritoScreen(navController, cartViewModel)
                 }
                 composable("Acerca"){
                     AboutUsScreen(navController)
