@@ -8,6 +8,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.random.Random
 
+// Clase sellada para resultado de agregar al carrito
+sealed class AgregarResultado {
+    object Exito : AgregarResultado()
+    data class ExcedeStock(val stockDisponible: Int, val cantidadEnCarrito: Int) : AgregarResultado()
+}
+
 class CartViewModel: ViewModel()  {
 
     private val _carrito = MutableStateFlow<List<CartItem>>(emptyList())
@@ -23,17 +29,13 @@ class CartViewModel: ViewModel()  {
     private val _numeroUltimoPedido = MutableStateFlow("")
     val numeroUltimoPedido: StateFlow<String> = _numeroUltimoPedido.asStateFlow()
 
-    // Agregar un producto (incrementa la cantidad si ya existe)
-    // Retorna true si se agregó, false si no hay stock suficiente
-    fun agregarAlCarrito(producto: Producto): Boolean {
-        // Verificar stock disponible
+    // Agregar un producto (siempre agrega, pero devuelve info sobre stock)
+    // Retorna AgregarResultado con información para mostrar advertencias
+    fun agregarAlCarrito(producto: Producto): AgregarResultado {
+        // Obtener cantidad actual antes de agregar
         val cantidadActual = _carrito.value.find { it.producto.id == producto.id }?.cantidad ?: 0
 
-        if (cantidadActual >= producto.stock) {
-            // No hay más stock disponible
-            return false
-        }
-
+        // Agregar al carrito (siempre)
         _carrito.value = _carrito.value.map { item ->
             if (item.producto.id == producto.id) {
                 // Crear nueva instancia con cantidad incrementada
@@ -50,7 +52,15 @@ class CartViewModel: ViewModel()  {
             }
         }
 
-        return true // Se agregó exitosamente
+        // Calcular nueva cantidad después de agregar
+        val nuevaCantidad = cantidadActual + 1
+
+        // Verificar si excede stock DESPUÉS de agregar
+        return if (nuevaCantidad > producto.stock) {
+            AgregarResultado.ExcedeStock(producto.stock, nuevaCantidad)
+        } else {
+            AgregarResultado.Exito
+        }
     }
 
     // Disminuir cantidad de un producto

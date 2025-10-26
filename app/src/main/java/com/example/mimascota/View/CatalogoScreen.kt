@@ -125,18 +125,21 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                             cantidad = cantidad,
                             onClick = { navController.navigate("Detalle/${producto.id}") },
                             onAgregar = {
-                                val agregado = cartViewModel.agregarAlCarrito(producto)
+                                val resultado = cartViewModel.agregarAlCarrito(producto)
                                 scope.launch {
-                                    if (agregado) {
-                                        snackbarHostState.showSnackbar(
-                                            message = "✅ ${producto.name} agregado",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    } else {
-                                        snackbarHostState.showSnackbar(
-                                            message = "⚠️ Stock insuficiente de ${producto.name}",
-                                            duration = SnackbarDuration.Long
-                                        )
+                                    when (resultado) {
+                                        is com.example.mimascota.ViewModel.AgregarResultado.Exito -> {
+                                            snackbarHostState.showSnackbar(
+                                                message = "✅ ${producto.name} agregado",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
+                                        is com.example.mimascota.ViewModel.AgregarResultado.ExcedeStock -> {
+                                            snackbarHostState.showSnackbar(
+                                                message = "⚠️ ${producto.name} agregado • Stock limitado: ${resultado.stockDisponible} disponibles (tienes ${resultado.cantidadEnCarrito} en carrito)",
+                                                duration = SnackbarDuration.Long
+                                            )
+                                        }
                                     }
                                 }
                             },

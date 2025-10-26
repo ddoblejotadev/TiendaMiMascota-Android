@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.mimascota.ViewModel.CartViewModel
 
 // Tipos de error que pueden ocurrir
 enum class TipoError {
@@ -28,7 +29,8 @@ enum class TipoError {
 @Composable
 fun CompraRechazadaScreenWrapper(
     navController: NavController,
-    tipoError: String
+    tipoError: String,
+    cartViewModel: CartViewModel
 ) {
     // Convertir el string a enum
     val error = when (tipoError) {
@@ -41,7 +43,8 @@ fun CompraRechazadaScreenWrapper(
     // Llamar a la pantalla principal
     CompraRechazadaScreen(
         navController = navController,
-        tipoError = error
+        tipoError = error,
+        cartViewModel = cartViewModel
     )
 }
 
@@ -49,13 +52,22 @@ fun CompraRechazadaScreenWrapper(
 @Composable
 fun CompraRechazadaScreen(
     navController: NavController,
-    tipoError: TipoError
+    tipoError: TipoError,
+    cartViewModel: CartViewModel
 ) {
+    // Obtener carrito para mostrar productos con problema
+    val carrito by cartViewModel.carrito.collectAsState()
+    val productosConProblema = carrito.filter { it.cantidad > it.producto.stock }
+
     // Obtener el mensaje y título según el tipo de error
     val (titulo, mensaje) = when (tipoError) {
         TipoError.STOCK_INSUFICIENTE -> Pair(
             "Stock Insuficiente 📦",
-            "Lo sentimos, algunos productos de tu carrito no tienen stock disponible en este momento."
+            if (productosConProblema.isNotEmpty()) {
+                "Los siguientes productos en tu carrito exceden el stock disponible:"
+            } else {
+                "Lo sentimos, algunos productos de tu carrito no tienen stock disponible en este momento."
+            }
         )
         TipoError.ERROR_PAGO -> Pair(
             "Error en el Pago 💳",
@@ -120,6 +132,53 @@ fun CompraRechazadaScreen(
             )
 
             Spacer(Modifier.height(32.dp))
+
+            // Mostrar productos con problema si es error de stock
+            if (tipoError == TipoError.STOCK_INSUFICIENTE && productosConProblema.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Productos con problema:",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+
+                        Spacer(Modifier.height(12.dp))
+
+                        productosConProblema.forEach { item ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "• ${item.producto.name}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                    Text(
+                                        text = "Tienes: ${item.cantidad} | Disponibles: ${item.producto.stock}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+            }
 
             // Tarjeta con información adicional
             Card(
