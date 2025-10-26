@@ -105,7 +105,15 @@ fun CarritoScreen(navController: NavController, cartViewModel: CartViewModel) {
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
-                    onClick = { cartViewModel.vaciarCarrito() },
+                    onClick = {
+                        // Procesar la compra (guarda los datos y vacía el carrito)
+                        cartViewModel.procesarCompra()
+
+                        // Navegar a la pantalla de compra exitosa
+                        navController.navigate("compraExitosa") {
+                            popUpTo("Carrito") { inclusive = true }
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Finalizar compra 🐶")

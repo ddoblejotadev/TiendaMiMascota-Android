@@ -22,6 +22,7 @@ import com.example.mimascota.Model.Producto
 import com.example.mimascota.View.AboutUsScreen
 import com.example.mimascota.View.CarritoScreen
 import com.example.mimascota.View.CatalogoScreen
+import com.example.mimascota.View.CompraExitosaScreenWrapper
 import com.example.mimascota.View.DetalleProductoScreen
 import com.example.mimascota.View.HomeScreen
 import com.example.mimascota.View.ProductoCard
@@ -61,6 +62,9 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("Carrito") {
                     CarritoScreen(navController, cartViewModel)
+                }
+                composable("compraExitosa") {
+                    CompraExitosaScreenWrapper(navController, cartViewModel)
                 }
                 composable("Acerca"){
                     AboutUsScreen(navController)

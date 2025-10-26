@@ -6,11 +6,22 @@ import com.example.mimascota.Model.Producto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.random.Random
 
 class CartViewModel: ViewModel()  {
 
     private val _carrito = MutableStateFlow<List<CartItem>>(emptyList())
     val carrito: StateFlow<List<CartItem>> = _carrito.asStateFlow()
+
+    // Almacenar temporalmente el último pedido realizado
+    private val _ultimoPedido = MutableStateFlow<List<CartItem>>(emptyList())
+    val ultimoPedido: StateFlow<List<CartItem>> = _ultimoPedido.asStateFlow()
+
+    private val _totalUltimoPedido = MutableStateFlow(0)
+    val totalUltimoPedido: StateFlow<Int> = _totalUltimoPedido.asStateFlow()
+
+    private val _numeroUltimoPedido = MutableStateFlow("")
+    val numeroUltimoPedido: StateFlow<String> = _numeroUltimoPedido.asStateFlow()
 
     // Agregar un producto (incrementa la cantidad si ya existe)
     fun agregarAlCarrito(producto: Producto) {
@@ -66,5 +77,25 @@ class CartViewModel: ViewModel()  {
     // Obtener cantidad total de items
     fun getTotalItems(): Int {
         return _carrito.value.sumOf { it.cantidad }
+    }
+
+    // Generar número de pedido único
+    fun generarNumeroPedido(): String {
+        val timestamp = System.currentTimeMillis()
+        val random = Random.nextInt(1000, 9999)
+        return "MM-${timestamp.toString().takeLast(6)}-$random"
+    }
+
+    // Obtener copia del carrito actual
+    fun getCarritoCopia(): List<CartItem> {
+        return _carrito.value.toList()
+    }
+
+    // Procesar la compra y guardar los datos del pedido
+    fun procesarCompra() {
+        _ultimoPedido.value = _carrito.value.toList()
+        _totalUltimoPedido.value = getTotal()
+        _numeroUltimoPedido.value = generarNumeroPedido()
+        vaciarCarrito()
     }
 }
