@@ -3,7 +3,7 @@ package com.example.mimascota.View
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Portrait
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -183,7 +183,7 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                 )
             ) {
                 Icon(
-                    imageVector = Icons.Default.Logout,
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = "Cerrar Sesión"
                 )
                 Spacer(modifier = Modifier.width(8.dp))

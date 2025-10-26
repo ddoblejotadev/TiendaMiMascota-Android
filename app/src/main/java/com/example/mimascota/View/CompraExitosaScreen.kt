@@ -22,6 +22,7 @@ import com.example.mimascota.ViewModel.CartViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+@Suppress("DEPRECATION")
 // Composable Wrapper: Obtiene los datos del ViewModel y los pasa a la pantalla
 @Composable
 fun CompraExitosaScreenWrapper(

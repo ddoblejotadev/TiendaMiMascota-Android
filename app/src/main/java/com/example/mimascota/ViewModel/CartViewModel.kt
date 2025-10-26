@@ -107,7 +107,8 @@ class CartViewModel: ViewModel()  {
         return "MM-${timestamp.toString().takeLast(6)}-$random"
     }
 
-    // Obtener copia del carrito actual
+    // Obtener copia del carrito actual (útil para validaciones futuras)
+    @Suppress("unused")
     fun getCarritoCopia(): List<CartItem> {
         return _carrito.value.toList()
     }
@@ -156,13 +157,15 @@ class CartViewModel: ViewModel()  {
         }
     }
 
-    // Verificar si un producto tiene stock suficiente
+    // Verificar si un producto tiene stock suficiente (útil para validaciones futuras)
+    @Suppress("unused")
     fun tieneStockSuficiente(producto: Producto): Boolean {
         val cantidadEnCarrito = _carrito.value.find { it.producto.id == producto.id }?.cantidad ?: 0
         return cantidadEnCarrito < producto.stock
     }
 
     // Obtener stock disponible de un producto (considerando lo que ya está en el carrito)
+    @Suppress("unused")
     fun getStockDisponible(producto: Producto): Int {
         val cantidadEnCarrito = _carrito.value.find { it.producto.id == producto.id }?.cantidad ?: 0
         return producto.stock - cantidadEnCarrito

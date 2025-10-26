@@ -26,6 +26,7 @@ import com.example.mimascota.ViewModel.CatalogoViewModel
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+@Suppress("DEPRECATION")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, cartViewModel: CartViewModel) {
@@ -161,6 +162,7 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
 }
 
 @SuppressLint("DefaultLocale")
+@Suppress("DEPRECATION")
 @Composable
 fun ProductoCard(
     producto: Producto,

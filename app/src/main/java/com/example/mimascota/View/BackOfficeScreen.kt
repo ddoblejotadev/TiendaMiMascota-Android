@@ -23,6 +23,7 @@ import com.example.mimascota.Model.Producto
 import com.example.mimascota.ViewModel.CatalogoViewModel
 import java.util.Locale
 
+@Suppress("DEPRECATION")
 // Pantalla principal del Back Office - Lista de productos
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
