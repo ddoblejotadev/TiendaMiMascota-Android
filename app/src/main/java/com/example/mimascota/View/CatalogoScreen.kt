@@ -179,7 +179,7 @@ fun ProductoCard(
                 Column(Modifier.weight(1f)) {
                     Text(producto.name, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = "$${String.format(Locale("es", "CL"), "%,d", producto.price.toInt())}",
+                        text = "$${String.format(Locale("es", "CL"), "%,d", producto.price)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -238,7 +238,7 @@ fun ProductoCard(
                     }
 
                     Text(
-                        text = "Total: $${String.format(Locale("es", "CL"), "%,d", (producto.price * cantidad).toInt())}",
+                        text = "Total: $${String.format(Locale("es", "CL"), "%,d", producto.price * cantidad)}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
