@@ -70,6 +70,34 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                 }
             )
         },
+        floatingActionButton = {
+            // Mostrar botón solo si hay productos en el carrito
+            if (carrito.isNotEmpty()) {
+                ExtendedFloatingActionButton(
+                    onClick = { navController.navigate("Carrito") },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    elevation = FloatingActionButtonDefaults.elevation(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = "Ir a pagar"
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Ir a pagar",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "$${String.format(Locale("es", "CL"), "%,d", cartViewModel.getTotal())}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(Modifier.padding(padding)) {
@@ -80,7 +108,12 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(8.dp),
+                    contentPadding = PaddingValues(
+                        start = 8.dp,
+                        end = 8.dp,
+                        top = 8.dp,
+                        bottom = if (carrito.isNotEmpty()) 80.dp else 8.dp // Espacio para el FAB
+                    ),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(productos, key = { it.id }) { producto ->
