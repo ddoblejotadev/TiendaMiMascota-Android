@@ -77,4 +77,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun esAdmin(): Boolean {
         return usuarioActual.value?.equals("admin", ignoreCase = true) == true
     }
+
+    // Función para cerrar sesión
+    fun cerrarSesion() {
+        usuarioActual.value = null
+        loginState.value = ""
+        registroState.value = ""
+    }
 }

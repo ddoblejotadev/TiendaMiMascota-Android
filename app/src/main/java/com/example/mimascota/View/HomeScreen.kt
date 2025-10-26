@@ -3,6 +3,7 @@ package com.example.mimascota.View
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Portrait
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -156,6 +157,37 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Back Office")
                 }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Separador para cerrar sesión
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Botón de cerrar sesión
+            OutlinedButton(
+                onClick = {
+                    authViewModel.cerrarSesion()
+                    navController.navigate("login") {
+                        popUpTo("register") { inclusive = false }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Logout,
+                    contentDescription = "Cerrar Sesión"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Cerrar Sesión")
             }
         }
     }
