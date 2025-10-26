@@ -24,7 +24,7 @@ import com.example.mimascota.Model.Producto
 import com.example.mimascota.ViewModel.CartViewModel
 import com.example.mimascota.ViewModel.CatalogoViewModel
 import kotlinx.coroutines.launch
-import java.util.Locale
+import com.example.mimascota.util.formatCurrencyCLP
 
 @Suppress("DEPRECATION")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,7 +92,7 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "$${String.format(Locale("es", "CL"), "%,d", cartViewModel.getTotal())}",
+                            text = "$${formatCurrencyCLP(cartViewModel.getTotal())}",
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -191,7 +191,7 @@ fun ProductoCard(
                 Column(Modifier.weight(1f)) {
                     Text(producto.name, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = "$${String.format(Locale("es", "CL"), "%,d", producto.price)}",
+                        text = "$${formatCurrencyCLP(producto.price)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -266,7 +266,7 @@ fun ProductoCard(
                     }
 
                     Text(
-                        text = "Total: $${String.format(Locale("es", "CL"), "%,d", producto.price * cantidad)}",
+                        text = "Total: $${formatCurrencyCLP(producto.price * cantidad)}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -286,4 +286,3 @@ fun ProductoCard(
         }
     }
 }
-

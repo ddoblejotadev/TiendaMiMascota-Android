@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.ViewModel.CartViewModel
 import com.example.mimascota.Model.CartItem
-import java.util.Locale
+import com.example.mimascota.util.formatCurrencyCLP
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,7 +97,7 @@ fun CarritoScreen(navController: NavController, cartViewModel: CartViewModel) {
                         ) {
                             Text("Total a pagar:", style = MaterialTheme.typography.titleLarge)
                             Text(
-                                "$${String.format(Locale("es", "CL"), "%,d", total)}",
+                                "$${formatCurrencyCLP(total)}",
                                 style = MaterialTheme.typography.titleLarge,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -161,11 +161,11 @@ fun CartItemCard(
                 Column(Modifier.weight(1f)) {
                     Text(cartItem.producto.name, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Precio unitario: $${String.format(Locale("es", "CL"), "%,d", cartItem.producto.price)}",
+                        "Precio unitario: $${formatCurrencyCLP(cartItem.producto.price)}",
                         style = MaterialTheme.typography.bodySmall
                     )
                     Text(
-                        "Subtotal: $${String.format(Locale("es", "CL"), "%,d", cartItem.subtotal)}",
+                        "Subtotal: $${formatCurrencyCLP(cartItem.subtotal)}",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
