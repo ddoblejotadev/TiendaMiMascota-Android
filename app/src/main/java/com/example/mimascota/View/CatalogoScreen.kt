@@ -1,45 +1,30 @@
 package com.example.mimascota.View
 
+import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.mimascota.Model.Producto
-import com.example.mimascota.ViewModel.CatalogoViewModel
-import androidx.compose.foundation.Image
-import androidx.compose.material3.*
-import android.annotation.SuppressLint
-import java.util.Locale
-
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.Icons
 import com.example.mimascota.ViewModel.CartViewModel
-import java.util.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import com.example.mimascota.ViewModel.CatalogoViewModel
 import kotlinx.coroutines.launch
-import androidx.compose.ui.text.font.FontWeight
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,8 +54,8 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     BadgedBox(
                         badge = {
                             if (carrito.isNotEmpty()) {
+                                Badge {
                                     Text("${cartViewModel.getTotalItems()}")
-                                    Text("${carrito.size}")
                                 }
                             }
                         }
@@ -99,23 +84,13 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(productos, key = { it.id }) { producto ->
+                        ProductoCard(
                             producto = producto,
                             cantidad = cartViewModel.getCantidadProducto(producto.id),
                             onClick = { navController.navigate("Detalle/${producto.id}") },
                             onAgregar = {
-                            onClick = { navController.navigate("Detalle/${producto.id}") },
-                            onAgregar = {
                                 cartViewModel.agregarAlCarrito(producto)
-                                        message = "✅ ${producto.name} agregado",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
-                            },
-                            onDisminuir = {
-                                cartViewModel.disminuirCantidad(producto)
                                 scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "➖ ${producto.name} disminuido",
                                     snackbarHostState.showSnackbar(
                                         message = "✅ ${producto.name} agregado",
                                         duration = SnackbarDuration.Short
@@ -131,17 +106,28 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                                     )
                                 }
                             }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@SuppressLint("DefaultLocale")
+@Composable
+fun ProductoCard(
     producto: Producto,
     cantidad: Int,
     onClick: () -> Unit,
     onAgregar: () -> Unit,
     onDisminuir: () -> Unit
 ) {
-            }
+    Card(
         modifier = Modifier.fillMaxWidth(),
-
-@SuppressLint("DefaultLocale")
-@Composable
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
         Column(Modifier.padding(12.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -164,81 +150,6 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     producto.description?.let {
                         Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
                     }
-                    contentDescription = producto.name,
-                    modifier = Modifier.size(80.dp),
-
-            // Controles de cantidad
-            if (cantidad > 0) {
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        IconButton(
-                            onClick = onDisminuir,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Remove,
-                                contentDescription = "Disminuir",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        ) {
-                            Text(
-                                text = "$cantidad",
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onAgregar,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = "Agregar",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = "Total: $${String.format(Locale("es", "CL"), "%,d", (producto.price * cantidad).toInt())}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    Text(producto.name, style = MaterialTheme.typography.titleMedium)
-                }
-            } else {
-                Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = onAgregar,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
-                    Text("Agregar al carrito")
-                    Text(
-                        text = "$${String.format(Locale("es", "CL"), "%,d", producto.price.toInt())}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    producto.description?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
-                    }
                 }
             }
 
@@ -274,7 +185,7 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                                 text = "$cantidad",
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                fontWeight = FontWeight.Bold
                             )
                         }
 
@@ -293,7 +204,7 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     Text(
                         text = "Total: $${String.format(Locale("es", "CL"), "%,d", (producto.price * cantidad).toInt())}",
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
