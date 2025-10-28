@@ -17,6 +17,7 @@ import com.example.mimascota.View.CompraExitosaScreenWrapper
 import com.example.mimascota.View.CompraRechazadaScreenWrapper
 import com.example.mimascota.View.DetalleProductoScreen
 import com.example.mimascota.View.HomeScreen
+import com.example.mimascota.View.FotoDePerfil
 import com.example.mimascota.ViewModel.AuthViewModel
 import com.example.mimascota.ViewModel.CartViewModel
 import com.example.mimascota.ViewModel.CatalogoViewModel
@@ -70,6 +71,9 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("agregarProducto") {
                     AgregarProductoScreen(navController)
+                }
+                composable("fotoDePerfil") {
+                    FotoDePerfil(navController, viewModel)
                 }
             }
         }
