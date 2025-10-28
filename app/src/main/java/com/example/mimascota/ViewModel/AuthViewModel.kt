@@ -8,12 +8,20 @@ import com.example.mimascota.Model.User
 import com.example.mimascota.repository.UserRepository
 import com.example.mimascota.repository.UserRoomRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-
+/**
+ * AuthViewModel: Maneja la autenticación de usuarios (Login y Registro)
+ *
+ * Responsabilidades:
+ * - Registrar nuevos usuarios
+ * - Validar credenciales de login
+ * - Mantener sesión del usuario actual
+ * - Gestionar foto de perfil
+ */
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo = UserRepository()

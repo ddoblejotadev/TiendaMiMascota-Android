@@ -1,5 +1,9 @@
 package com.example.mimascota.Model
 
+/**
+ * Juguete: Tipo específico de producto para juguetes de mascotas
+ * Extiende de Producto agregando material y tamaño
+ */
 data class Juguete(
     val idPro: Int,
     val namePro: String,
@@ -8,5 +12,12 @@ data class Juguete(
     val stockPro: Int,
     val material: String,
     val tamano: String
-) : Producto(idPro, namePro, descriptionPro, pricePro, stockPro, category = "Juguete", imageUrl = "") {
-}
+) : Producto(
+    id = idPro,
+    name = namePro,
+    description = descriptionPro,
+    price = pricePro,
+    stock = stockPro,
+    category = "Juguete",
+    imageUrl = ""
+)
