@@ -4,26 +4,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.mimascota.View.registerScreen
-import com.example.mimascota.View.LoginScreen
-import com.example.mimascota.View.AboutUsScreen
-import com.example.mimascota.View.AgregarProductoScreen
-import com.example.mimascota.View.BackOfficeScreen
-import com.example.mimascota.View.CarritoScreen
-import com.example.mimascota.View.CatalogoScreen
-import com.example.mimascota.View.CompraExitosaScreenWrapper
-import com.example.mimascota.View.CompraRechazadaScreenWrapper
-import com.example.mimascota.View.DetalleProductoScreen
-import com.example.mimascota.View.HomeScreen
-import com.example.mimascota.View.FotoDePerfil
+import com.example.mimascota.View.*
 import com.example.mimascota.ViewModel.AuthViewModel
 import com.example.mimascota.ViewModel.CartViewModel
 import com.example.mimascota.ViewModel.CatalogoViewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.compose.runtime.remember
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
