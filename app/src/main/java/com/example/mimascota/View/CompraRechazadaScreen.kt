@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.ViewModel.CartViewModel
+import com.example.mimascota.ViewModel.AuthViewModel
 
 // Tipos de error que pueden ocurrir
 enum class TipoError {
@@ -30,7 +31,8 @@ enum class TipoError {
 fun CompraRechazadaScreenWrapper(
     navController: NavController,
     tipoError: String,
-    cartViewModel: CartViewModel
+    cartViewModel: CartViewModel,
+    authViewModel: AuthViewModel
 ) {
     // Convertir el string a enum
     val error = when (tipoError) {
@@ -44,7 +46,8 @@ fun CompraRechazadaScreenWrapper(
     CompraRechazadaScreen(
         navController = navController,
         tipoError = error,
-        cartViewModel = cartViewModel
+        cartViewModel = cartViewModel,
+        authViewModel = authViewModel
     )
 }
 
@@ -53,7 +56,8 @@ fun CompraRechazadaScreenWrapper(
 fun CompraRechazadaScreen(
     navController: NavController,
     tipoError: TipoError,
-    cartViewModel: CartViewModel
+    cartViewModel: CartViewModel,
+    authViewModel: AuthViewModel
 ) {
     // Obtener carrito para mostrar productos con problema
     val carrito by cartViewModel.carrito.collectAsState()
@@ -282,8 +286,9 @@ fun CompraRechazadaScreen(
                 // Botón terciario: Volver al inicio
                 TextButton(
                     onClick = {
-                        // Navegar al home
-                        navController.navigate("home/Usuario") {
+                        // Navegar al home con el nombre real del usuario
+                        val username = authViewModel.usuarioActual.value ?: "Usuario"
+                        navController.navigate("home/$username") {
                             popUpTo("register") { inclusive = false }
                         }
                     },

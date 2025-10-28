@@ -57,11 +57,11 @@ class MainActivity : ComponentActivity() {
                     CarritoScreen(navController, cartViewModel)
                 }
                 composable("compraExitosa") {
-                    CompraExitosaScreenWrapper(navController, cartViewModel)
+                    CompraExitosaScreenWrapper(navController, cartViewModel, viewModel)
                 }
                 composable("compraRechazada/{tipoError}") { backStack ->
                     val tipoError = backStack.arguments?.getString("tipoError") ?: "PAGO"
-                    CompraRechazadaScreenWrapper(navController, tipoError, cartViewModel)
+                    CompraRechazadaScreenWrapper(navController, tipoError, cartViewModel, viewModel)
                 }
                 composable("Acerca"){
                     AboutUsScreen(navController)

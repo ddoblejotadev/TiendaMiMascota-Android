@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.Model.CartItem
 import com.example.mimascota.ViewModel.CartViewModel
+import com.example.mimascota.ViewModel.AuthViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 import com.example.mimascota.util.formatCurrencyCLP
@@ -28,7 +29,8 @@ import com.example.mimascota.util.formatCurrencyCLP
 @Composable
 fun CompraExitosaScreenWrapper(
     navController: NavController,
-    cartViewModel: CartViewModel
+    cartViewModel: CartViewModel,
+    authViewModel: AuthViewModel
 ) {
     // Observar los datos del último pedido desde el ViewModel
     val pedidoItems by cartViewModel.ultimoPedido.collectAsState()
@@ -40,7 +42,8 @@ fun CompraExitosaScreenWrapper(
         navController = navController,
         pedidoItems = pedidoItems,
         totalPedido = totalPedido,
-        numeroPedido = numeroPedido
+        numeroPedido = numeroPedido,
+        authViewModel = authViewModel
     )
 }
 
@@ -50,7 +53,8 @@ fun CompraExitosaScreen(
     navController: NavController,
     pedidoItems: List<CartItem>,
     totalPedido: Int,
-    numeroPedido: String
+    numeroPedido: String,
+    authViewModel: AuthViewModel
 ) {
     // Obtener la fecha y hora actual
     val fechaActual = remember {
@@ -293,8 +297,9 @@ fun CompraExitosaScreen(
                 // Botón secundario: Volver al inicio
                 OutlinedButton(
                     onClick = {
-                        // Navegar al home
-                        navController.navigate("home/Usuario") {
+                        // Navegar al home con el nombre real del usuario
+                        val username = authViewModel.usuarioActual.value ?: "Usuario"
+                        navController.navigate("home/$username") {
                             popUpTo("register") { inclusive = false }
                         }
                     },
