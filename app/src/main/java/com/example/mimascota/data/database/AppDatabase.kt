@@ -10,8 +10,11 @@ import com.example.mimascota.data.entity.CartItemEntity
 import com.example.mimascota.data.entity.UserEntity
 
 /**
- * AppDatabase: Clase principal de la base de datos Room
- * Define todas las entidades y DAOs
+ * AppDatabase: Base de datos Room principal
+ *
+ * Entidades: UserEntity, CartItemEntity
+ * DAOs: UserDao, CartItemDao
+ * Patrón: Singleton
  */
 @Database(
     entities = [UserEntity::class, CartItemEntity::class],
@@ -20,7 +23,6 @@ import com.example.mimascota.data.entity.UserEntity
 )
 abstract class AppDatabase : RoomDatabase() {
 
-    // Declarar DAOs disponibles
     abstract fun userDao(): UserDao
     abstract fun cartItemDao(): CartItemDao
 
@@ -28,19 +30,13 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        /**
-         * Función para obtener instancia de la base de datos (Singleton Pattern)
-         * Garantiza que solo exista una instancia de la BD en toda la aplicación
-         */
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "tienda_mascota.db" // Nombre del archivo de BD
-                )
-                    .fallbackToDestructiveMigration() // Para desarrollo: borra BD si hay cambios de versión
-                    .build()
+                    "tienda_mascota.db"
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

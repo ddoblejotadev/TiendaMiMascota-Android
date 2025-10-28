@@ -14,34 +14,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * AuthViewModel: Maneja la autenticación de usuarios (Login y Registro)
- *
- * Responsabilidades:
- * - Registrar nuevos usuarios
- * - Validar credenciales de login
- * - Mantener sesión del usuario actual
- * - Gestionar foto de perfil
+ * AuthViewModel: Maneja autenticación y perfil de usuarios
  */
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo = UserRepository()
-
-    // Repository con Room para persistencia en BD
     private val roomRepository = UserRoomRepository(application)
 
-    var registroState = mutableStateOf<String>("")
-    var loginState = mutableStateOf<String>("")
+    var registroState = mutableStateOf("")
+    var loginState = mutableStateOf("")
     var usuarioActual = mutableStateOf<String?>(null)
     var usuarioActualId = mutableStateOf<Int?>(null)
 
-    // StateFlow para foto de perfil (observable)
     private val _fotoPerfil = MutableStateFlow<String?>(null)
     val fotoPerfil: StateFlow<String?> = _fotoPerfil
 
-    /**
-     * Registrar nuevo usuario
-     * Guarda en ambas ubicaciones: archivo (legacy) y BD Room (nueva)
-     */
     fun registrarUsuario(run: String, username: String, email: String, password: String, direccion: String) {
         viewModelScope.launch {
             val contexto = getApplication<Application>()
@@ -55,13 +42,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             )
 
             val resultado = withContext(Dispatchers.IO) {
-                // Guardar en archivo (legacy)
-                val guardoEnArchivo = repo.guardarUsuarioEnArchivo(contexto, nuevoUsuario)
-
-                // Guardar en BD Room (persistencia local)
-                val guardoEnRoom = roomRepository.saveUserToDatabase(nuevoUsuario)
-
-                guardoEnArchivo && guardoEnRoom
+                roomRepository.saveUserToDatabase(nuevoUsuario)
             }
 
             registroState.value = if (resultado) {
@@ -72,15 +53,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /**
-     * Login de usuario
-     * Busca credenciales en BD Room
-     */
     fun loginUsuario(email: String, password: String) {
         viewModelScope.launch {
-            val contexto = getApplication<Application>()
-
-            // Verificar si es el admin (credenciales hardcodeadas)
             if (email.equals("admin", ignoreCase = true) && password == "admin") {
                 usuarioActual.value = "admin"
                 usuarioActualId.value = 0
@@ -88,7 +62,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 return@launch
             }
 
-            // Buscar en BD Room
             val usuarioEncontrado = withContext(Dispatchers.IO) {
                 roomRepository.getUserByEmailAndPassword(email, password)
             }
@@ -103,12 +76,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Función para verificar si el usuario actual es administrador
-    fun esAdmin(): Boolean {
-        return usuarioActual.value?.equals("admin", ignoreCase = true) == true
-    }
+    fun esAdmin(): Boolean = usuarioActual.value?.equals("admin", ignoreCase = true) == true
 
-    // Función para cerrar sesión
     fun cerrarSesion() {
         usuarioActual.value = null
         usuarioActualId.value = null
@@ -116,29 +85,25 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         registroState.value = ""
     }
 
-    // Función para actualizar foto de perfil
     fun actualizarFotoPerfil(fotoPerfil: String) {
         viewModelScope.launch {
-            if (usuarioActualId.value != null && usuarioActualId.value != 0) {
+            usuarioActualId.value?.takeIf { it != 0 }?.let { userId ->
                 withContext(Dispatchers.IO) {
-                    roomRepository.updateUserPhoto(usuarioActualId.value!!, fotoPerfil)
+                    roomRepository.updateUserPhoto(userId, fotoPerfil)
                 }
-                // Actualizar StateFlow para notificar a la UI
                 _fotoPerfil.value = fotoPerfil
             }
         }
     }
 
-    // Función para obtener foto de perfil del usuario actual
     suspend fun obtenerFotoPerfilActual(): String? {
-        val foto = if (usuarioActualId.value != null && usuarioActualId.value != 0) {
+        val foto = usuarioActualId.value?.takeIf { it != 0 }?.let { userId ->
             withContext(Dispatchers.IO) {
-                roomRepository.getUserPhotoById(usuarioActualId.value!!)
+                roomRepository.getUserPhotoById(userId)
             }
-        } else {
-            null
         }
         _fotoPerfil.value = foto
         return foto
     }
 }
+

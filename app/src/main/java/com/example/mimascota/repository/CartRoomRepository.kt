@@ -7,17 +7,13 @@ import com.example.mimascota.data.database.AppDatabase
 import com.example.mimascota.data.entity.CartItemEntity
 
 /**
- * CartRoomRepository: Intermedia entre ViewModel del carrito y la Base de Datos
- * Responsable de guardar, actualizar y recuperar items del carrito
+ * CartRoomRepository: Intermedia entre CartViewModel y Room Database
+ * Convierte entre CartItem (Model) y CartItemEntity (BD)
  */
 class CartRoomRepository(context: Context) {
 
-    private val database = AppDatabase.getInstance(context)
-    private val cartItemDao = database.cartItemDao()
+    private val cartItemDao = AppDatabase.getInstance(context).cartItemDao()
 
-    /**
-     * Agregar item al carrito en la BD
-     */
     suspend fun addToCart(cartItem: CartItem): Boolean {
         return try {
             val entity = CartItemEntity(
@@ -35,69 +31,39 @@ class CartRoomRepository(context: Context) {
         }
     }
 
-    /**
-     * Obtener todos los items del carrito
-     */
     suspend fun getCartItems(): List<CartItem> {
         return try {
-            cartItemDao.getAllCartItems().map { entity ->
-                val producto = Producto(
-                    id = entity.productoId,
-                    name = entity.nombre,
-                    description = null,
-                    price = entity.precio,
-                    stock = 0,
-                    category = "",
-                    imageUrl = entity.imagen
-                )
-                CartItem(producto = producto, cantidad = entity.cantidad)
-            }
+            cartItemDao.getAllCartItems().map { it.toCartItem() }
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
         }
     }
 
-    /**
-     * Actualizar cantidad de item en el carrito
-     */
     suspend fun updateCartItemQuantity(itemId: Int, newQuantity: Int): Boolean {
         return try {
-            val item = cartItemDao.getCartItemById(itemId)
-            if (item != null) {
-                val updatedItem = item.copy(cantidad = newQuantity)
-                cartItemDao.updateCartItem(updatedItem)
+            cartItemDao.getCartItemById(itemId)?.let { item ->
+                cartItemDao.updateCartItem(item.copy(cantidad = newQuantity))
                 true
-            } else {
-                false
-            }
+            } ?: false
         } catch (e: Exception) {
             e.printStackTrace()
             false
         }
     }
 
-    /**
-     * Remover item del carrito
-     */
     suspend fun removeFromCart(itemId: Int): Boolean {
         return try {
-            val item = cartItemDao.getCartItemById(itemId)
-            if (item != null) {
+            cartItemDao.getCartItemById(itemId)?.let { item ->
                 cartItemDao.deleteCartItem(item)
                 true
-            } else {
-                false
-            }
+            } ?: false
         } catch (e: Exception) {
             e.printStackTrace()
             false
         }
     }
 
-    /**
-     * Vaciar carrito completo
-     */
     suspend fun clearCart(): Boolean {
         return try {
             cartItemDao.clearCart()
@@ -108,16 +74,17 @@ class CartRoomRepository(context: Context) {
         }
     }
 
-    /**
-     * Obtener cantidad total de items en carrito
-     */
-    suspend fun getCartItemCount(): Int {
-        return try {
-            cartItemDao.getCartItemCount()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            0
-        }
-    }
+    private fun CartItemEntity.toCartItem() = CartItem(
+        producto = Producto(
+            id = productoId,
+            name = nombre,
+            description = null,
+            price = precio,
+            stock = 0,
+            category = "",
+            imageUrl = imagen
+        ),
+        cantidad = cantidad
+    )
 }
 
