@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.example.mimascota.repository
 
 import android.content.Context
@@ -9,6 +11,9 @@ import com.example.mimascota.data.entity.CartItemEntity
 /**
  * CartRoomRepository: Intermedia entre CartViewModel y Room Database
  * Convierte entre CartItem (Model) y CartItemEntity (BD)
+ *
+ * Nota: Esta clase está lista para uso futuro cuando se implemente
+ * persistencia del carrito entre sesiones.
  */
 class CartRoomRepository(context: Context) {
 

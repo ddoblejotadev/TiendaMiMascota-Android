@@ -72,7 +72,7 @@ fun FotoDePerfil(navController: NavController, viewModel: AuthViewModel) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Atrás")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary

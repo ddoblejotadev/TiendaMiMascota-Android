@@ -21,10 +21,10 @@ import com.example.mimascota.Model.CartItem
 import com.example.mimascota.ViewModel.CartViewModel
 import com.example.mimascota.ViewModel.AuthViewModel
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 import com.example.mimascota.util.formatCurrencyCLP
 
-@Suppress("DEPRECATION")
 // Composable Wrapper: Obtiene los datos del ViewModel y los pasa a la pantalla
 @Composable
 fun CompraExitosaScreenWrapper(
@@ -57,8 +57,8 @@ fun CompraExitosaScreen(
     authViewModel: AuthViewModel
 ) {
     // Obtener la fecha y hora actual
+    @Suppress("SimpleDateFormat")
     val fechaActual = remember {
-        // Usamos Locale.forLanguageTag para evitar el constructor deprecated
         SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.forLanguageTag("es-CL")).format(Date())
     }
 

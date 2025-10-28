@@ -39,6 +39,7 @@ class UserRoomRepository(context: Context) {
         }
     }
 
+    @Suppress("unused")
     suspend fun getUserByEmail(email: String): User? {
         return try {
             userDao.getUserByEmail(email)?.toUser()
@@ -59,6 +60,7 @@ class UserRoomRepository(context: Context) {
         }
     }
 
+    @Suppress("unused")
     suspend fun getAllUsers(): List<User> {
         return try {
             userDao.getAllUsers().map { it.toUser() }
