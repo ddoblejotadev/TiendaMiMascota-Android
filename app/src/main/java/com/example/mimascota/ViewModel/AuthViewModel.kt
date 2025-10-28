@@ -10,6 +10,8 @@ import com.example.mimascota.repository.UserRoomRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
@@ -23,6 +25,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     var loginState = mutableStateOf<String>("")
     var usuarioActual = mutableStateOf<String?>(null)
     var usuarioActualId = mutableStateOf<Int?>(null)
+
+    // StateFlow para foto de perfil (observable)
+    private val _fotoPerfil = MutableStateFlow<String?>(null)
+    val fotoPerfil: StateFlow<String?> = _fotoPerfil
 
     /**
      * Registrar nuevo usuario
@@ -109,18 +115,22 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.IO) {
                     roomRepository.updateUserPhoto(usuarioActualId.value!!, fotoPerfil)
                 }
+                // Actualizar StateFlow para notificar a la UI
+                _fotoPerfil.value = fotoPerfil
             }
         }
     }
 
     // Función para obtener foto de perfil del usuario actual
     suspend fun obtenerFotoPerfilActual(): String? {
-        return if (usuarioActualId.value != null && usuarioActualId.value != 0) {
+        val foto = if (usuarioActualId.value != null && usuarioActualId.value != 0) {
             withContext(Dispatchers.IO) {
                 roomRepository.getUserPhotoById(usuarioActualId.value!!)
             }
         } else {
             null
         }
+        _fotoPerfil.value = foto
+        return foto
     }
 }

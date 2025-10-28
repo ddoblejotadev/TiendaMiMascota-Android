@@ -169,6 +169,8 @@ fun FotoDePerfil(navController: NavController, viewModel: AuthViewModel) {
                             val fotoPath = "foto_perfil_${System.currentTimeMillis()}"
                             viewModel.actualizarFotoPerfil(fotoPath)
                             isSaved.value = true
+                            // Esperar un momento y volver
+                            navController.popBackStack()
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
@@ -178,7 +180,7 @@ fun FotoDePerfil(navController: NavController, viewModel: AuthViewModel) {
                         containerColor = MaterialTheme.colorScheme.secondary
                     )
                 ) {
-                    Text("Guardar Foto de Perfil")
+                    Text("Guardar Foto de Perfil", fontWeight = FontWeight.Bold)
                 }
             }
 

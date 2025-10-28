@@ -24,12 +24,24 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.R
 import com.example.mimascota.ViewModel.AuthViewModel
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthViewModel) {
     // Verificar si el usuario es administrador
     val esAdmin = authViewModel.esAdmin()
+
+    // Observar foto de perfil (reactivo)
+    val fotoPerfil = authViewModel.fotoPerfil.collectAsState()
+
+    // Cargar foto de perfil cuando la pantalla se carga
+    LaunchedEffect(Unit) {
+        authViewModel.obtenerFotoPerfilActual()
+    }
 
     Scaffold(
         topBar = {
@@ -62,27 +74,54 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .background(
+                        if (fotoPerfil.value != null)
+                            MaterialTheme.colorScheme.secondaryContainer
+                        else
+                            MaterialTheme.colorScheme.primaryContainer
+                    )
                     .clickable {
                         navController.navigate("fotoDePerfil")
                     },
                 contentAlignment = Alignment.Center
             ) {
-                // Mostrar iniciales del usuario
-                val iniciales = name?.take(2)?.uppercase() ?: "?"
-                Text(
-                    text = iniciales,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                if (fotoPerfil.value != null) {
+                    // Si tiene foto guardada, mostrar ícono de check
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoCamera,
+                            contentDescription = "Foto guardada",
+                            modifier = Modifier.size(40.dp),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "✓",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                } else {
+                    // Mostrar iniciales del usuario
+                    val iniciales = name?.take(2)?.uppercase() ?: "?"
+                    Text(
+                        text = iniciales,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // Indicador para cambiar foto
             Text(
-                text = "Toca para cambiar foto",
+                text = if (fotoPerfil.value != null)
+                    "Foto guardada - Toca para cambiar"
+                else
+                    "Toca para agregar foto",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
