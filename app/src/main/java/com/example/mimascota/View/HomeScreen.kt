@@ -1,17 +1,23 @@
 package com.example.mimascota.View
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Portrait
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,13 +34,16 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Inicio") },
-                navigationIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Pets,
-                        contentDescription = "Logo Mascota",
-                        modifier = Modifier.padding(start = 12.dp)
-                    )
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo1),
+                            contentDescription = "Logo",
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Mi Mascota")
+                    }
                 }
             )
         }
@@ -48,13 +57,37 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
             verticalArrangement = Arrangement.Center
         ) {
 
-            Image(
-                painter = painterResource(id = R.drawable.logo1),
-                contentDescription = "Logo Mi Mascota",
+            // Foto de perfil circular clickeable
+            Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .padding(bottom = 16.dp)
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable {
+                        navController.navigate("fotoDePerfil")
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                // Mostrar iniciales del usuario
+                val iniciales = name?.take(2)?.uppercase() ?: "?"
+                Text(
+                    text = iniciales,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Indicador para cambiar foto
+            Text(
+                text = "Toca para cambiar foto",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "¡Bienvenido 👋!",
@@ -121,6 +154,7 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Ver Sobre Nosotros")
             }
+
 
             // Mostrar sección de administración solo si es admin
             if (esAdmin) {
