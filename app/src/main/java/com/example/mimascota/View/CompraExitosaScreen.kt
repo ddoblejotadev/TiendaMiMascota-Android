@@ -20,8 +20,8 @@ import androidx.navigation.NavController
 import com.example.mimascota.Model.CartItem
 import com.example.mimascota.ViewModel.CartViewModel
 import com.example.mimascota.ViewModel.AuthViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import com.example.mimascota.util.formatCurrencyCLP
 
@@ -57,9 +57,9 @@ fun CompraExitosaScreen(
     authViewModel: AuthViewModel
 ) {
     // Obtener la fecha y hora actual
-    @Suppress("SimpleDateFormat")
     val fechaActual = remember {
-        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.forLanguageTag("es-CL")).format(Date())
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.forLanguageTag("es-CL"))
+        LocalDateTime.now().format(formatter)
     }
 
     // Pantalla principal
