@@ -4,8 +4,8 @@ Aplicación móvil Android de e-commerce para productos de mascotas.
 
 ## 👥 Autores
 
-- [Jesús Orellana](https://github.com/ddoblejotadev)
-- [Yasser Duoc](https://github.com/yasser-duoc)
+- [Juan Llontop](https://github.com/ddoblejotadev)
+- [Yasser Illanes](https://github.com/yasser-duoc)
 
 ## 📱 Descripción
 
