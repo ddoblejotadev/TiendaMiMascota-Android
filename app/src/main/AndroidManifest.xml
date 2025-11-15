@@ -28,6 +28,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.activity.ProductoListaActivity"
+            android:exported="false"
+            android:label="@string/productos"
+            android:theme="@style/Theme.MiMascota" />
     </application>
 
 </manifest>
