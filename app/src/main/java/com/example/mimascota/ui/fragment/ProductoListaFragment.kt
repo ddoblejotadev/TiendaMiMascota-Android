@@ -10,8 +10,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mimascota.Model.Producto
 import com.example.mimascota.R
 import com.example.mimascota.ViewModel.SharedViewModel
+import com.example.mimascota.client.RetrofitClient
 import com.example.mimascota.databinding.FragmentProductoListaBinding
 import com.example.mimascota.ui.adapter.ProductoAdapter
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
 /**
@@ -22,6 +24,7 @@ import com.google.android.material.snackbar.Snackbar
  * - SearchView para buscar
  * - Spinner para filtrar por categoría
  * - Bottom Sheet para agregar al carrito
+ * - Validación de autenticación JWT
  * - Observadores LiveData
  */
 class ProductoListaFragment : Fragment() {
@@ -33,6 +36,9 @@ class ProductoListaFragment : Fragment() {
     private val viewModel: SharedViewModel by activityViewModels()
 
     private lateinit var productoAdapter: ProductoAdapter
+
+    // TokenManager para validar login
+    private val tokenManager by lazy { RetrofitClient.getTokenManager() }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,8 +72,12 @@ class ProductoListaFragment : Fragment() {
                 mostrarDetalleProducto(producto)
             },
             onAddToCartClick = { producto ->
-                // Agregar al carrito directamente
-                viewModel.agregarAlCarrito(producto)
+                // Validar que esté logueado antes de agregar
+                if (tokenManager.isLoggedIn()) {
+                    viewModel.agregarAlCarrito(producto)
+                } else {
+                    mostrarDialogoIniciarSesion()
+                }
             }
         )
 
@@ -177,10 +187,34 @@ class ProductoListaFragment : Fragment() {
      * Muestra el detalle del producto en un Bottom Sheet
      */
     private fun mostrarDetalleProducto(producto: Producto) {
+        // Validar que esté logueado antes de mostrar detalles
+        if (!tokenManager.isLoggedIn()) {
+            mostrarDialogoIniciarSesion()
+            return
+        }
+
         viewModel.seleccionarProducto(producto)
 
         val bottomSheet = ProductoDetalleBottomSheet()
         bottomSheet.show(parentFragmentManager, "ProductoDetalleBottomSheet")
+    }
+
+    /**
+     * Muestra diálogo para iniciar sesión
+     */
+    private fun mostrarDialogoIniciarSesion() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Iniciar Sesión")
+            .setMessage("Debes iniciar sesión para agregar productos al carrito")
+            .setPositiveButton("Iniciar Sesión") { _, _ ->
+                // Navegar a LoginFragment
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, LoginFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     /**

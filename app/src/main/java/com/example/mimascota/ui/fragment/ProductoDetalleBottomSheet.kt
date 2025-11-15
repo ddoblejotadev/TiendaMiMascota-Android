@@ -10,8 +10,11 @@ import com.bumptech.glide.Glide
 import com.example.mimascota.Model.Producto
 import com.example.mimascota.R
 import com.example.mimascota.ViewModel.SharedViewModel
+import com.example.mimascota.client.RetrofitClient
 import com.example.mimascota.databinding.BottomSheetProductoDetalleBinding
+import com.example.mimascota.util.TokenManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import java.text.NumberFormat
 import java.util.Locale
@@ -24,6 +27,7 @@ import java.util.Locale
  * - Selector de cantidad
  * - Botón para agregar al carrito
  * - Validación de stock
+ * - Validación de autenticación JWT
  */
 class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
 
@@ -35,12 +39,16 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
     private var cantidadSeleccionada = 1
     private var productoActual: Producto? = null
 
+    // TokenManager inicializado en onCreateView
+    private lateinit var tokenManager: TokenManager
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = BottomSheetProductoDetalleBinding.inflate(inflater, container, false)
+        tokenManager = RetrofitClient.getTokenManager()
         return binding.root
     }
 
@@ -93,6 +101,12 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
 
         // Botón agregar al carrito
         binding.btnAgregarCarrito.setOnClickListener {
+            // Validar que esté logueado
+            if (!tokenManager.isLoggedIn()) {
+                mostrarDialogoIniciarSesion()
+                return@setOnClickListener
+            }
+
             productoActual?.let { producto ->
                 val exitoso = viewModel.agregarAlCarrito(producto, cantidadSeleccionada)
                 if (exitoso) {
@@ -214,6 +228,27 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
             val subtotal = producto.price * cantidadSeleccionada
             binding.tvSubtotal.text = "Subtotal: ${formato.format(subtotal)}"
         }
+    }
+
+    /**
+     * Muestra diálogo para iniciar sesión
+     */
+    private fun mostrarDialogoIniciarSesion() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Iniciar Sesión")
+            .setMessage("Debes iniciar sesión para agregar productos al carrito")
+            .setPositiveButton("Iniciar Sesión") { _, _ ->
+                dismiss()
+                // Navegar a LoginFragment
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, LoginFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
+            .setNegativeButton("Cancelar") { _, _ ->
+                dismiss()
+            }
+            .show()
     }
 
     override fun onDestroyView() {

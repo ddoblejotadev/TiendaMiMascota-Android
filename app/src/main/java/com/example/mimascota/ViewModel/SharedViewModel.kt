@@ -1,13 +1,16 @@
 package com.example.mimascota.ViewModel
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimascota.Model.CartItem
 import com.example.mimascota.Model.Producto
+import com.example.mimascota.client.RetrofitClient
 import com.example.mimascota.repository.ProductoRepository
 import com.example.mimascota.repository.CartSyncRepository
+import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.launch
 
 /**
@@ -19,19 +22,23 @@ import kotlinx.coroutines.launch
  * - Filtros y búsqueda
  * - Sincronización con backend
  * - Sincronización REAL con React Context mediante API
+ * - Integración con autenticación JWT
  */
-class SharedViewModel : ViewModel() {
+class SharedViewModel(context: Context) : ViewModel() {
 
     private val repository = ProductoRepository()
     private val cartSyncRepository = CartSyncRepository()
+    private val tokenManager = RetrofitClient.getTokenManager()
 
-    // ID del usuario (TODO: obtener desde el sistema de autenticación real)
-    private val userId: Int = 1
+    // ID del usuario logueado (obtenido desde TokenManager)
+    private val userId: Int
+        get() = tokenManager.getUserId()
 
     // Habilita/deshabilita sincronización automática con React
     var sincronizacionAutomatica: Boolean = true
 
     // ========== PRODUCTOS ==========
+    // ...existing code...
     private val _productos = MutableLiveData<List<Producto>>(emptyList())
     val productos: LiveData<List<Producto>> = _productos
 
