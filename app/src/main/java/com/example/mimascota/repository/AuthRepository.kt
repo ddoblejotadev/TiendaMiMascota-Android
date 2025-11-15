@@ -4,7 +4,7 @@ import com.example.mimascota.model.LoginRequest
 import com.example.mimascota.model.LoginResponse
 import com.example.mimascota.model.RegistroRequest
 import com.example.mimascota.model.Usuario
-import com.example.mimascota.service.ApiClient
+import com.example.mimascota.config.ApiClient // cambio de paquete service->config
 import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -135,4 +135,3 @@ class AuthRepository {
         }
     }
 }
-

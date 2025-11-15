@@ -40,8 +40,7 @@ class LoginFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        authViewModel = JwtAuthViewModel(requireContext())
+        authViewModel = androidx.lifecycle.ViewModelProvider(this)[com.example.mimascota.ViewModel.JwtAuthViewModel::class.java]
 
         setupListeners()
         setupObservers()
@@ -114,4 +113,3 @@ class LoginFragment : Fragment() {
         _binding = null
     }
 }
-

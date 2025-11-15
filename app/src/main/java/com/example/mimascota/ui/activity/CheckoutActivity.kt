@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mimascota.Model.*
 import com.example.mimascota.ViewModel.CheckoutViewModel
 import com.example.mimascota.ViewModel.SharedViewModel
+import com.example.mimascota.client.RetrofitClient // agregado
 import com.example.mimascota.databinding.ActivityCheckoutBinding
 import com.example.mimascota.ui.adapter.CheckoutProductoAdapter
 import com.example.mimascota.util.TokenManager
@@ -47,7 +48,8 @@ class CheckoutActivity : AppCompatActivity() {
         // Inicializar ViewModels y TokenManager
         checkoutViewModel = CheckoutViewModel()
         cartViewModel = SharedViewModel(this)
-        tokenManager = TokenManager(this)
+        RetrofitClient.init(applicationContext)
+        tokenManager = TokenManager // uso del object
 
         setupToolbar()
         setupRecyclerView()
@@ -194,6 +196,8 @@ class CheckoutActivity : AppCompatActivity() {
      * Crea la orden en el backend
      */
     private fun crearOrden() {
+        val subtotal = carritoItems.sumOf { it.subtotal }
+        val total = subtotal // sumar envío si corresponde
         val datosEnvio = DatosEnvio(
             nombreCompleto = binding.etNombreCompleto.text.toString(),
             email = binding.etEmail.text.toString(),
@@ -201,28 +205,25 @@ class CheckoutActivity : AppCompatActivity() {
             direccion = binding.etDireccion.text.toString(),
             ciudad = binding.etCiudad.text.toString(),
             region = binding.etRegion.text.toString(),
-            codigoPostal = binding.etCodigoPostal.text.toString().takeIf { it.isNotBlank() },
-            notas = binding.etNotas.text.toString().takeIf { it.isNotBlank() }
+            codigoPostal = binding.etCodigoPostal.text.toString(), // no nullable
+            metodoPago = "tarjeta",
+            pais = "Chile"
         )
-
-        val ordenItems = carritoItems.map {
-            OrdenItem(
-                productoId = it.producto.producto_id,
-                productoNombre = it.producto.producto_nombre,
-                cantidad = it.cantidad,
-                precioUnitario = it.producto.price,
-                subtotal = it.subtotal
+        val items = carritoItems.map { ci ->
+            ItemOrden(
+                productoId = ci.producto.producto_id,
+                cantidad = ci.cantidad,
+                precioUnitario = ci.producto.price
             )
         }
-
-        val usuarioId = tokenManager.getUserId()
-
+        val usuarioIdLong = tokenManager.getUserId().toLong()
         checkoutViewModel.crearOrden(
-            usuarioId = usuarioId,
+            usuarioId = usuarioIdLong,
+            esInvitado = false,
             datosEnvio = datosEnvio,
-            items = ordenItems,
-            total = totalPagar,
-            esInvitado = false
+            items = items,
+            subtotal = subtotal,
+            total = total
         )
     }
 
@@ -257,14 +258,11 @@ class CheckoutActivity : AppCompatActivity() {
         lifecycleScope.launch {
             checkoutViewModel.ordenCreada.collect { response ->
                 response?.let {
-                    // Vaciar carrito
                     cartViewModel.vaciarCarrito()
-
-                    // Navegar a pantalla de éxito
                     val intent = Intent(this@CheckoutActivity, OrdenExitosaActivity::class.java)
-                    intent.putExtra("ORDEN_ID", it.ordenId)
+                    intent.putExtra("ORDEN_ID", it.id) // usar id
                     intent.putExtra("NUMERO_ORDEN", it.numeroOrden)
-                    intent.putExtra("TOTAL", totalPagar)
+                    intent.putExtra("TOTAL", it.total)
                     startActivity(intent)
                     finish()
                 }
@@ -276,7 +274,7 @@ class CheckoutActivity : AppCompatActivity() {
             checkoutViewModel.error.collect { error ->
                 error?.let {
                     Snackbar.make(binding.root, it, Snackbar.LENGTH_LONG).show()
-                    checkoutViewModel.clearError()
+                    checkoutViewModel.limpiarError() // nombre correcto
                 }
             }
         }
@@ -328,4 +326,3 @@ class CheckoutActivity : AppCompatActivity() {
         verificarStockYProcesar()
     }
 }
-

@@ -1,7 +1,7 @@
 package com.example.mimascota.repository
 
 import com.example.mimascota.model.Orden
-import com.example.mimascota.service.ApiClient
+import com.example.mimascota.config.ApiClient // cambio de paquete
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -87,4 +87,3 @@ class OrdenRepository {
         }
     }
 }
-

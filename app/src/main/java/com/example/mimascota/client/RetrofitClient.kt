@@ -30,7 +30,6 @@ object RetrofitClient {
     // URL base del backend Spring Boot (10.0.2.2 es localhost para el emulador Android)
     private const val BASE_URL = "http://10.0.2.2:8080/api/"
 
-    private lateinit var tokenManager: TokenManager
     private var onUnauthorized: (() -> Unit)? = null
 
     /**
@@ -38,7 +37,7 @@ object RetrofitClient {
      * Debe llamarse desde Application.onCreate() o antes de usar los servicios
      */
     fun init(context: Context, onUnauthorizedCallback: (() -> Unit)? = null) {
-        tokenManager = TokenManager(context.applicationContext)
+        TokenManager.init(context.applicationContext)
         onUnauthorized = onUnauthorizedCallback
     }
 
@@ -54,8 +53,8 @@ object RetrofitClient {
         val originalRequest = chain.request()
 
         // Obtener token del TokenManager
-        val token = if (::tokenManager.isInitialized) {
-            tokenManager.getToken()
+        val token = if (TokenManager.isLoggedIn()) {
+            TokenManager.getToken()
         } else {
             null
         }
@@ -74,9 +73,7 @@ object RetrofitClient {
 
         // Si respuesta es 401 Unauthorized, hacer logout y notificar
         if (response.code == 401) {
-            if (::tokenManager.isInitialized) {
-                tokenManager.logout()
-            }
+            TokenManager.logout()
             onUnauthorized?.invoke()
         }
 
@@ -129,10 +126,5 @@ object RetrofitClient {
     /**
      * Obtiene la instancia de TokenManager
      */
-    fun getTokenManager(): TokenManager {
-        if (!::tokenManager.isInitialized) {
-            throw IllegalStateException("RetrofitClient no ha sido inicializado. Llama a init() primero.")
-        }
-        return tokenManager
-    }
+    fun getTokenManager(): TokenManager = TokenManager
 }
