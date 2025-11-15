@@ -57,7 +57,16 @@ class JwtAuthViewModel(private val context: Context) : ViewModel() {
         _isLoggedIn.value = loggedIn
 
         if (loggedIn) {
-            _usuario.value = tokenManager.getUserData()
+            val usuario = tokenManager.getUsuario()
+            _usuario.value = usuario?.let {
+                mapOf(
+                    "usuario_id" to it.usuarioId,
+                    "nombre" to it.nombre,
+                    "email" to it.email,
+                    "telefono" to (it.telefono ?: ""),
+                    "rol" to it.rol
+                )
+            }
         }
     }
 
@@ -89,18 +98,18 @@ class JwtAuthViewModel(private val context: Context) : ViewModel() {
 
                     // Guardar token y datos del usuario
                     tokenManager.saveToken(authResponse.token)
-                    tokenManager.saveUserData(
-                        usuarioId = authResponse.usuarioId,
-                        email = authResponse.email,
-                        nombre = authResponse.nombre,
-                        telefono = authResponse.telefono,
-                        direccion = authResponse.direccion,
-                        run = authResponse.run
-                    )
+                    tokenManager.saveUsuario(authResponse.usuario)
 
                     _loginState.value = authResponse
                     _isLoggedIn.value = true
-                    _usuario.value = tokenManager.getUserData()
+                    val usuario = authResponse.usuario
+                    _usuario.value = mapOf(
+                        "usuario_id" to usuario.usuarioId,
+                        "nombre" to usuario.nombre,
+                        "email" to usuario.email,
+                        "telefono" to (usuario.telefono ?: ""),
+                        "rol" to usuario.rol
+                    )
 
                 } else {
                     _error.value = "Credenciales incorrectas: ${response.message()}"

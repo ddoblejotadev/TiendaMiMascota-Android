@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.mimascota.service.AuthService
 import com.example.mimascota.service.ProductoService
 import com.example.mimascota.service.CartSyncService
+import com.example.mimascota.service.CheckoutService
 import com.example.mimascota.util.TokenManager
 import com.google.gson.GsonBuilder
 import okhttp3.Interceptor
@@ -118,6 +119,11 @@ object RetrofitClient {
     // Servicio de sincronización de carrito (lazy initialization)
     val cartSyncService: CartSyncService by lazy {
         retrofit.create(CartSyncService::class.java)
+    }
+
+    // Servicio de checkout y órdenes (lazy initialization)
+    val checkoutService: CheckoutService by lazy {
+        retrofit.create(CheckoutService::class.java)
     }
 
     /**

@@ -1,141 +1,146 @@
 package com.example.mimascota.util
 
 import android.content.Context
-import android.content.SharedPreferences
+import com.example.mimascota.model.Usuario
+import com.google.gson.Gson
 
 /**
- * TokenManager: Gestiona el almacenamiento seguro del token JWT y datos del usuario
- *
- * Funcionalidades:
- * - Guardar/obtener token JWT
- * - Guardar/obtener datos del usuario
- * - Validar sesión activa
- * - Logout (limpiar datos)
+ * TokenManager: Gestiona almacenamiento de token y datos de usuario en SharedPreferences
  */
-class TokenManager(context: Context) {
+object TokenManager {
+    private const val PREFS_NAME = "TiendaMiMascotaPrefs"
+    private const val KEY_TOKEN = "auth_token"
+    private const val KEY_USUARIO = "usuario_data"
+    private const val KEY_USER_ID = "user_id"
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(
-        PREFS_NAME,
-        Context.MODE_PRIVATE
-    )
+    private lateinit var prefs: android.content.SharedPreferences
+    private val gson = Gson()
 
-    companion object {
-        private const val PREFS_NAME = "mimascota_auth"
-        private const val KEY_TOKEN = "jwt_token"
-        private const val KEY_USER_ID = "user_id"
-        private const val KEY_EMAIL = "email"
-        private const val KEY_NOMBRE = "nombre"
-        private const val KEY_TELEFONO = "telefono"
-        private const val KEY_DIRECCION = "direccion"
-        private const val KEY_RUN = "run"
+    /**
+     * Inicializar TokenManager (debe llamarse en Application o MainActivity)
+     */
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
     /**
-     * Guarda el token JWT
+     * Guardar token JWT
      */
     fun saveToken(token: String) {
-        prefs.edit().putString(KEY_TOKEN, token).apply()
+        prefs.edit().apply {
+            putString(KEY_TOKEN, token)
+            apply()
+        }
     }
 
     /**
-     * Obtiene el token JWT almacenado
+     * Obtener token JWT
      */
     fun getToken(): String? {
         return prefs.getString(KEY_TOKEN, null)
     }
 
     /**
-     * Guarda los datos del usuario logueado
+     * Guardar datos del usuario
      */
-    fun saveUserData(
-        usuarioId: Int,
-        email: String,
-        nombre: String,
-        telefono: String? = null,
-        direccion: String? = null,
-        run: String? = null
-    ) {
+    fun saveUsuario(usuario: Usuario) {
+        val json = gson.toJson(usuario)
         prefs.edit().apply {
-            putInt(KEY_USER_ID, usuarioId)
-            putString(KEY_EMAIL, email)
-            putString(KEY_NOMBRE, nombre)
-            putString(KEY_TELEFONO, telefono)
-            putString(KEY_DIRECCION, direccion)
-            putString(KEY_RUN, run)
+            putString(KEY_USUARIO, json)
+            putInt(KEY_USER_ID, usuario.usuarioId)
             apply()
         }
     }
 
     /**
-     * Obtiene el ID del usuario logueado
+     * Obtener datos del usuario
+     */
+    fun getUsuario(): Usuario? {
+        val json = prefs.getString(KEY_USUARIO, null)
+        return if (json != null) {
+            try {
+                gson.fromJson(json, Usuario::class.java)
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+    }
+
+    /**
+     * Obtener ID del usuario
      */
     fun getUserId(): Int {
         return prefs.getInt(KEY_USER_ID, -1)
     }
 
     /**
-     * Obtiene el email del usuario
-     */
-    fun getUserEmail(): String? {
-        return prefs.getString(KEY_EMAIL, null)
-    }
-
-    /**
-     * Obtiene el nombre del usuario
+     * Obtener nombre del usuario
      */
     fun getUserName(): String? {
-        return prefs.getString(KEY_NOMBRE, null)
+        return getUsuario()?.nombre
     }
 
     /**
-     * Obtiene el teléfono del usuario
+     * Obtener email del usuario
+     */
+    fun getUserEmail(): String? {
+        return getUsuario()?.email
+    }
+
+    /**
+     * Obtener teléfono del usuario
      */
     fun getUserTelefono(): String? {
-        return prefs.getString(KEY_TELEFONO, null)
+        return getUsuario()?.telefono
     }
 
     /**
-     * Obtiene la dirección del usuario
+     * Obtener dirección del usuario (temporal - no existe en modelo Usuario actual)
      */
     fun getUserDireccion(): String? {
-        return prefs.getString(KEY_DIRECCION, null)
+        // Este campo no existe en el modelo Usuario actual
+        // Retorna null por ahora
+        return null
     }
 
     /**
-     * Obtiene el RUN del usuario
+     * Obtener RUN del usuario (temporal - no existe en modelo Usuario actual)
      */
     fun getUserRun(): String? {
-        return prefs.getString(KEY_RUN, null)
+        // Este campo no existe en el modelo Usuario actual
+        // Retorna null por ahora
+        return null
     }
 
     /**
-     * Verifica si hay un usuario logueado
+     * Verificar si está logueado
      */
     fun isLoggedIn(): Boolean {
-        val token = getToken()
-        val userId = getUserId()
-        return !token.isNullOrEmpty() && userId > 0
+        return !getToken().isNullOrEmpty()
     }
 
     /**
-     * Cierra sesión y limpia todos los datos
+     * Cerrar sesión
      */
     fun logout() {
-        prefs.edit().clear().apply()
+        prefs.edit().apply {
+            clear()
+            apply()
+        }
     }
 
     /**
-     * Obtiene todos los datos del usuario como mapa
+     * Limpiar datos (pero mantener algunas preferencias)
      */
-    fun getUserData(): Map<String, Any?> {
-        return mapOf(
-            "userId" to getUserId(),
-            "email" to getUserEmail(),
-            "nombre" to getUserName(),
-            "telefono" to getUserTelefono(),
-            "direccion" to getUserDireccion(),
-            "run" to getUserRun()
-        )
+    fun clearUserData() {
+        prefs.edit().apply {
+            remove(KEY_TOKEN)
+            remove(KEY_USUARIO)
+            remove(KEY_USER_ID)
+            apply()
+        }
     }
 }
 

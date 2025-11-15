@@ -33,6 +33,21 @@
             android:exported="false"
             android:label="@string/productos"
             android:theme="@style/Theme.MiMascota" />
+        <activity
+            android:name=".ui.activity.CheckoutActivity"
+            android:exported="false"
+            android:label="Checkout"
+            android:theme="@style/Theme.MiMascota" />
+        <activity
+            android:name=".ui.activity.OrdenExitosaActivity"
+            android:exported="false"
+            android:label="Orden Exitosa"
+            android:theme="@style/Theme.MiMascota" />
+        <activity
+            android:name=".ui.activity.MisPedidosActivity"
+            android:exported="false"
+            android:label="Mis Pedidos"
+            android:theme="@style/Theme.MiMascota" />
     </application>
 
 </manifest>
