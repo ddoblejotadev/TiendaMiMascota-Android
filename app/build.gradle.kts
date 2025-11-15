@@ -38,6 +38,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 
     packaging {
@@ -107,6 +108,29 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation)
     kapt("androidx.room:room-compiler:2.6.1")
+
+    // RecyclerView y Material Components para vistas tradicionales
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.cardview:cardview:1.0.0")
+
+    // Fragment y Navigation Component tradicional
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
+
+    // SwipeRefreshLayout
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // LiveData y ViewModel tradicional
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+
+    // Glide para cargar imágenes en RecyclerView
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
+
+
 
 
     testImplementation(libs.junit)

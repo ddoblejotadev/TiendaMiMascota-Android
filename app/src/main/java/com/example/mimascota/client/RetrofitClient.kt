@@ -53,5 +53,10 @@ object RetrofitClient {
     val productoService: ProductoService by lazy {
         retrofit.create(ProductoService::class.java)
     }
+
+    // Servicio de sincronización de carrito (lazy initialization)
+    val cartSyncService: CartSyncService by lazy {
+        retrofit.create(CartSyncService::class.java)
+    }
 }
 

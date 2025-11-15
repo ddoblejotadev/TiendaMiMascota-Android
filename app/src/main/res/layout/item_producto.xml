@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardProducto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:strokeColor="@color/purple_200"
+    app:strokeWidth="1dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- Imagen del producto -->
+        <ImageView
+            android:id="@+id/ivProductoImagen"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="@string/product_image"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@drawable/placeholder_product" />
+
+        <!-- Nombre del producto -->
+        <TextView
+            android:id="@+id/tvProductoNombre"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:maxLines="2"
+            android:ellipsize="end"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/ivProductoImagen"
+            app:layout_constraintTop_toTopOf="@id/ivProductoImagen"
+            tools:text="Collar Premium para Perros" />
+
+        <!-- Categoría -->
+        <com.google.android.material.chip.Chip
+            android:id="@+id/tvProductoCategoria"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            app:chipMinHeight="24dp"
+            app:layout_constraintStart_toStartOf="@id/tvProductoNombre"
+            app:layout_constraintTop_toBottomOf="@id/tvProductoNombre"
+            tools:text="Accesorio" />
+
+        <!-- Precio -->
+        <TextView
+            android:id="@+id/tvProductoPrecio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/purple_700"
+            app:layout_constraintStart_toStartOf="@id/ivProductoImagen"
+            app:layout_constraintTop_toBottomOf="@id/ivProductoImagen"
+            tools:text="$25.000" />
+
+        <!-- Stock -->
+        <TextView
+            android:id="@+id/tvProductoStock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            app:layout_constraintBaseline_toBaselineOf="@id/tvProductoPrecio"
+            app:layout_constraintStart_toEndOf="@id/tvProductoPrecio"
+            tools:text="Stock: 30" />
+
+        <!-- Botón agregar al carrito -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddToCart"
+            style="@style/Widget.Material3.Button.Icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_to_cart"
+            app:icon="@drawable/ic_add_shopping_cart"
+            app:iconGravity="textStart"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ivProductoImagen" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>
+

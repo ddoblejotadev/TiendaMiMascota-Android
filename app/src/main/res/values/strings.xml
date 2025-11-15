@@ -1,3 +1,30 @@
 <resources>
     <string name="app_name">Mi mascota</string>
+
+    <!-- Productos -->
+    <string name="productos">Productos</string>
+    <string name="product_image">Imagen del producto</string>
+    <string name="add_to_cart">Agregar</string>
+    <string name="categoria">Categoría:</string>
+    <string name="no_products">No hay productos</string>
+    <string name="no_products_found">No se encontraron productos</string>
+    <string name="ver_carrito">Ver Carrito</string>
+
+    <!-- Bottom Sheet -->
+    <string name="cerrar">Cerrar</string>
+    <string name="destacado">Destacado</string>
+    <string name="descripcion">Descripción</string>
+    <string name="cantidad">Cantidad</string>
+    <string name="agregar_al_carrito">Agregar al Carrito</string>
+
+    <!-- Menú -->
+    <string name="action_search">Buscar</string>
+    <string name="action_cart">Carrito</string>
+    <string name="action_refresh">Actualizar</string>
+
+    <!-- Mensajes -->
+    <string name="producto_agregado">Producto agregado al carrito</string>
+    <string name="stock_insuficiente">Stock insuficiente</string>
+    <string name="error_cargar_productos">Error al cargar productos</string>
+    <string name="retry">Reintentar</string>
 </resources>
