@@ -1,4 +1,3 @@
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -168,4 +167,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
     implementation("com.google.code.gson:gson:2.9.0")
     implementation("io.coil-kt:coil-compose:2.3.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
 }

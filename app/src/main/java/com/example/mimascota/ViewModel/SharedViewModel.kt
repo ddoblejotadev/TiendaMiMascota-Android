@@ -7,9 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mimascota.Model.CartItem
 import com.example.mimascota.Model.Producto
 import com.example.mimascota.repository.ProductoRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.mimascota.repository.CartSyncRepository
 import kotlinx.coroutines.launch
 
 /**
@@ -20,11 +18,18 @@ import kotlinx.coroutines.launch
  * - Gestión del carrito compartido
  * - Filtros y búsqueda
  * - Sincronización con backend
- * - Sincronización con React Context (WebSocket)
+ * - Sincronización REAL con React Context mediante API
  */
 class SharedViewModel : ViewModel() {
 
     private val repository = ProductoRepository()
+    private val cartSyncRepository = CartSyncRepository()
+
+    // ID del usuario (TODO: obtener desde el sistema de autenticación real)
+    private val userId: Int = 1
+
+    // Habilita/deshabilita sincronización automática con React
+    var sincronizacionAutomatica: Boolean = true
 
     // ========== PRODUCTOS ==========
     private val _productos = MutableLiveData<List<Producto>>(emptyList())
@@ -274,11 +279,9 @@ class SharedViewModel : ViewModel() {
 
                 when (val result = cartSyncRepository.sincronizarCarritoConReact(userId, items)) {
                     is CartSyncRepository.SyncResult.Success -> {
-                        // Sincronización exitosa (silenciosa)
                         android.util.Log.d("SharedViewModel", "Carrito sincronizado con React")
                     }
                     is CartSyncRepository.SyncResult.Error -> {
-                        // Error en sincronización (no bloquea la app)
                         android.util.Log.e("SharedViewModel", "Error sincronizando: ${result.message}")
                     }
                 }
@@ -314,9 +317,7 @@ class SharedViewModel : ViewModel() {
     /**
      * Fuerza una sincronización manual del carrito
      */
-    fun forzarSincronizacion() {
-        sincronizarCarritoConReact()
-    }
+    fun forzarSincronizacion() { sincronizarCarritoConReact() }
 
     // ========== UTILIDADES ==========
 
@@ -342,4 +343,3 @@ class SharedViewModel : ViewModel() {
         return listOf("Todas") + categorias.sorted()
     }
 }
-

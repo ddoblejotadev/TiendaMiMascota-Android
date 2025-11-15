@@ -1,6 +1,7 @@
 package com.example.mimascota.client
 
 import com.example.mimascota.service.ProductoService
+import com.example.mimascota.service.CartSyncService
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -59,4 +60,3 @@ object RetrofitClient {
         retrofit.create(CartSyncService::class.java)
     }
 }
-
