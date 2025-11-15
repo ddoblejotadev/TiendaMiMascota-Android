@@ -1,16 +1,21 @@
 package com.example.mimascota.repository
 
+import android.util.Log
 import com.example.mimascota.Model.*
 import com.example.mimascota.client.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 /**
  * CheckoutRepository: Capa de abstracción para operaciones de checkout y órdenes
+ * Incluye manejo de errores específicos para Render (timeout, 400, 500, etc.)
  */
 class CheckoutRepository {
 
     private val checkoutService = RetrofitClient.checkoutService
+    private val TAG = "CheckoutRepository"
 
     /**
      * Resultado de operaciones
@@ -28,33 +33,48 @@ class CheckoutRepository {
         return withContext(Dispatchers.IO) {
             try {
                 val request = VerificarStockRequest(items)
+                Log.d(TAG, "Verificando stock para ${items.size} productos")
+
                 val response = checkoutService.verificarStock(request)
 
                 if (response.isSuccessful && response.body() != null) {
+                    Log.d(TAG, "Stock verificado exitosamente")
                     CheckoutResult.Success(response.body()!!)
                 } else {
+                    val errorMsg = "Error al verificar stock: ${response.code()} - ${response.message()}"
+                    Log.e(TAG, errorMsg)
                     CheckoutResult.Error(
-                        message = "Error al verificar stock: ${response.message()}",
+                        message = errorMsg,
                         code = response.code()
                     )
                 }
+            } catch (e: SocketTimeoutException) {
+                val errorMsg = "Timeout: El servidor tardó demasiado en responder (30s). Render free tier puede tardar en despertar."
+                Log.e(TAG, errorMsg, e)
+                CheckoutResult.Error(message = errorMsg)
+            } catch (e: UnknownHostException) {
+                val errorMsg = "Error de conexión: No se pudo conectar con el servidor"
+                Log.e(TAG, errorMsg, e)
+                CheckoutResult.Error(message = errorMsg)
             } catch (e: Exception) {
-                CheckoutResult.Error(
-                    message = "Error de conexión: ${e.localizedMessage ?: "Error desconocido"}"
-                )
+                val errorMsg = "Error inesperado: ${e.localizedMessage ?: "Error desconocido"}"
+                Log.e(TAG, errorMsg, e)
+                CheckoutResult.Error(message = errorMsg)
             }
         }
     }
 
     /**
      * Crea una nueva orden de compra
+     * IMPORTANTE: Asegúrate de incluir todos los campos obligatorios: subtotal, total, estado, es_invitado
      */
     suspend fun crearOrden(
-        usuarioId: Int,
+        usuarioId: Long,
+        esInvitado: Boolean,
         datosEnvio: DatosEnvio,
-        items: List<OrdenItem>,
-        total: Int,
-        esInvitado: Boolean = false
+        items: List<ItemOrden>,
+        subtotal: Int,
+        total: Int
     ): CheckoutResult<OrdenResponse> {
         return withContext(Dispatchers.IO) {
             try {
@@ -63,23 +83,49 @@ class CheckoutRepository {
                     esInvitado = esInvitado,
                     datosEnvio = datosEnvio,
                     items = items,
-                    total = total
+                    subtotal = subtotal,
+                    total = total,
+                    estado = "completada"
                 )
+
+                Log.d(TAG, "Creando orden para usuario $usuarioId")
+                Log.d(TAG, "Items: ${items.size}, Subtotal: $subtotal, Total: $total")
+                Log.d(TAG, "Datos envío: ${datosEnvio.nombreCompleto}, ${datosEnvio.ciudad}")
 
                 val response = checkoutService.crearOrden(request)
 
                 if (response.isSuccessful && response.body() != null) {
-                    CheckoutResult.Success(response.body()!!)
+                    val orden = response.body()!!
+                    Log.d(TAG, "Orden creada exitosamente: ${orden.numeroOrden}")
+                    CheckoutResult.Success(orden)
                 } else {
+                    val errorBody = response.errorBody()?.string()
+                    val errorMsg = when (response.code()) {
+                        400 -> "Datos inválidos: Verifica que todos los campos estén completos. Error: $errorBody"
+                        401 -> "No autorizado: Inicia sesión nuevamente"
+                        500 -> "Error en el servidor: $errorBody. Intenta de nuevo más tarde"
+                        else -> "Error ${response.code()}: ${response.message()}"
+                    }
+                    Log.e(TAG, "Error al crear orden: $errorMsg")
+                    Log.e(TAG, "Error body completo: $errorBody")
                     CheckoutResult.Error(
-                        message = "Error al crear orden: ${response.message()}",
+                        message = errorMsg,
                         code = response.code()
                     )
                 }
+            } catch (e: SocketTimeoutException) {
+                val errorMsg = "Timeout: El servidor tardó demasiado (30s). Tu orden podría haberse creado. Verifica en 'Mis Pedidos'"
+                Log.e(TAG, errorMsg, e)
+                CheckoutResult.Error(message = errorMsg)
+            } catch (e: UnknownHostException) {
+                val errorMsg = "Sin conexión: Verifica tu conexión a internet"
+                Log.e(TAG, errorMsg, e)
+                CheckoutResult.Error(message = errorMsg)
             } catch (e: Exception) {
-                CheckoutResult.Error(
-                    message = "Error de conexión: ${e.localizedMessage ?: "Error desconocido"}"
-                )
+                val errorMsg = "Error inesperado: ${e.localizedMessage ?: "Error desconocido"}"
+                Log.e(TAG, errorMsg, e)
+                e.printStackTrace()
+                CheckoutResult.Error(message = errorMsg)
             }
         }
     }
@@ -87,23 +133,37 @@ class CheckoutRepository {
     /**
      * Obtiene el historial de órdenes del usuario
      */
-    suspend fun obtenerOrdenesUsuario(usuarioId: Int): CheckoutResult<List<Orden>> {
+    suspend fun obtenerOrdenesUsuario(usuarioId: Long): CheckoutResult<List<OrdenHistorial>> {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "Obteniendo órdenes del usuario $usuarioId")
+
                 val response = checkoutService.obtenerOrdenesUsuario(usuarioId)
 
                 if (response.isSuccessful && response.body() != null) {
-                    CheckoutResult.Success(response.body()!!)
+                    val ordenes = response.body()!!
+                    Log.d(TAG, "Órdenes obtenidas: ${ordenes.size}")
+                    CheckoutResult.Success(ordenes)
                 } else {
+                    val errorMsg = "Error al obtener órdenes: ${response.code()} - ${response.message()}"
+                    Log.e(TAG, errorMsg)
                     CheckoutResult.Error(
-                        message = "Error al obtener órdenes: ${response.message()}",
+                        message = errorMsg,
                         code = response.code()
                     )
                 }
+            } catch (e: SocketTimeoutException) {
+                val errorMsg = "Timeout: El servidor tardó demasiado en responder"
+                Log.e(TAG, errorMsg, e)
+                CheckoutResult.Error(message = errorMsg)
+            } catch (e: UnknownHostException) {
+                val errorMsg = "Sin conexión a internet"
+                Log.e(TAG, errorMsg, e)
+                CheckoutResult.Error(message = errorMsg)
             } catch (e: Exception) {
-                CheckoutResult.Error(
-                    message = "Error de conexión: ${e.localizedMessage ?: "Error desconocido"}"
-                )
+                val errorMsg = "Error: ${e.localizedMessage ?: "Error desconocido"}"
+                Log.e(TAG, errorMsg, e)
+                CheckoutResult.Error(message = errorMsg)
             }
         }
     }
@@ -111,7 +171,7 @@ class CheckoutRepository {
     /**
      * Obtiene los detalles de una orden específica
      */
-    suspend fun obtenerDetalleOrden(ordenId: Int): CheckoutResult<Orden> {
+    suspend fun obtenerDetalleOrden(ordenId: Long): CheckoutResult<OrdenHistorial> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = checkoutService.obtenerDetalleOrden(ordenId)
@@ -135,7 +195,7 @@ class CheckoutRepository {
     /**
      * Cancela una orden
      */
-    suspend fun cancelarOrden(ordenId: Int): CheckoutResult<Orden> {
+    suspend fun cancelarOrden(ordenId: Long): CheckoutResult<OrdenHistorial> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = checkoutService.cancelarOrden(ordenId)

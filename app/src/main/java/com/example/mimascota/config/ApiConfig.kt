@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit
  * ApiConfig: Configuración centralizada para Retrofit con autenticación JWT
  */
 object ApiConfig {
-    // URL base del backend (configurar según tu dominio)
-    private const val BASE_URL = "https://tu-dominio-ec2.com/api/"
+    // URL base del backend en Render
+    private const val BASE_URL = "https://tiendamimascotabackends.onrender.com/api/"
 
     /**
      * Interceptor para agregar token JWT a todas las peticiones

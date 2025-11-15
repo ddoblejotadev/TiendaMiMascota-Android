@@ -25,18 +25,18 @@ interface CheckoutService {
      * Obtiene el historial de órdenes del usuario
      */
     @GET("ordenes/usuario/{usuarioId}")
-    suspend fun obtenerOrdenesUsuario(@Path("usuarioId") usuarioId: Int): Response<List<Orden>>
+    suspend fun obtenerOrdenesUsuario(@Path("usuarioId") usuarioId: Long): Response<List<OrdenHistorial>>
 
     /**
      * Obtiene los detalles de una orden específica
      */
     @GET("ordenes/{ordenId}")
-    suspend fun obtenerDetalleOrden(@Path("ordenId") ordenId: Int): Response<Orden>
+    suspend fun obtenerDetalleOrden(@Path("ordenId") ordenId: Long): Response<OrdenHistorial>
 
     /**
      * Cancela una orden (si está en estado PENDIENTE)
      */
     @PUT("ordenes/{ordenId}/cancelar")
-    suspend fun cancelarOrden(@Path("ordenId") ordenId: Int): Response<Orden>
+    suspend fun cancelarOrden(@Path("ordenId") ordenId: Long): Response<OrdenHistorial>
 }
 
