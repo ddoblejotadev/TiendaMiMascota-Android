@@ -32,3 +32,8 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Kotlin compiler temporary files
+*.salive
+.kotlin.compiler*.salive
+
