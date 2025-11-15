@@ -37,7 +37,7 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) { viewModel.cargarProductos(context) }
+    LaunchedEffect(Unit) { viewModel.cargarProductos() }
 
     Scaffold(
         topBar = {

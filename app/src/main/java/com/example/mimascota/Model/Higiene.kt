@@ -2,7 +2,7 @@ package com.example.mimascota.Model
 
 /**
  * Higiene: Tipo específico de producto para productos de higiene de mascotas
- * Extiende de Producto agregando tipo de higiene y fragancia
+ * Extiende de Producto con campos específicos para higiene
  */
 data class Higiene(
     val idPro: Int,
@@ -10,8 +10,8 @@ data class Higiene(
     val descriptionPro: String,
     val pricePro: Int,
     val stockPro: Int,
-    val tipoHigiene: String,
-    val fragancia: String
+    override val tipoHigiene: String,
+    override val fragancia: String
 ) : Producto(
     id = idPro,
     name = namePro,
@@ -19,5 +19,7 @@ data class Higiene(
     price = pricePro,
     stock = stockPro,
     category = "Higiene",
-    imageUrl = ""
+    imageUrl = "",
+    tipoHigiene = tipoHigiene,
+    fragancia = fragancia
 )

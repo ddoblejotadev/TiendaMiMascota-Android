@@ -2,7 +2,7 @@ package com.example.mimascota.Model
 
 /**
  * Juguete: Tipo específico de producto para juguetes de mascotas
- * Extiende de Producto agregando material y tamaño
+ * Extiende de Producto con campos específicos para juguetes
  */
 data class Juguete(
     val idPro: Int,
@@ -10,8 +10,8 @@ data class Juguete(
     val descriptionPro: String,
     val pricePro: Int,
     val stockPro: Int,
-    val material: String,
-    val tamano: String
+    override val material: String,
+    override val tamano: String
 ) : Producto(
     id = idPro,
     name = namePro,
@@ -19,5 +19,7 @@ data class Juguete(
     price = pricePro,
     stock = stockPro,
     category = "Juguete",
-    imageUrl = ""
+    imageUrl = "",
+    material = material,
+    tamano = tamano
 )

@@ -15,7 +15,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/logo1_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MiMascota">
+        android:theme="@style/Theme.MiMascota"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

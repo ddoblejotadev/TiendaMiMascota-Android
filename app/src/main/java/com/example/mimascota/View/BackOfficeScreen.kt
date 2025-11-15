@@ -34,7 +34,7 @@ fun BackOfficeScreen(navController: NavController, viewModel: CatalogoViewModel)
 
     // Cargar productos al iniciar
     LaunchedEffect(Unit) {
-        viewModel.cargarProductos(context)
+        viewModel.cargarProductos()
     }
 
     Scaffold(

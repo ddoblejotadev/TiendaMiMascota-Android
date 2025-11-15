@@ -2,7 +2,7 @@ package com.example.mimascota.Model
 
 /**
  * Alimento: Tipo específico de producto para comida de mascotas
- * Extiende de Producto agregando propiedades específicas como marca, tipo y peso
+ * Extiende de Producto con campos específicos para alimentos
  */
 data class Alimento(
     val idPro: Int,
@@ -10,9 +10,9 @@ data class Alimento(
     val descriptionPro: String,
     val pricePro: Int,
     val stockPro: Int,
-    val marca: String,
-    val tipo: String,
-    val peso: Double
+    override val marca: String,
+    override val tipo: String,
+    override val peso: String
 ) : Producto(
     id = idPro,
     name = namePro,
@@ -20,5 +20,8 @@ data class Alimento(
     price = pricePro,
     stock = stockPro,
     category = "Alimento",
-    imageUrl = ""
+    imageUrl = "",
+    marca = marca,
+    tipo = tipo,
+    peso = peso
 )
