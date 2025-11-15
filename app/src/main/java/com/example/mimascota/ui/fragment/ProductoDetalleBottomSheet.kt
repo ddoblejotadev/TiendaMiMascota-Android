@@ -133,7 +133,7 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
             tvDescripcion.text = producto.description ?: "Sin descripción"
 
             // Precio
-            val formato = NumberFormat.getCurrencyInstance(Locale("es", "CL"))
+            val formato = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CL"))
             tvPrecio.text = formato.format(producto.price)
 
             // Precio anterior si existe
@@ -144,14 +144,14 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
                 chipDescuento.visibility = View.VISIBLE
 
                 val descuento = ((precioAnterior - producto.price) * 100 / precioAnterior)
-                chipDescuento.text = "-$descuento%"
+                chipDescuento.text = getString(R.string.descuento_formato, descuento)
             } ?: run {
                 tvPrecioAnterior.visibility = View.GONE
                 chipDescuento.visibility = View.GONE
             }
 
             // Stock
-            tvStock.text = "Stock disponible: ${producto.stock}"
+            tvStock.text = getString(R.string.stock_disponible, producto.stock)
 
             // Categoría
             chipCategoria.text = producto.category
@@ -159,7 +159,7 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
             // Valoración
             producto.valoracion?.let { rating ->
                 ratingBar.rating = rating.toFloat()
-                tvRating.text = String.format("%.1f", rating)
+                tvRating.text = String.format(Locale.US, "%.1f", rating)
                 ratingBar.visibility = View.VISIBLE
                 tvRating.visibility = View.VISIBLE
             } ?: run {
@@ -224,9 +224,9 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
         binding.tvCantidad.text = cantidadSeleccionada.toString()
 
         productoActual?.let { producto ->
-            val formato = NumberFormat.getCurrencyInstance(Locale("es", "CL"))
+            val formato = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CL"))
             val subtotal = producto.price * cantidadSeleccionada
-            binding.tvSubtotal.text = "Subtotal: ${formato.format(subtotal)}"
+            binding.tvSubtotal.text = getString(R.string.subtotal_formato, formato.format(subtotal))
         }
     }
 

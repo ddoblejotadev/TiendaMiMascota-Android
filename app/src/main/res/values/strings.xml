@@ -16,6 +16,9 @@
     <string name="descripcion">Descripción</string>
     <string name="cantidad">Cantidad</string>
     <string name="agregar_al_carrito">Agregar al Carrito</string>
+    <string name="subtotal_formato">Subtotal: %s</string>
+    <string name="stock_disponible">Stock disponible: %d</string>
+    <string name="descuento_formato">-%d%%</string>
 
     <!-- Menú -->
     <string name="action_search">Buscar</string>
