@@ -30,4 +30,8 @@
     <string name="stock_insuficiente">Stock insuficiente</string>
     <string name="error_cargar_productos">Error al cargar productos</string>
     <string name="retry">Reintentar</string>
+
+    <!-- Validación RUT -->
+    <string name="rut_invalido">RUT inválido</string>
+    <string name="rut_corregir">Por favor corrige el RUT ingresado</string>
 </resources>

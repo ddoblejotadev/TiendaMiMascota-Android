@@ -1,6 +1,8 @@
 package com.example.mimascota.ui.fragment
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.mimascota.R
 import com.example.mimascota.ViewModel.JwtAuthViewModel
 import com.example.mimascota.databinding.FragmentRegistroBinding
+import com.example.mimascota.util.RutValidator
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 
@@ -17,7 +20,9 @@ import kotlinx.coroutines.launch
  *
  * Características:
  * - Campos: email, password, nombre, telefono, direccion, run
- * - Validaciones: email válido, password >= 6 caracteres, nombre obligatorio
+ * - Validaciones: email válido, password >= 6 caracteres, nombre obligatorio, RUT válido (si no está vacío)
+ * - Validación en tiempo real del RUT
+ * - Formateo automático del RUT
  * - Loading state mientras registra
  * - Manejo de errores
  * - Navegación a ProductoListaFragment tras registro exitoso
@@ -43,8 +48,52 @@ class RegistroFragment : Fragment() {
 
         authViewModel = JwtAuthViewModel(requireContext())
 
+        setupRutValidation()
         setupListeners()
         setupObservers()
+    }
+
+    /**
+     * Configurar validación en tiempo real del RUT
+     */
+    private fun setupRutValidation() {
+        // Validación en tiempo real mientras el usuario escribe
+        binding.etRun.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                val rut = s?.toString()?.trim()
+
+                // Si el RUT está vacío, limpiar error (es opcional)
+                if (rut.isNullOrEmpty()) {
+                    binding.tilRun.error = null
+                    return
+                }
+
+                // Si el RUT no está vacío, validar
+                if (!RutValidator.esValido(rut)) {
+                    binding.tilRun.error = "RUT inválido"
+                } else {
+                    binding.tilRun.error = null
+                }
+            }
+        })
+
+        // Formatear automáticamente cuando el usuario termina de editar
+        binding.etRun.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                val rut = binding.etRun.text?.toString()?.trim()
+                if (!rut.isNullOrEmpty() && RutValidator.esValido(rut)) {
+                    // Formatear a XX.XXX.XXX-X
+                    val rutFormateado = RutValidator.formatear(rut)
+                    binding.etRun.setText(rutFormateado)
+                    // Mover cursor al final
+                    binding.etRun.setSelection(rutFormateado.length)
+                }
+            }
+        }
     }
 
     /**
@@ -58,6 +107,13 @@ class RegistroFragment : Fragment() {
             val telefono = binding.etTelefono.text.toString().trim().takeIf { it.isNotEmpty() }
             val direccion = binding.etDireccion.text.toString().trim().takeIf { it.isNotEmpty() }
             val run = binding.etRun.text.toString().trim().takeIf { it.isNotEmpty() }
+
+            // Validar RUT si no está vacío
+            if (!run.isNullOrEmpty() && !RutValidator.esValido(run)) {
+                binding.tilRun.error = "RUT inválido"
+                Snackbar.make(binding.root, "Por favor corrige el RUT ingresado", Snackbar.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
 
             authViewModel.registro(
                 email = email,
