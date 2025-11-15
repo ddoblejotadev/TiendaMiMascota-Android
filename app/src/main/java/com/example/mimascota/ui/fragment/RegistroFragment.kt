@@ -74,7 +74,7 @@ class RegistroFragment : Fragment() {
 
                 // Si el RUT no está vacío, validar
                 if (!RutValidator.esValido(rut)) {
-                    binding.tilRun.error = "RUT inválido"
+                    binding.tilRun.error = getString(R.string.rut_invalido)
                 } else {
                     binding.tilRun.error = null
                 }
@@ -110,8 +110,8 @@ class RegistroFragment : Fragment() {
 
             // Validar RUT si no está vacío
             if (!run.isNullOrEmpty() && !RutValidator.esValido(run)) {
-                binding.tilRun.error = "RUT inválido"
-                Snackbar.make(binding.root, "Por favor corrige el RUT ingresado", Snackbar.LENGTH_LONG).show()
+                binding.tilRun.error = getString(R.string.rut_invalido)
+                Snackbar.make(binding.root, getString(R.string.rut_corregir), Snackbar.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
@@ -178,4 +178,3 @@ class RegistroFragment : Fragment() {
         _binding = null
     }
 }
-

@@ -52,7 +52,7 @@ object RutValidator {
             // Comparar
             return digitoVerificador == digitoCalculado
 
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return false
         }
     }
@@ -91,7 +91,7 @@ object RutValidator {
 
             return "$numeroFormateado-$dv"
 
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return rutLimpio
         }
     }
@@ -145,6 +145,7 @@ object RutValidator {
      * @param rut RUT completo
      * @return Número del RUT sin dígito verificador
      */
+    @Suppress("unused")
     fun extraerNumero(rut: String?): String {
         if (rut.isNullOrBlank()) return ""
         val rutLimpio = limpiar(rut)
@@ -157,10 +158,10 @@ object RutValidator {
      * @param rut RUT completo
      * @return Dígito verificador o null si no existe
      */
+    @Suppress("unused")
     fun extraerDigitoVerificador(rut: String?): Char? {
         if (rut.isNullOrBlank()) return null
         val rutLimpio = limpiar(rut)
         return if (rutLimpio.isNotEmpty()) rutLimpio.last().uppercaseChar() else null
     }
 }
-
