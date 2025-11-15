@@ -48,8 +48,8 @@ class CartViewModel : ViewModel() {
         }
 
         val nuevaCantidad = cantidadActual + 1
-        return if (nuevaCantidad > producto.stock) {
-            AgregarResultado.ExcedeStock(producto.stock, nuevaCantidad)
+        return if (nuevaCantidad > (producto.stock ?: 0)) {
+            AgregarResultado.ExcedeStock(producto.stock ?: 0, nuevaCantidad)
         } else {
             AgregarResultado.Exito
         }
@@ -92,7 +92,7 @@ class CartViewModel : ViewModel() {
 
     fun intentarProcesarCompra(): String? {
         // Validar stock
-        if (_carrito.value.any { it.cantidad > it.producto.stock }) {
+        if (_carrito.value.any { it.cantidad > (it.producto.stock ?: 0) }) {
             return "STOCK"
         }
 

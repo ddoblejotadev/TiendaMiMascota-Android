@@ -77,8 +77,8 @@ class CartRoomRepository(context: Context) {
 
     private fun CartItemEntity.toCartItem() = CartItem(
         producto = Producto(
-            id = productoId,
-            name = nombre,
+            producto_id = productoId,
+            producto_nombre = nombre,
             description = null,
             price = precio,
             stock = 0,

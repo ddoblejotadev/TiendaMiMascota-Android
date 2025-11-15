@@ -203,12 +203,12 @@ fun ProductoBackOfficeCard(producto: Producto) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "${producto.stock} unidades",
+                            text = "${producto.stock ?: 0} unidades",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = when {
-                                producto.stock == 0 -> MaterialTheme.colorScheme.error
-                                producto.stock <= 5 -> MaterialTheme.colorScheme.tertiary
+                                (producto.stock ?: 0) == 0 -> MaterialTheme.colorScheme.error
+                                (producto.stock ?: 0) <= 5 -> MaterialTheme.colorScheme.tertiary
                                 else -> MaterialTheme.colorScheme.primary
                             }
                         )

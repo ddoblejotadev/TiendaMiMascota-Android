@@ -86,7 +86,7 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
         // Botón aumentar cantidad
         binding.btnAumentar.setOnClickListener {
             productoActual?.let { producto ->
-                if (cantidadSeleccionada < producto.stock) {
+                if (cantidadSeleccionada < (producto.stock ?: 0)) {
                     cantidadSeleccionada++
                     actualizarCantidad()
                 } else {
@@ -127,7 +127,7 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
     private fun mostrarDetalles(producto: Producto) {
         with(binding) {
             // Nombre
-            tvNombre.text = producto.name
+            tvNombre.text = producto.producto_nombre
 
             // Descripción
             tvDescripcion.text = producto.description ?: "Sin descripción"
@@ -151,7 +151,7 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
             }
 
             // Stock
-            tvStock.text = getString(R.string.stock_disponible, producto.stock)
+            tvStock.text = getString(R.string.stock_disponible, producto.stock ?: 0)
 
             // Categoría
             chipCategoria.text = producto.category
@@ -168,7 +168,7 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
             }
 
             // Destacado
-            if (producto.destacado) {
+            if (producto.destacado == true) {
                 chipDestacado.visibility = View.VISIBLE
             } else {
                 chipDestacado.visibility = View.GONE
@@ -186,7 +186,7 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
                 .into(ivProducto)
 
             // Habilitar/deshabilitar botón según stock
-            btnAgregarCarrito.isEnabled = producto.stock > 0
+            btnAgregarCarrito.isEnabled = (producto.stock ?: 0) > 0
 
             // Resetear cantidad
             cantidadSeleccionada = 1

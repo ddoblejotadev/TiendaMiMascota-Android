@@ -61,7 +61,7 @@ fun CompraRechazadaScreen(
 ) {
     // Obtener carrito para mostrar productos con problema
     val carrito by cartViewModel.carrito.collectAsState()
-    val productosConProblema = carrito.filter { it.cantidad > it.producto.stock }
+    val productosConProblema = carrito.filter { it.cantidad > (it.producto.stock ?: 0) }
 
     // Obtener el mensaje y título según el tipo de error
     val (titulo, mensaje) = when (tipoError) {

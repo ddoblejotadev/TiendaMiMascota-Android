@@ -246,7 +246,7 @@ class ProductoViewModel : ViewModel() {
      * Filtra productos destacados
      */
     fun getProductosDestacados(): List<Producto> {
-        return _productos.value.filter { it.destacado }
+        return _productos.value.filter { it.destacado == true }
     }
 
     /**

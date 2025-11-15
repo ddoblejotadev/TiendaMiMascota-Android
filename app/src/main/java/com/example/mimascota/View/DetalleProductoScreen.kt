@@ -61,8 +61,8 @@ fun DetalleProductoScreen(navController: NavController, productoId: Int, viewMod
     ) { padding ->
         producto?.let { p ->
             // Calcular cantidad en carrito y stock disponible
-            val cantidadEnCarrito = carrito.find { it.producto.id == p.id }?.cantidad ?: 0
-            val stockDisponible = p.stock - cantidadEnCarrito
+            val cantidadEnCarrito = carrito.find { it.producto.producto_id == p.producto_id }?.cantidad ?: 0
+            val stockDisponible = (p.stock ?: 0) - cantidadEnCarrito
 
             Column(
                 modifier = Modifier
@@ -73,13 +73,13 @@ fun DetalleProductoScreen(navController: NavController, productoId: Int, viewMod
                 val painter = rememberAsyncImagePainter(p.imageUrl)
                 Image(
                     painter = painter,
-                    contentDescription = p.name,
+                    contentDescription = p.producto_nombre,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp),
                     contentScale = ContentScale.Crop
                 )
-                Text(text = p.name, style = MaterialTheme.typography.titleLarge)
+                Text(text = p.producto_nombre, style = MaterialTheme.typography.titleLarge)
                 Text(text = "$${p.price}", style = MaterialTheme.typography.titleMedium)
 
                 // Mostrar stock disponible
@@ -87,7 +87,7 @@ fun DetalleProductoScreen(navController: NavController, productoId: Int, viewMod
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = when {
-                            cantidadEnCarrito > p.stock -> MaterialTheme.colorScheme.errorContainer
+                            cantidadEnCarrito > (p.stock ?: 0) -> MaterialTheme.colorScheme.errorContainer
                             stockDisponible <= 5 -> MaterialTheme.colorScheme.tertiaryContainer
                             else -> MaterialTheme.colorScheme.secondaryContainer
                         }
@@ -100,10 +100,10 @@ fun DetalleProductoScreen(navController: NavController, productoId: Int, viewMod
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Stock total: ${p.stock} unidades",
+                                text = "Stock total: ${p.stock ?: 0} unidades",
                                 style = MaterialTheme.typography.bodyMedium
                             )
-                            if (cantidadEnCarrito > p.stock) {
+                            if (cantidadEnCarrito > (p.stock ?: 0)) {
                                 Text("❌", style = MaterialTheme.typography.titleMedium)
                             } else if (stockDisponible <= 5 && stockDisponible >= 0) {
                                 Text("⚠️", style = MaterialTheme.typography.titleMedium)
@@ -115,7 +115,7 @@ fun DetalleProductoScreen(navController: NavController, productoId: Int, viewMod
                             Text(
                                 text = "Ya tienes $cantidadEnCarrito en tu carrito",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (cantidadEnCarrito > p.stock) {
+                                color = if (cantidadEnCarrito > (p.stock ?: 0)) {
                                     MaterialTheme.colorScheme.error
                                 } else {
                                     MaterialTheme.colorScheme.primary
@@ -123,7 +123,7 @@ fun DetalleProductoScreen(navController: NavController, productoId: Int, viewMod
                             )
                         }
 
-                        if (cantidadEnCarrito > p.stock) {
+                        if (cantidadEnCarrito > (p.stock ?: 0)) {
                             Spacer(Modifier.height(4.dp))
                             Text(
                                 text = "⚠️ Excedes el stock disponible. Se validará al finalizar la compra.",

@@ -10,27 +10,31 @@ import com.google.gson.annotations.SerializedName
  */
 open class Producto(
     @SerializedName("producto_id")
-    val id: Int = 0,
+    val producto_id: Int = 0,
 
     @SerializedName("producto_nombre")
-    val name: String = "",
+    val producto_nombre: String = "",
 
-    val description: String? = null,
     val price: Int = 0,
-    val stock: Int = 0,
     val category: String = "",
+    val description: String? = null,
     val imageUrl: String? = null,
-    val destacado: Boolean = false,
+    val stock: Int? = null,
+    val destacado: Boolean? = null,
     val valoracion: Double? = null,
     val precioAnterior: Int? = null,
+    open val marca: String? = null,
+    open val peso: Double? = null,
 
-    // Campos específicos por categoría (opcionales y open para override)
+    // Campos adicionales específicos por categoría (opcionales y open para override)
     open val material: String? = null,
     open val tamano: String? = null,
     open val tipoHigiene: String? = null,
     open val fragancia: String? = null,
-    open val marca: String? = null,
     open val tipo: String? = null,
-    open val peso: String? = null,
     open val tipoAccesorio: String? = null
-)
+) {
+    // Propiedades de conveniencia para mantener compatibilidad con código existente
+    val id: Int get() = producto_id
+    val name: String get() = producto_nombre
+}

@@ -196,7 +196,7 @@ fun ProductoCard(
                         color = MaterialTheme.colorScheme.primary
                     )
                     // Mostrar stock disponible
-                    val stockDisponible = producto.stock - cantidad
+                    val stockDisponible = (producto.stock ?: 0) - cantidad
                     Text(
                         text = if (stockDisponible > 0) {
                             "Stock: $stockDisponible disponible${if (stockDisponible <= 5) " ⚠️" else ""}"

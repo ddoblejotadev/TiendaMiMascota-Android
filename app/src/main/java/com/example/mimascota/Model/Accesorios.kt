@@ -10,11 +10,11 @@ data class Accesorios(
     val descriptionPro: String,
     val pricePro: Int,
     val stockPro: Int,
-    override val tipoAccesorio: String,
-    override val material: String
+    override val tipoAccesorio: String?,
+    override val material: String?
 ) : Producto(
-    id = idPro,
-    name = namePro,
+    producto_id = idPro,
+    producto_nombre = namePro,
     description = descriptionPro,
     price = pricePro,
     stock = stockPro,

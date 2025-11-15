@@ -139,7 +139,7 @@ fun CartItemCard(
     onEliminar: () -> Unit
 ) {
     // Verificar si excede el stock
-    val excedeStock = cartItem.cantidad > cartItem.producto.stock
+    val excedeStock = cartItem.cantidad > (cartItem.producto.stock ?: 0)
 
     Card(
         modifier = Modifier.fillMaxWidth(),

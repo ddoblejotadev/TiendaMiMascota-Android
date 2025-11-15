@@ -143,8 +143,8 @@ fun CartItem.toDto(): CarritoItemDto {
 fun CarritoItemDto.toCartItem(): CartItem {
     return CartItem(
         producto = Producto(
-            id = producto_id,
-            name = producto_nombre,
+            producto_id = producto_id,
+            producto_nombre = producto_nombre,
             price = price,
             stock = stock ?: 0,
             category = category ?: "",

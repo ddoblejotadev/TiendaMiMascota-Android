@@ -79,13 +79,13 @@ class ProductoAdapter(
             }
 
             // Deshabilitar botón si no hay stock
-            btnAddCart.isEnabled = producto.stock > 0
+            btnAddCart.isEnabled = (producto.stock ?: 0) > 0
         }
     }
 
     class ProductoDiffCallback : DiffUtil.ItemCallback<Producto>() {
         override fun areItemsTheSame(oldItem: Producto, newItem: Producto): Boolean {
-            return oldItem.id == newItem.id
+            return oldItem.producto_id == newItem.producto_id
         }
 
         override fun areContentsTheSame(oldItem: Producto, newItem: Producto): Boolean {

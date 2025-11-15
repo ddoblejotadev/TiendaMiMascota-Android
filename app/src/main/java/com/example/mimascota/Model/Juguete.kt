@@ -10,11 +10,11 @@ data class Juguete(
     val descriptionPro: String,
     val pricePro: Int,
     val stockPro: Int,
-    override val material: String,
-    override val tamano: String
+    override val material: String?,
+    override val tamano: String?
 ) : Producto(
-    id = idPro,
-    name = namePro,
+    producto_id = idPro,
+    producto_nombre = namePro,
     description = descriptionPro,
     price = pricePro,
     stock = stockPro,

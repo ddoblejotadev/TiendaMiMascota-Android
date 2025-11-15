@@ -176,13 +176,13 @@ class SharedViewModel(context: Context) : ViewModel() {
      */
     fun agregarAlCarrito(producto: Producto, cantidad: Int = 1): Boolean {
         val carritoActual = _carrito.value?.toMutableList() ?: mutableListOf()
-        val itemExistente = carritoActual.find { it.producto.id == producto.id }
+        val itemExistente = carritoActual.find { it.producto.producto_id == producto.producto_id }
 
         if (itemExistente != null) {
             // Verificar stock
             val nuevaCantidad = itemExistente.cantidad + cantidad
-            if (nuevaCantidad > producto.stock) {
-                _mensaje.value = "Stock insuficiente. Disponible: ${producto.stock}"
+            if (nuevaCantidad > (producto.stock ?: 0)) {
+                _mensaje.value = "Stock insuficiente. Disponible: ${producto.stock ?: 0}"
                 return false
             }
 
@@ -191,8 +191,8 @@ class SharedViewModel(context: Context) : ViewModel() {
             carritoActual[index] = itemExistente.copy(cantidad = nuevaCantidad)
         } else {
             // Agregar nuevo item
-            if (cantidad > producto.stock) {
-                _mensaje.value = "Stock insuficiente. Disponible: ${producto.stock}"
+            if (cantidad > (producto.stock ?: 0)) {
+                _mensaje.value = "Stock insuficiente. Disponible: ${producto.stock ?: 0}"
                 return false
             }
             carritoActual.add(CartItem(producto, cantidad))
@@ -200,7 +200,7 @@ class SharedViewModel(context: Context) : ViewModel() {
 
         _carrito.value = carritoActual
         calcularTotales()
-        _mensaje.value = "${producto.name} agregado al carrito"
+        _mensaje.value = "${producto.producto_nombre} agregado al carrito"
 
         // Sincronizar con React
         sincronizarCarritoConReact()
@@ -213,10 +213,10 @@ class SharedViewModel(context: Context) : ViewModel() {
      */
     fun eliminarDelCarrito(producto: Producto) {
         val carritoActual = _carrito.value?.toMutableList() ?: mutableListOf()
-        carritoActual.removeAll { it.producto.id == producto.id }
+        carritoActual.removeAll { it.producto.producto_id == producto.producto_id }
         _carrito.value = carritoActual
         calcularTotales()
-        _mensaje.value = "${producto.name} eliminado del carrito"
+        _mensaje.value = "${producto.producto_nombre} eliminado del carrito"
 
         // Sincronizar con React
         sincronizarCarritoConReact()
@@ -231,13 +231,13 @@ class SharedViewModel(context: Context) : ViewModel() {
             return
         }
 
-        if (cantidad > producto.stock) {
-            _mensaje.value = "Stock insuficiente. Disponible: ${producto.stock}"
+        if (cantidad > (producto.stock ?: 0)) {
+            _mensaje.value = "Stock insuficiente. Disponible: ${producto.stock ?: 0}"
             return
         }
 
         val carritoActual = _carrito.value?.toMutableList() ?: mutableListOf()
-        val itemExistente = carritoActual.find { it.producto.id == producto.id }
+        val itemExistente = carritoActual.find { it.producto.producto_id == producto.producto_id }
 
         if (itemExistente != null) {
             val index = carritoActual.indexOf(itemExistente)
