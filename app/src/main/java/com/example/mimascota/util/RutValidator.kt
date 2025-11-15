@@ -138,30 +138,4 @@ object RutValidator {
             else -> dv.toString()[0]
         }
     }
-
-    /**
-     * Extrae solo el número del RUT (sin dígito verificador)
-     *
-     * @param rut RUT completo
-     * @return Número del RUT sin dígito verificador
-     */
-    @Suppress("unused")
-    fun extraerNumero(rut: String?): String {
-        if (rut.isNullOrBlank()) return ""
-        val rutLimpio = limpiar(rut)
-        return if (rutLimpio.length > 1) rutLimpio.dropLast(1) else ""
-    }
-
-    /**
-     * Extrae solo el dígito verificador del RUT
-     *
-     * @param rut RUT completo
-     * @return Dígito verificador o null si no existe
-     */
-    @Suppress("unused")
-    fun extraerDigitoVerificador(rut: String?): Char? {
-        if (rut.isNullOrBlank()) return null
-        val rutLimpio = limpiar(rut)
-        return if (rutLimpio.isNotEmpty()) rutLimpio.last().uppercaseChar() else null
-    }
 }
