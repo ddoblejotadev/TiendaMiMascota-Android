@@ -17,10 +17,27 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Variables de entorno para desarrollo
+        buildConfigField("String", "BASE_URL", "\"https://tiendamimascotabackends.onrender.com/\"")
+        buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:8080/api/\"")
+        buildConfigField("boolean", "IS_PRODUCTION", "false")
     }
 
     buildTypes {
+        debug {
+            // Modo desarrollo - servidor local
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/\"")
+            buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:8080/api/\"")
+            buildConfigField("boolean", "IS_PRODUCTION", "false")
+        }
+        
         release {
+            // Modo producción - servidor Render
+            buildConfigField("String", "BASE_URL", "\"https://tiendamimascotabackends.onrender.com/\"")
+            buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:8080/api/\"")
+            buildConfigField("boolean", "IS_PRODUCTION", "true")
+            
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -38,6 +55,7 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true // Habilitar BuildConfig
     }
 
     packaging {
