@@ -8,9 +8,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import coil.load
 import com.example.mimascota.Model.Producto
 import com.example.mimascota.R
+import com.example.mimascota.config.ApiConfig
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import java.text.NumberFormat
@@ -21,7 +22,7 @@ import java.util.Locale
  *
  * Características:
  * - Usa DiffUtil para actualizaciones eficientes
- * - Carga imágenes con Glide
+ * - Carga imágenes con Coil (URLs absolutas desde backend)
  * - Formato de precio chileno
  * - Click listeners para ver detalles y agregar al carrito
  */
@@ -54,19 +55,19 @@ class ProductoAdapter(
             tvNombre.text = producto.name
 
             // Formato de precio chileno
-            val formato = NumberFormat.getCurrencyInstance(Locale("es", "CL"))
+            val formato = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CL"))
             tvPrecio.text = formato.format(producto.price)
 
-            tvStock.text = "Stock: ${producto.stock}"
+            tvStock.text = "Stock: ${producto.stock ?: 0}"
             tvCategoria.text = producto.category
 
-            // Cargar imagen con Glide
-            Glide.with(itemView.context)
-                .load(producto.imageUrl)
-                .placeholder(R.drawable.placeholder_product)
-                .error(R.drawable.ic_error_image)
-                .centerCrop()
-                .into(imageView)
+            // Construir URL absoluta y cargar con Coil
+            val imageUrl = ApiConfig.toAbsoluteImageUrl(producto.imageUrl)
+            imageView.load(imageUrl) {
+                placeholder(R.drawable.placeholder_product)
+                error(R.drawable.ic_error_image)
+                crossfade(true)
+            }
 
             // Click en la card para ver detalles
             cardView.setOnClickListener {
@@ -89,8 +90,11 @@ class ProductoAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Producto, newItem: Producto): Boolean {
-            return oldItem == newItem
+            // Opcional: comparar campos relevantes
+            return oldItem.producto_id == newItem.producto_id &&
+                    oldItem.price == newItem.price &&
+                    oldItem.imageUrl == newItem.imageUrl &&
+                    oldItem.producto_nombre == newItem.producto_nombre
         }
     }
 }
-

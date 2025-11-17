@@ -1,6 +1,7 @@
 package com.example.mimascota
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,11 +14,24 @@ import com.example.mimascota.View.*
 import com.example.mimascota.ViewModel.AuthViewModel
 import com.example.mimascota.ViewModel.CartViewModel
 import com.example.mimascota.ViewModel.CatalogoViewModel
+import com.example.mimascota.util.ConnectionTester
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        private const val TAG = "MainActivity"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Probar conexión con el backend al iniciar
+        probarConexionBackend()
+
         setContent {
             val navController = rememberNavController()
             val viewModel: AuthViewModel = viewModel()
@@ -64,6 +78,25 @@ class MainActivity : ComponentActivity() {
                 composable("fotoDePerfil") {
                     FotoDePerfil(navController, viewModel)
                 }
+            }
+        }
+    }
+
+    /**
+     * Prueba la conexión con el backend al iniciar la app
+     */
+    private fun probarConexionBackend() {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val connectionInfo = ConnectionTester.getConnectionInfo()
+                Log.d(TAG, connectionInfo.toString())
+
+                if (!connectionInfo.isConnected) {
+                    Log.w(TAG, "⚠️ No se pudo conectar con el backend")
+                    Log.w(TAG, "💡 Verifica que el servidor esté corriendo")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Error al probar conexión: ${e.message}")
             }
         }
     }

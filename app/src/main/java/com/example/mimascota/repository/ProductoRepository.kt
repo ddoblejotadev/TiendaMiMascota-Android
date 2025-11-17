@@ -34,8 +34,8 @@ class ProductoRepository {
         return withContext(Dispatchers.IO) {
             try {
                 val response = productoService.getAllProductos()
-                if (response.isSuccessful && response.body() != null) {
-                    ProductoResult.Success(response.body()!!)
+                if (response.isSuccessful) {
+                    ProductoResult.Success(response.body().orEmpty())
                 } else {
                     ProductoResult.Error(
                         message = "Error al obtener productos: ${response.message()}",
@@ -75,24 +75,15 @@ class ProductoRepository {
 
     /**
      * Obtiene productos por categoría
+     * NOTA: Filtrado local debido a que el backend no expone el endpoint /productos/categoria/{categoria}
      */
     suspend fun getProductosByCategoria(categoria: String): ProductoResult<List<Producto>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = productoService.getProductosByCategoria(categoria)
-                if (response.isSuccessful && response.body() != null) {
-                    ProductoResult.Success(response.body()!!)
-                } else {
-                    ProductoResult.Error(
-                        message = "Error al obtener productos de la categoría $categoria",
-                        code = response.code()
-                    )
-                }
-            } catch (e: Exception) {
-                ProductoResult.Error(
-                    message = "Error de conexión: ${e.localizedMessage ?: "Error desconocido"}"
-                )
-            }
+        val all = getAllProductos()
+        return if (all is ProductoResult.Success) {
+            val filtered = all.data.filter { it.category.equals(categoria, ignoreCase = true) }
+            ProductoResult.Success(filtered)
+        } else {
+            all as ProductoResult.Error
         }
     }
 
@@ -172,9 +163,9 @@ class ProductoRepository {
     suspend fun searchProductos(query: String): ProductoResult<List<Producto>> {
         return when (val result = getAllProductos()) {
             is ProductoResult.Success -> {
-                val filtered = result.data.filter { producto ->
-                    producto.name.contains(query, ignoreCase = true) ||
-                    producto.description?.contains(query, ignoreCase = true) == true
+                val filtered = result.data.filter {
+                    it.name.contains(query, ignoreCase = true) ||
+                    it.description?.contains(query, ignoreCase = true) == true
                 }
                 ProductoResult.Success(filtered)
             }
@@ -183,4 +174,3 @@ class ProductoRepository {
         }
     }
 }
-

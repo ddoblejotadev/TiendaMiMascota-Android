@@ -117,8 +117,8 @@ object RetrofitClient {
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor) // PRIMERO el auth interceptor
         .addInterceptor(loggingInterceptor) // DESPUÉS el logging
-        .connectTimeout(30, TimeUnit.SECONDS) // Timeout para Render (wake up time)
-        .readTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(60, TimeUnit.SECONDS) // ↑ 60s para backend en Render (wake up)
+        .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true) // Reintentar si falla la conexión
         .build()

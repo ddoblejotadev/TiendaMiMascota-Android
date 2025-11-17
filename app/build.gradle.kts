@@ -18,26 +18,21 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Variables de entorno para desarrollo
-        buildConfigField("String", "BASE_URL", "\"https://tiendamimascotabackends.onrender.com/\"")
+        // Variables de entorno por defecto
         buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:8080/api/\"")
-        buildConfigField("boolean", "IS_PRODUCTION", "false")
+        buildConfigField("String", "BASE_URL_PROD", "\"https://tiendamimascotabackends.onrender.com/api/\"")
     }
 
     buildTypes {
         debug {
-            // Modo desarrollo - servidor local
+            // Modo desarrollo - servidor local (emulador usa 10.0.2.2 para localhost)
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/\"")
-            buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:8080/api/\"")
-            buildConfigField("boolean", "IS_PRODUCTION", "false")
+            isMinifyEnabled = false
         }
         
         release {
             // Modo producción - servidor Render
-            buildConfigField("String", "BASE_URL", "\"https://tiendamimascotabackends.onrender.com/\"")
-            buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:8080/api/\"")
-            buildConfigField("boolean", "IS_PRODUCTION", "true")
-            
+            buildConfigField("String", "BASE_URL", "\"https://tiendamimascotabackends.onrender.com/api/\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -87,6 +82,8 @@ dependencies {
 
     // Coil - carga de imágenes en Compose (opcional si usas URLs)
     implementation("io.coil-kt:coil-compose:2.3.0")
+    // Coil core para cargas en ImageView
+    implementation("io.coil-kt:coil:2.3.0")
 
     //dependencies gson
     implementation("com.google.code.gson:gson:2.10.1")

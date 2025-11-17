@@ -38,7 +38,6 @@ class SharedViewModel(context: Context) : ViewModel() {
     var sincronizacionAutomatica: Boolean = true
 
     // ========== PRODUCTOS ==========
-    // ...existing code...
     private val _productos = MutableLiveData<List<Producto>>(emptyList())
     val productos: LiveData<List<Producto>> = _productos
 
@@ -148,7 +147,8 @@ class SharedViewModel(context: Context) : ViewModel() {
         if (query.isNotBlank()) {
             lista = lista.filter { producto ->
                 producto.name.contains(query, ignoreCase = true) ||
-                producto.description?.contains(query, ignoreCase = true) == true
+                producto.description?.contains(query, ignoreCase = true) == true ||
+                producto.category.contains(query, ignoreCase = true)
             }
         }
 
@@ -178,21 +178,23 @@ class SharedViewModel(context: Context) : ViewModel() {
         val carritoActual = _carrito.value?.toMutableList() ?: mutableListOf()
         val itemExistente = carritoActual.find { it.producto.producto_id == producto.producto_id }
 
+        val stockDisponible = producto.stock ?: 0
+        if (stockDisponible <= 0) {
+            _mensaje.value = "Producto sin stock"
+            return false
+        }
+
         if (itemExistente != null) {
-            // Verificar stock
             val nuevaCantidad = itemExistente.cantidad + cantidad
-            if (nuevaCantidad > (producto.stock ?: 0)) {
-                _mensaje.value = "Stock insuficiente. Disponible: ${producto.stock ?: 0}"
+            if (nuevaCantidad > stockDisponible) {
+                _mensaje.value = "Stock insuficiente. Disponible: $stockDisponible"
                 return false
             }
-
-            // Actualizar cantidad
             val index = carritoActual.indexOf(itemExistente)
             carritoActual[index] = itemExistente.copy(cantidad = nuevaCantidad)
         } else {
-            // Agregar nuevo item
-            if (cantidad > (producto.stock ?: 0)) {
-                _mensaje.value = "Stock insuficiente. Disponible: ${producto.stock ?: 0}"
+            if (cantidad > stockDisponible) {
+                _mensaje.value = "Stock insuficiente. Disponible: $stockDisponible"
                 return false
             }
             carritoActual.add(CartItem(producto, cantidad))
@@ -201,10 +203,7 @@ class SharedViewModel(context: Context) : ViewModel() {
         _carrito.value = carritoActual
         calcularTotales()
         _mensaje.value = "${producto.producto_nombre} agregado al carrito"
-
-        // Sincronizar con React
         sincronizarCarritoConReact()
-
         return true
     }
 
@@ -230,22 +229,18 @@ class SharedViewModel(context: Context) : ViewModel() {
             eliminarDelCarrito(producto)
             return
         }
-
-        if (cantidad > (producto.stock ?: 0)) {
-            _mensaje.value = "Stock insuficiente. Disponible: ${producto.stock ?: 0}"
+        val stockDisponible = producto.stock ?: 0
+        if (cantidad > stockDisponible) {
+            _mensaje.value = "Stock insuficiente. Disponible: $stockDisponible"
             return
         }
-
         val carritoActual = _carrito.value?.toMutableList() ?: mutableListOf()
         val itemExistente = carritoActual.find { it.producto.producto_id == producto.producto_id }
-
         if (itemExistente != null) {
             val index = carritoActual.indexOf(itemExistente)
             carritoActual[index] = itemExistente.copy(cantidad = cantidad)
             _carrito.value = carritoActual
             calcularTotales()
-
-            // Sincronizar con React
             sincronizarCarritoConReact()
         }
     }
@@ -346,7 +341,7 @@ class SharedViewModel(context: Context) : ViewModel() {
      * Obtiene las categorías disponibles
      */
     fun obtenerCategorias(): List<String> {
-        val categorias = _productos.value?.map { it.category }?.distinct() ?: emptyList()
+        val categorias = _productos.value?.map { it.category }?.filter { it.isNotBlank() }?.distinct() ?: emptyList()
         return listOf("Todas") + categorias.sorted()
     }
 }

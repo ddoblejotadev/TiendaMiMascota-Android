@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="100dp"
-    android:height="100dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Fondo rojo claro -->
     <path
-        android:fillColor="@android:color/darker_gray"
-        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM13,17h-2v-6h2v6zM13,9h-2V7h2v2z"/>
+        android:fillColor="#FFEBEE"
+        android:pathData="M0,0 L200,0 L200,200 L0,200 Z"/>
+
+    <!-- Icono de error (X) -->
+    <path
+        android:fillColor="#E57373"
+        android:strokeWidth="8"
+        android:strokeColor="#E57373"
+        android:pathData="M60,60 L140,140 M140,60 L60,140"/>
+
+    <!-- Círculo exterior -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeWidth="6"
+        android:strokeColor="#E57373"
+        android:pathData="M100,100 m-60,0 a60,60 0 1,1 120,0 a60,60 0 1,1 -120,0"/>
 </vector>
 

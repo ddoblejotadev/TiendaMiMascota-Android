@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Por seguridad, no permitir cleartext globalmente -->
+    <base-config cleartextTrafficPermitted="false" />
+
+    <!-- Permitir cleartext solo para el host local de desarrollo (si lo necesitas) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+
+    <!-- Si quieres permitir todos los HTTP en debug, descomenta esto (no recomendado en prod) -->
+    <!--
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </debug-overrides>
+    -->
+</network-security-config>
