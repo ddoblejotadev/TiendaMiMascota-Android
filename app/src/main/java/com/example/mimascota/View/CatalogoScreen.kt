@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -31,12 +30,25 @@ import com.example.mimascota.util.formatCurrencyCLP
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, cartViewModel: CartViewModel) {
-    // val context = LocalContext.current // no usado
     val productos by viewModel.productos.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val carrito by cartViewModel.carrito.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    // Categorías derivadas de los productos (vienen del backend)
+    val categorias = remember(productos) {
+        val cats = productos.mapNotNull { prod ->
+            val t = prod.category.trim()
+            if (t.isEmpty()) null else t
+        }
+            .distinct()
+            .sortedBy { it.lowercase() }
+        listOf("Todas") + cats
+    }
+
+    var expanded by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf("Todas") }
 
     LaunchedEffect(Unit) { viewModel.cargarProductos() }
 
@@ -108,78 +120,131 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     CircularProgressIndicator()
                 }
             } else {
-                // Ordenar productos por categoría (string no nulo) y por nombre
-                val productosOrdenados = productos.sortedWith(compareBy(
-                    { it.category.isBlank() },
-                    { it.category.trim().lowercase() },
-                    { it.name.trim().lowercase() }
-                ))
+                // Fila superior: selector de categoría profesional (ExposedDropdown)
+                Column(Modifier.fillMaxSize()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Categoría:", modifier = Modifier.padding(end = 8.dp))
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = 8.dp,
-                        end = 8.dp,
-                        top = 8.dp,
-                        bottom = if (carrito.isNotEmpty()) 80.dp else 8.dp // Espacio para el FAB
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    itemsIndexed(productosOrdenados, key = { _, p -> p.id }) { index, producto ->
-                        val prevCat = if (index == 0) null else productosOrdenados[index - 1].category.trim().lowercase()
-                        val curCat = producto.category.trim().lowercase()
-                        val showHeader = index == 0 || prevCat != curCat
-
-                        if (showHeader) {
-                            // Header simple visual
-                            Text(
-                                text = producto.category.trim().uppercase(),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .background(MaterialTheme.colorScheme.primary)
-                                    .padding(8.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                style = MaterialTheme.typography.titleSmall
+                        // ExposedDropdownMenuBox requiere material3
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = !expanded }
+                        ) {
+                            TextField(
+                                value = selectedCategory,
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                colors = ExposedDropdownMenuDefaults.textFieldColors()
                             )
-                        }
-
-                        // Calcular cantidad desde el estado del carrito
-                        val cantidad = carrito.find { it.producto.id == producto.id }?.cantidad ?: 0
-
-                        ProductoCard(
-                            producto = producto,
-                            cantidad = cantidad,
-                            onClick = { navController.navigate("Detalle/${producto.id}") },
-                            onAgregar = {
-                                val resultado = cartViewModel.agregarAlCarrito(producto)
-                                scope.launch {
-                                    when (resultado) {
-                                        is com.example.mimascota.ViewModel.AgregarResultado.Exito -> {
-                                            snackbarHostState.showSnackbar(
-                                                message = "✅ ${producto.name} agregado",
-                                                duration = SnackbarDuration.Short
-                                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                categorias.forEach { cat ->
+                                    DropdownMenuItem(
+                                        text = { Text(cat) },
+                                        onClick = {
+                                            selectedCategory = cat
+                                            expanded = false
+                                            // Solicitar al backend la categoría seleccionada
+                                            if (cat == "Todas") {
+                                                viewModel.cargarProductos()
+                                            } else {
+                                                viewModel.cargarProductosPorCategoria(cat)
+                                            }
                                         }
-                                        is com.example.mimascota.ViewModel.AgregarResultado.ExcedeStock -> {
-                                            snackbarHostState.showSnackbar(
-                                                message = "⚠️ ${producto.name} agregado • Stock limitado: ${resultado.stockDisponible} disponibles (tienes ${resultado.cantidadEnCarrito} en carrito)",
-                                                duration = SnackbarDuration.Long
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            onDisminuir = {
-                                cartViewModel.disminuirCantidad(producto)
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "➖ ${producto.name} disminuido",
-                                        duration = SnackbarDuration.Short
                                     )
                                 }
                             }
-                        )
+                        }
+
+                        Spacer(Modifier.weight(1f))
+
+                        // Botón para refrescar manualmente
+                        IconButton(onClick = { viewModel.cargarProductos() }) {
+                            Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refrescar")
+                        }
+                    }
+
+                    // Ordenar productos por categoría y luego por nombre (sólo para mostrar agrupado)
+                    val productosOrdenados = productos.sortedWith(compareBy(
+                        { it.category.isBlank() },
+                        { it.category.trim().lowercase() },
+                        { it.name.trim().lowercase() }
+                    ))
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = 8.dp,
+                            end = 8.dp,
+                            top = 8.dp,
+                            bottom = if (carrito.isNotEmpty()) 80.dp else 8.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(productosOrdenados, key = { _, p -> p.id }) { index, producto ->
+                            val prevCat = if (index == 0) null else productosOrdenados[index - 1].category.trim().lowercase()
+                            val curCat = producto.category.trim().lowercase()
+                            val showHeader = index == 0 || prevCat != curCat
+
+                            if (showHeader) {
+                                // Header simple visual
+                                Text(
+                                    text = producto.category.trim().uppercase(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                        .padding(8.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+
+                            // Calcular cantidad desde el estado del carrito
+                            val cantidad = carrito.find { it.producto.id == producto.id }?.cantidad ?: 0
+
+                            ProductoCard(
+                                producto = producto,
+                                cantidad = cantidad,
+                                onClick = { navController.navigate("Detalle/${producto.id}") },
+                                onAgregar = {
+                                    val resultado = cartViewModel.agregarAlCarrito(producto)
+                                    scope.launch {
+                                        when (resultado) {
+                                            is com.example.mimascota.ViewModel.AgregarResultado.Exito -> {
+                                                snackbarHostState.showSnackbar(
+                                                    message = "✅ ${producto.name} agregado",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                            }
+                                            is com.example.mimascota.ViewModel.AgregarResultado.ExcedeStock -> {
+                                                snackbarHostState.showSnackbar(
+                                                    message = "⚠️ ${producto.name} agregado • Stock limitado: ${resultado.stockDisponible} disponibles (tienes ${resultado.cantidadEnCarrito} en carrito)",
+                                                    duration = SnackbarDuration.Long
+                                                )
+                                            }
+                                        }
+                                    }
+                                },
+                                onDisminuir = {
+                                    cartViewModel.disminuirCantidad(producto)
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "➖ ${producto.name} disminuido",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
