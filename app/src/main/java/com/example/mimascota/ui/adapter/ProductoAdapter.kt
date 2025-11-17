@@ -40,6 +40,17 @@ class ProductoAdapter(
     override fun onBindViewHolder(holder: ProductoViewHolder, position: Int) {
         val producto = getItem(position)
         holder.bind(producto)
+
+        // Mostrar header de categoría si es la primera posición o la categoría cambió respecto al anterior
+        val showHeader = if (position == 0) {
+            true
+        } else {
+            val prev = getItem(position - 1)
+            val prevCat = prev.category?.trim()?.lowercase() ?: ""
+            val curCat = producto.category?.trim()?.lowercase() ?: ""
+            prevCat != curCat
+        }
+        holder.showCategoryHeader(if (showHeader) producto.category?.trim() else null)
     }
 
     inner class ProductoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -50,6 +61,7 @@ class ProductoAdapter(
         private val tvStock: TextView = itemView.findViewById(R.id.tvProductoStock)
         private val tvCategoria: TextView = itemView.findViewById(R.id.tvProductoCategoria)
         private val btnAddCart: MaterialButton = itemView.findViewById(R.id.btnAddToCart)
+        private val tvCategoryHeader: TextView? = itemView.findViewById(R.id.tvCategoryHeader)
 
         fun bind(producto: Producto) {
             tvNombre.text = producto.name
@@ -58,7 +70,7 @@ class ProductoAdapter(
             val formato = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CL"))
             tvPrecio.text = formato.format(producto.price)
 
-            tvStock.text = "Stock: ${producto.stock ?: 0}"
+            tvStock.text = itemView.context.getString(R.string.product_stock, producto.stock ?: 0)
             tvCategoria.text = producto.category
 
             // Construir URL absoluta y cargar con Coil
@@ -81,6 +93,16 @@ class ProductoAdapter(
 
             // Deshabilitar botón si no hay stock
             btnAddCart.isEnabled = (producto.stock ?: 0) > 0
+        }
+
+        fun showCategoryHeader(category: String?) {
+            if (tvCategoryHeader == null) return
+            if (category.isNullOrBlank()) {
+                tvCategoryHeader.visibility = View.GONE
+            } else {
+                tvCategoryHeader.visibility = View.VISIBLE
+                tvCategoryHeader.text = category
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 package com.example.mimascota.ViewModel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -150,6 +151,21 @@ class SharedViewModel(context: Context) : ViewModel() {
                 producto.description?.contains(query, ignoreCase = true) == true ||
                 producto.category.contains(query, ignoreCase = true)
             }
+        }
+
+        // Ordenar y agrupar por categoría -> primero categorías no vacías, luego por nombre (normalizando)
+        lista = lista.sortedWith(compareBy(
+            { it.category.isBlank() },
+            { it.category.trim().lowercase() },
+            { it.producto_nombre.trim().lowercase() }
+        ))
+
+        // Log para depuración: imprimir primeras categorías en orden
+        try {
+            val cats = lista.map { it.category.trim() }.filter { it.isNotBlank() }
+            Log.d("SharedViewModel", "Productos ordenados, primeras categorias: ${cats.take(10)}")
+        } catch (e: Exception) {
+            Log.e("SharedViewModel", "Error al loggear categorias: ${e.message}")
         }
 
         _productosFiltrados.value = lista
@@ -341,7 +357,11 @@ class SharedViewModel(context: Context) : ViewModel() {
      * Obtiene las categorías disponibles
      */
     fun obtenerCategorias(): List<String> {
-        val categorias = _productos.value?.map { it.category }?.filter { it.isNotBlank() }?.distinct() ?: emptyList()
-        return listOf("Todas") + categorias.sorted()
+        val categorias = _productos.value
+            ?.map { it.category?.trim() ?: "" }
+            ?.filter { it.isNotBlank() }
+            ?.map { it }
+            ?.distinct() ?: emptyList()
+        return listOf("Todas") + categorias.sortedWith(compareBy { it.lowercase() })
     }
 }

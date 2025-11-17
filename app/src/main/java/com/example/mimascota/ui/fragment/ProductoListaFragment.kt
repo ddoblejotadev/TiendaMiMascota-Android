@@ -89,6 +89,18 @@ class ProductoListaFragment : Fragment() {
         setupObservers()
         setupSwipeRefresh()
 
+        // Observar productos para actualizar categorías del spinner cuando cambien
+        viewModel.productos.observe(viewLifecycleOwner) { productos ->
+            val categorias = viewModel.obtenerCategorias()
+            val adapterSpinner = ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                categorias
+            )
+            binding.spinnerCategoria.adapter = adapterSpinner
+        }
+
+        // Cargar productos al iniciar (mover al final para que observadores estén listos)
         viewModel.cargarProductos()
     }
 

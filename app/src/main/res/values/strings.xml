@@ -19,6 +19,7 @@
     <string name="subtotal_formato">Subtotal: %s</string>
     <string name="stock_disponible">Stock disponible: %d</string>
     <string name="descuento_formato">-%d%%</string>
+    <string name="product_stock">Stock: %d</string>
 
     <!-- Menú -->
     <string name="action_search">Buscar</string>

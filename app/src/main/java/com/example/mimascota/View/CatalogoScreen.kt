@@ -2,10 +2,11 @@ package com.example.mimascota.View
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -30,7 +31,7 @@ import com.example.mimascota.util.formatCurrencyCLP
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, cartViewModel: CartViewModel) {
-    val context = LocalContext.current
+    // val context = LocalContext.current // no usado
     val productos by viewModel.productos.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val carrito by cartViewModel.carrito.collectAsState()
@@ -107,6 +108,13 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     CircularProgressIndicator()
                 }
             } else {
+                // Ordenar productos por categoría (string no nulo) y por nombre
+                val productosOrdenados = productos.sortedWith(compareBy(
+                    { it.category.isBlank() },
+                    { it.category.trim().lowercase() },
+                    { it.name.trim().lowercase() }
+                ))
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
@@ -117,7 +125,25 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     ),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(productos, key = { it.id }) { producto ->
+                    itemsIndexed(productosOrdenados, key = { _, p -> p.id }) { index, producto ->
+                        val prevCat = if (index == 0) null else productosOrdenados[index - 1].category.trim().lowercase()
+                        val curCat = producto.category.trim().lowercase()
+                        val showHeader = index == 0 || prevCat != curCat
+
+                        if (showHeader) {
+                            // Header simple visual
+                            Text(
+                                text = producto.category.trim().uppercase(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .padding(8.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+
                         // Calcular cantidad desde el estado del carrito
                         val cantidad = carrito.find { it.producto.id == producto.id }?.cantidad ?: 0
 
