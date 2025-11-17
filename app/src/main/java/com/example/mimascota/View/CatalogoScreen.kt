@@ -135,29 +135,43 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                             expanded = expanded,
                             onExpandedChange = { expanded = !expanded }
                         ) {
+                            // Usar TextField + menuAnchor() para que ExposedDropdownMenu se posicione correctamente
                             TextField(
                                 value = selectedCategory,
                                 onValueChange = {},
                                 readOnly = true,
+                                modifier = Modifier
+                                    .weight(0.65f)
+                                    .menuAnchor()
+                                    .clickable { expanded = !expanded },
+                                placeholder = { Text("Selecciona una categoría") },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                colors = ExposedDropdownMenuDefaults.textFieldColors()
+                                // usar colores por defecto para compatibilidad con distintas versiones de Material3
+                                shape = RoundedCornerShape(8.dp)
                             )
+
                             ExposedDropdownMenu(
                                 expanded = expanded,
                                 onDismissRequest = { expanded = false }
                             ) {
                                 categorias.forEach { cat ->
                                     DropdownMenuItem(
-                                        text = { Text(cat) },
+                                        text = {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(cat, style = MaterialTheme.typography.bodyMedium)
+                                                Spacer(Modifier.weight(1f))
+                                                // contador pequeño
+                                                val count = productos.count { it.category.equals(cat, ignoreCase = true) }
+                                                if (count > 0 && cat != "Todas") {
+                                                    Text("$count", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                            }
+                                        },
                                         onClick = {
                                             selectedCategory = cat
                                             expanded = false
-                                            // Solicitar al backend la categoría seleccionada
-                                            if (cat == "Todas") {
-                                                viewModel.cargarProductos()
-                                            } else {
-                                                viewModel.cargarProductosPorCategoria(cat)
-                                            }
+                                            // Usar filtrado local (rápido) y sincronizar con backend en background
+                                            viewModel.applyCategoryFilter(cat)
                                         }
                                     )
                                 }
