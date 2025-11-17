@@ -3,6 +3,7 @@ package com.example.mimascota.ui.fragment
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -33,6 +34,7 @@ class RegistroFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var authViewModel: JwtAuthViewModel
+    private var registrationRequested = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,7 +47,7 @@ class RegistroFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        authViewModel = androidx.lifecycle.ViewModelProvider(this)[com.example.mimascota.ViewModel.JwtAuthViewModel::class.java]
+        authViewModel = androidx.lifecycle.ViewModelProvider(this)[JwtAuthViewModel::class.java]
 
         setupRutValidation()
         setupListeners()
@@ -100,29 +102,78 @@ class RegistroFragment : Fragment() {
      */
     private fun setupListeners() {
         binding.btnRegistrar.setOnClickListener {
+            // Limpiar errores anteriores
+            binding.tilEmail.error = null
+            binding.tilPassword.error = null
+            binding.tilNombre.error = null
+            binding.tilRun.error = null
+
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString()
             val nombre = binding.etNombre.text.toString().trim()
             val telefono = binding.etTelefono.text.toString().trim().takeIf { it.isNotEmpty() }
             val direccion = binding.etDireccion.text.toString().trim().takeIf { it.isNotEmpty() }
-            val run = binding.etRun.text.toString().trim().takeIf { it.isNotEmpty() }
+            val run = binding.etRun.text.toString().trim()
 
-            // Validar RUT si no está vacío
-            if (!run.isNullOrEmpty() && !RutValidator.esValido(run)) {
+            var hasError = false
+
+            // Email obligatorio y válido
+            if (email.isEmpty()) {
+                binding.tilEmail.error = getString(R.string.email_obligatorio)
+                hasError = true
+            } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                binding.tilEmail.error = getString(R.string.email_invalido)
+                hasError = true
+            } else {
+                binding.tilEmail.error = null
+            }
+
+            // Password obligatorio y longitud mínima
+            if (password.isEmpty()) {
+                binding.tilPassword.error = getString(R.string.password_obligatorio)
+                hasError = true
+            } else if (password.length < 6) {
+                binding.tilPassword.error = getString(R.string.password_minimo)
+                hasError = true
+            } else {
+                binding.tilPassword.error = null
+            }
+
+            // Nombre obligatorio
+            if (nombre.isEmpty()) {
+                binding.tilNombre.error = getString(R.string.nombre_obligatorio)
+                hasError = true
+            } else {
+                binding.tilNombre.error = null
+            }
+
+            // RUT obligatorio y válido
+            if (run.isEmpty()) {
+                binding.tilRun.error = "El RUT es obligatorio"
+                hasError = true
+            } else if (!RutValidator.esValido(run)) {
                 binding.tilRun.error = getString(R.string.rut_invalido)
-                Snackbar.make(binding.root, getString(R.string.rut_corregir), Snackbar.LENGTH_LONG).show()
+                hasError = true
+            } else {
+                binding.tilRun.error = null
+            }
+
+            if (hasError) {
+                Snackbar.make(binding.root, getString(R.string.complete_campos_obligatorios), Snackbar.LENGTH_LONG).show()
                 return@setOnClickListener
             }
 
+            // Si todo está OK, enviar al ViewModel
+            registrationRequested = true
             authViewModel.registro(
-                email = email,
-                password = password,
-                nombre = nombre,
-                telefono = telefono,
-                direccion = direccion,
-                run = run
-            )
-        }
+                 email = email,
+                 password = password,
+                 nombre = nombre,
+                 telefono = telefono,
+                 direccion = direccion,
+                 run = run
+             )
+         }
 
         binding.btnYaTienesCuenta.setOnClickListener {
             // Volver a LoginFragment
@@ -160,16 +211,17 @@ class RegistroFragment : Fragment() {
         }
 
         // Observar registro exitoso
-        lifecycleScope.launch {
-            authViewModel.isLoggedIn.collect { isLoggedIn ->
-                if (isLoggedIn) {
-                    // Navegar a ProductoListaFragment
+         lifecycleScope.launch {
+             authViewModel.isLoggedIn.collect { isLoggedIn ->
+                if (isLoggedIn && registrationRequested) {
+                    // Solo navegar si esta pantalla inició el registro
                     parentFragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, ProductoListaFragment())
                         .commit()
+                    registrationRequested = false
                 }
-            }
-        }
+             }
+         }
     }
 
     override fun onDestroyView() {

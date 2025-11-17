@@ -35,4 +35,13 @@
     <!-- Validación RUT -->
     <string name="rut_invalido">RUT inválido</string>
     <string name="rut_corregir">Por favor corrige el RUT ingresado</string>
+    <string name="rut_obligatorio">El RUT es obligatorio</string>
+
+    <!-- Registro - validaciones -->
+    <string name="email_obligatorio">Email es obligatorio</string>
+    <string name="email_invalido">Email inválido</string>
+    <string name="password_obligatorio">Contraseña es obligatoria</string>
+    <string name="password_minimo">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="nombre_obligatorio">El nombre es obligatorio</string>
+    <string name="complete_campos_obligatorios">Completa los campos obligatorios correctamente</string>
 </resources>

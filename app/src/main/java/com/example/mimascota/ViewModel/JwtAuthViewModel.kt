@@ -8,6 +8,7 @@ import com.example.mimascota.Model.RegistroRequest
 import com.example.mimascota.client.RetrofitClient
 import com.example.mimascota.util.TokenManager
 import com.example.mimascota.model.Usuario
+import com.example.mimascota.util.RutValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,20 +16,12 @@ import kotlinx.coroutines.launch
 
 /**
  * AuthViewModel: ViewModel para gestionar autenticación JWT
- *
- * Funcionalidades:
- * - Login con email y password
- * - Registro de nuevos usuarios
- * - Logout
- * - Estados reactivos con StateFlow
- * - Validación de credenciales
  */
 class JwtAuthViewModel : ViewModel() {
 
     private val authService = RetrofitClient.authService
     private val tokenManager = TokenManager
 
-    // Estados expuestos (podrían usarse desde UI)
     private val _loginState = MutableStateFlow<AuthResponse?>(null)
     val loginState: StateFlow<AuthResponse?> = _loginState.asStateFlow()
     private val _isLoading = MutableStateFlow(false)
@@ -68,7 +61,6 @@ class JwtAuthViewModel : ViewModel() {
                 val response = authService.login(LoginRequest(email, password))
                 if (response.isSuccessful) {
                     response.body()?.let { authResp ->
-                        // Construir Usuario desde AuthResponse (no trae objeto usuario)
                         val usuarioObj = Usuario(
                             usuarioId = authResp.usuarioId,
                             nombre = authResp.nombre,
@@ -103,12 +95,16 @@ class JwtAuthViewModel : ViewModel() {
         password: String,
         nombre: String,
         telefono: String? = null,
-        @Suppress("UNUSED_PARAMETER") direccion: String? = null,
-        @Suppress("UNUSED_PARAMETER") run: String? = null
+        direccion: String? = null,
+        run: String? = null
     ): Boolean {
+        // Validaciones locales: email, password, nombre, run obligatorio y válido
         if (!isValidEmail(email)) { _error.value = "Email inválido"; return false }
         if (!isValidPassword(password)) { _error.value = "La contraseña debe tener al menos 6 caracteres"; return false }
         if (nombre.isBlank()) { _error.value = "El nombre es obligatorio"; return false }
+        if (run.isNullOrBlank()) { _error.value = "El RUT es obligatorio"; return false }
+        if (!RutValidator.esValido(run)) { _error.value = "RUT inválido"; return false }
+
         viewModelScope.launch {
             try {
                 _isLoading.value = true
@@ -118,7 +114,9 @@ class JwtAuthViewModel : ViewModel() {
                         nombre = nombre,
                         email = email,
                         password = password,
-                        telefono = telefono
+                        telefono = telefono,
+                        direccion = direccion,
+                        run = run
                     )
                 )
                 if (response.isSuccessful) {
