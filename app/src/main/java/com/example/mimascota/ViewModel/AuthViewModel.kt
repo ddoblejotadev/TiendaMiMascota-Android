@@ -30,6 +30,24 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     val fotoPerfil: StateFlow<String?> = _fotoPerfil
 
     fun registrarUsuario(run: String, username: String, email: String, password: String, direccion: String) {
+        // Validación cliente (defensiva) antes de insertar en la base local
+        if (username.isBlank()) {
+            registroState.value = "Ingrese nombre"
+            return
+        }
+        if (run.isBlank()) {
+            registroState.value = "Ingrese RUT"
+            return
+        }
+        if (email.isBlank()) {
+            registroState.value = "Ingrese email"
+            return
+        }
+        if (password.length < 6) {
+            registroState.value = "La contraseña debe tener al menos 6 caracteres"
+            return
+        }
+
         viewModelScope.launch {
             val contexto = getApplication<Application>()
             val nuevoUsuario = User(
@@ -106,4 +124,3 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         return foto
     }
 }
-

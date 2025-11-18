@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
             val cartViewModel = remember { CartViewModel() }
             NavHost(navController, startDestination = "register") {
                 composable("register") {
-                    registerScreen(navController, viewModel)
+                    RegisterScreen(navController, viewModel)
                 }
                 composable("login") {
                     LoginScreen(navController, viewModel)

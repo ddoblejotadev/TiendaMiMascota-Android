@@ -164,16 +164,30 @@ class RegistroFragment : Fragment() {
             }
 
             // Si todo está OK, enviar al ViewModel
-            registrationRequested = true
-            authViewModel.registro(
-                 email = email,
-                 password = password,
-                 nombre = nombre,
-                 telefono = telefono,
-                 direccion = direccion,
-                 run = run
-             )
-         }
+            // Llamar al ViewModel; éste realiza validaciones adicionales y devuelve true si inició la petición
+            val started = authViewModel.registro(
+                email = email,
+                password = password,
+                nombre = nombre,
+                telefono = telefono,
+                direccion = direccion,
+                run = run
+            )
+
+            if (started) {
+                registrationRequested = true
+            } else {
+                // Si el ViewModel rechazó la petición por validación, mostrar el error inmediato (si existe)
+                // `error` es un StateFlow; acceder a su valor para mostrar el mensaje que estableció el ViewModel
+                val vmError = authViewModel.error.value
+                if (!vmError.isNullOrEmpty()) {
+                    Snackbar.make(binding.root, vmError, Snackbar.LENGTH_LONG).show()
+                    authViewModel.clearError()
+                } else {
+                    Snackbar.make(binding.root, getString(R.string.complete_campos_obligatorios), Snackbar.LENGTH_LONG).show()
+                }
+            }
+        }
 
         binding.btnYaTienesCuenta.setOnClickListener {
             // Volver a LoginFragment

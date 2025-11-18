@@ -15,21 +15,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.mimascota.ViewModel.AuthViewModel
+import com.example.mimascota.util.RutValidator
+import android.util.Patterns
 
 @Composable
-fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
+fun RegisterScreen(navController: NavController, viewModel: AuthViewModel) {
     var nombre by remember { mutableStateOf("") }
     var run by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var direccion by remember { mutableStateOf("") }
     var registroState by remember { viewModel.registroState }
+
+    // Estados de error por campo (null = sin error)
+    var nombreError by remember { mutableStateOf<String?>(null) }
+    var runError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    // var direccionError by remember { mutableStateOf<String?>(null) } // direccionError no se usa por ahora
 
     // Fondo con gradiente
     Box(
@@ -73,14 +82,14 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
+            androidx.compose.material3.Text(
                 text = "Mi Mascota",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Text(
+            androidx.compose.material3.Text(
                 text = "Crea tu cuenta",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -99,7 +108,7 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
+                    androidx.compose.material3.Text(
                         text = "Registro",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
@@ -111,8 +120,11 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
                     // Campo Nombre
                     OutlinedTextField(
                         value = nombre,
-                        onValueChange = { nombre = it },
-                        label = { Text("Nombre completo") },
+                        onValueChange = {
+                            nombre = it
+                            if (!it.isBlank()) nombreError = null
+                        },
+                        label = { androidx.compose.material3.Text("Nombre completo") },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Person,
@@ -124,13 +136,25 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
                         shape = RoundedCornerShape(12.dp)
                     )
 
+                    if (nombreError != null) {
+                        androidx.compose.material3.Text(
+                            text = nombreError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Campo RUN
                     OutlinedTextField(
                         value = run,
-                        onValueChange = { run = it },
-                        label = { Text("RUT (ej: 12345678-9)") },
+                        onValueChange = {
+                            run = it
+                            if (it.isNotBlank() && RutValidator.esValido(it)) runError = null
+                        },
+                        label = { androidx.compose.material3.Text("RUT (ej: 12345678-9)") },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Badge,
@@ -142,13 +166,25 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
                         shape = RoundedCornerShape(12.dp)
                     )
 
+                    if (runError != null) {
+                        androidx.compose.material3.Text(
+                            text = runError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Campo Email
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
+                        onValueChange = {
+                            email = it
+                            if (it.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(it).matches()) emailError = null
+                        },
+                        label = { androidx.compose.material3.Text("Email") },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Email,
@@ -160,13 +196,25 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
                         shape = RoundedCornerShape(12.dp)
                     )
 
+                    if (emailError != null) {
+                        androidx.compose.material3.Text(
+                            text = emailError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Campo Password
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Contraseña") },
+                        onValueChange = {
+                            password = it
+                            if (it.length >= 6) passwordError = null
+                        },
+                        label = { androidx.compose.material3.Text("Contraseña") },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Lock,
@@ -179,13 +227,22 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
                         shape = RoundedCornerShape(12.dp)
                     )
 
+                    if (passwordError != null) {
+                        androidx.compose.material3.Text(
+                            text = passwordError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Campo Dirección
                     OutlinedTextField(
                         value = direccion,
                         onValueChange = { direccion = it },
-                        label = { Text("Dirección") },
+                        label = { androidx.compose.material3.Text("Dirección") },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Home,
@@ -202,14 +259,42 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
                     // Botón de registro
                     Button(
                         onClick = {
-                            viewModel.registrarUsuario(run, nombre, email, password, direccion)
+                            // Validación cliente antes de llamar al ViewModel
+                            var valid = true
+
+                            if (nombre.isBlank()) {
+                                nombreError = "Ingrese nombre"
+                                valid = false
+                            }
+                            if (run.isBlank()) {
+                                runError = "Ingrese RUT"
+                                valid = false
+                            } else if (!RutValidator.esValido(run)) {
+                                runError = "RUT inválido"
+                                valid = false
+                            }
+                            if (email.isBlank()) {
+                                emailError = "Ingrese email"
+                                valid = false
+                            } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                emailError = "Email inválido"
+                                valid = false
+                            }
+                            if (password.length < 6) {
+                                passwordError = "La contraseña debe tener al menos 6 caracteres"
+                                valid = false
+                            }
+
+                            if (valid) {
+                                viewModel.registrarUsuario(run, nombre, email, password, direccion)
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(
+                        androidx.compose.material3.Text(
                             text = "Registrar",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
@@ -219,7 +304,7 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
                     // Mostrar estado de registro si hay mensaje
                     if (registroState.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(
+                        androidx.compose.material3.Text(
                             text = registroState,
                             color = if (registroState.contains("exitoso", ignoreCase = true)) {
                                 MaterialTheme.colorScheme.primary
@@ -239,11 +324,11 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
             TextButton(
                 onClick = { navController.navigate("login") }
             ) {
-                Text(
+                androidx.compose.material3.Text(
                     text = "¿Ya tienes una cuenta? ",
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
+                androidx.compose.material3.Text(
                     text = "Inicia sesión",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
@@ -253,7 +338,7 @@ fun registerScreen(navController: NavController, viewModel: AuthViewModel) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Footer
-            Text(
+            androidx.compose.material3.Text(
                 text = "© 2025 Mi Mascota",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
