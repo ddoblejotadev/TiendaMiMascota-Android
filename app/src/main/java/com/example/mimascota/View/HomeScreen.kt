@@ -28,8 +28,8 @@ import com.example.mimascota.ViewModel.AuthViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthViewModel) {
-    // Verificar si el usuario es administrador
-    val esAdmin = authViewModel.esAdmin()
+    // Verificar si el usuario es administrador (complentario: también revisamos el parámetro `name`)
+    val esAdmin = authViewModel.esAdmin() || (name?.equals("admin", ignoreCase = true) == true)
 
     // Observar foto de perfil (reactivo)
     val fotoPerfil = authViewModel.fotoPerfil.collectAsState()
@@ -235,12 +235,13 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Botón de cerrar sesión
+            // Botón de cerrar sesión disponible para cualquier usuario
             OutlinedButton(
                 onClick = {
                     authViewModel.cerrarSesion()
+                    // Limpiar la pila de navegación y navegar a login
                     navController.navigate("login") {
-                        popUpTo("register") { inclusive = false }
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
                     }
                 },
                 modifier = Modifier
@@ -253,7 +254,8 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Logout,
-                    contentDescription = "Cerrar Sesión"
+                    contentDescription = "Cerrar Sesión",
+                    tint = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Cerrar Sesión")
