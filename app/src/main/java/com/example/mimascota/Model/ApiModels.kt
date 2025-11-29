@@ -3,18 +3,6 @@ package com.example.mimascota.model
 import com.google.gson.annotations.SerializedName
 
 /**
- * Usuario: Modelo de usuario del sistema
- */
-data class Usuario(
-    @SerializedName("usuario_id")
-    val usuarioId: Int,
-    val nombre: String,
-    val email: String,
-    val telefono: String? = null,
-    val rol: String = "USUARIO"
-)
-
-/**
  * LoginRequest: Datos para login
  */
 data class LoginRequest(
@@ -119,4 +107,3 @@ data class Producto(
     val imagen: String?,
     val activo: Boolean = true
 )
-

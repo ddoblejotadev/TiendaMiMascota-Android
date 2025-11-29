@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                     BackOfficeScreen(navController, viewModelC)
                 }
                 composable("agregarProducto") {
-                    AgregarProductoScreen(navController)
+                    AgregarProductoScreen(navController, viewModelC)
                 }
                 composable("fotoDePerfil") {
                     FotoDePerfil(navController, viewModel)
