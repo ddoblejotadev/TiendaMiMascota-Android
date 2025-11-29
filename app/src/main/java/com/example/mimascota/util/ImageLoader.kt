@@ -4,7 +4,6 @@ import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.mimascota.R
-import com.example.tiendamimascota.network.ApiConfig
 
 /**
  * ImageLoader: Utilidad centralizada para cargar imágenes desde el backend
@@ -33,7 +32,7 @@ object ImageLoader {
         errorRes: Int = R.drawable.ic_error_image
     ) {
         // Convertir a URL absoluta
-        val absoluteUrl = ApiConfig.toAbsoluteImageUrl(pathOrUrl)
+        val absoluteUrl = com.example.mimascota.config.ApiConfig.toAbsoluteImageUrl(pathOrUrl)
 
         if (absoluteUrl.isNullOrBlank()) {
             // Si no hay URL, mostrar placeholder
@@ -60,7 +59,7 @@ object ImageLoader {
         placeholderRes: Int = R.drawable.placeholder_product,
         errorRes: Int = R.drawable.ic_error_image
     ) {
-        val absoluteUrl = ApiConfig.toAbsoluteImageUrl(pathOrUrl)
+        val absoluteUrl = com.example.mimascota.config.ApiConfig.toAbsoluteImageUrl(pathOrUrl)
 
         if (absoluteUrl.isNullOrBlank()) {
             imageView.setImageResource(errorRes)
@@ -80,7 +79,7 @@ object ImageLoader {
      * Pre-carga una imagen en segundo plano (útil para optimizar carga posterior)
      */
     fun preloadImage(imageView: ImageView, pathOrUrl: String?) {
-        val absoluteUrl = ApiConfig.toAbsoluteImageUrl(pathOrUrl)
+        val absoluteUrl = com.example.mimascota.config.ApiConfig.toAbsoluteImageUrl(pathOrUrl)
         if (absoluteUrl.isNullOrBlank()) return
 
         Glide.with(imageView.context)
