@@ -31,6 +31,10 @@ class CatalogoViewModel(
     // Filtro actual aplicado ("Todas" para no filtrar)
     private var currentCategoryFilter: String = "Todas"
 
+    // Id del producto seleccionado para edición (null si ninguno)
+    private val _selectedProductId = MutableStateFlow<Int?>(null)
+    val selectedProductId: StateFlow<Int?> = _selectedProductId
+
     /**
      * Carga todos los productos desde el backend y actualiza la lista maestra.
      * Mantiene cualquier filtro local aplicado (se re-aplica después de actualizar).
@@ -159,5 +163,74 @@ class CatalogoViewModel(
      */
     fun clearError() {
         _error.value = null
+    }
+
+    /**
+     * Crea un nuevo producto usando el repositorio y actualiza las listas locales.
+     */
+    fun createProducto(producto: Producto, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            _loading.value = true
+            when (val r = repo.createProducto(producto)) {
+                is ProductoRepository.ProductoResult.Success -> {
+                    // agregar al listado maestro y reaplicar filtro
+                    _allProducts.value = _allProducts.value + r.data
+                    applyCategoryFilterInternal(currentCategoryFilter)
+                    onResult(true, null)
+                }
+                is ProductoRepository.ProductoResult.Error -> {
+                    onResult(false, r.message)
+                }
+                else -> onResult(false, "Error desconocido")
+            }
+            _loading.value = false
+        }
+    }
+
+    /**
+     * Actualiza producto existente
+     */
+    fun updateProducto(id: Int, producto: Producto, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            _loading.value = true
+            when (val r = repo.updateProducto(id, producto)) {
+                is ProductoRepository.ProductoResult.Success -> {
+                    // reemplazar en lista maestra
+                    val updated = _allProducts.value.map { if (it.id == id) r.data else it }
+                    _allProducts.value = updated
+                    applyCategoryFilterInternal(currentCategoryFilter)
+                    onResult(true, null)
+                }
+                is ProductoRepository.ProductoResult.Error -> onResult(false, r.message)
+                else -> onResult(false, "Error desconocido")
+            }
+            _loading.value = false
+        }
+    }
+
+    /**
+     * Elimina producto
+     */
+    fun deleteProducto(id: Int, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            _loading.value = true
+            when (val r = repo.deleteProducto(id)) {
+                is ProductoRepository.ProductoResult.Success -> {
+                    _allProducts.value = _allProducts.value.filterNot { it.id == id }
+                    applyCategoryFilterInternal(currentCategoryFilter)
+                    onResult(true, null)
+                }
+                is ProductoRepository.ProductoResult.Error -> onResult(false, r.message)
+                else -> onResult(false, "Error desconocido")
+            }
+            _loading.value = false
+        }
+    }
+
+    fun selectForEdit(id: Int?) { _selectedProductId.value = id }
+
+    // Obtener producto por id de la lista maestra (sin llamadas a backend)
+    fun getProductoFromCache(id: Int): Producto? {
+        return _allProducts.value.find { it.id == id }
     }
 }

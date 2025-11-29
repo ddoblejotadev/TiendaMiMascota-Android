@@ -1,4 +1,4 @@
-package com.example.mimascota.View
+package com.example.mimascota.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +32,9 @@ fun BackOfficeScreen(navController: NavController, viewModel: CatalogoViewModel)
     val context = LocalContext.current
     val productos by viewModel.productos.collectAsState()
     val loading by viewModel.loading.collectAsState()
+
+    // Estado para confirmar eliminación
+    var productoToDelete by remember { mutableStateOf<Producto?>(null) }
 
     // Cargar productos al iniciar
     LaunchedEffect(Unit) {
@@ -65,7 +69,10 @@ fun BackOfficeScreen(navController: NavController, viewModel: CatalogoViewModel)
         floatingActionButton = {
             // Botón para agregar nuevo producto
             ExtendedFloatingActionButton(
-                onClick = { navController.navigate("agregarProducto") },
+                onClick = {
+                    viewModel.selectForEdit(null) // limpiar selección para creación
+                    navController.navigate("agregarProducto")
+                },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
@@ -127,9 +134,38 @@ fun BackOfficeScreen(navController: NavController, viewModel: CatalogoViewModel)
 
                     // Lista de productos
                     items(productos, key = { it.id }) { producto ->
-                        ProductoBackOfficeCard(producto)
+                        ProductoBackOfficeCard(
+                            producto = producto,
+                            onEdit = { prod ->
+                                viewModel.selectForEdit(prod.id)
+                                navController.navigate("agregarProducto")
+                            },
+                            onDelete = { prod ->
+                                productoToDelete = prod
+                            }
+                        )
                     }
                 }
+            }
+
+            // Dialogo de confirmacion fuera del lambda
+            productoToDelete?.let { prod ->
+                AlertDialog(
+                    onDismissRequest = { productoToDelete = null },
+                    title = { Text("Eliminar producto") },
+                    text = { Text("¿Estás seguro de eliminar ${prod.name}?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            viewModel.deleteProducto(prod.id) { success, err ->
+                                // TODO: mostrar Snackbar según resultado
+                            }
+                            productoToDelete = null
+                        }) { Text("Eliminar") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { productoToDelete = null }) { Text("Cancelar") }
+                    }
+                )
             }
         }
     }
@@ -137,7 +173,7 @@ fun BackOfficeScreen(navController: NavController, viewModel: CatalogoViewModel)
 
 // Card de producto en el Back Office
 @Composable
-fun ProductoBackOfficeCard(producto: Producto) {
+fun ProductoBackOfficeCard(producto: Producto, onEdit: (Producto) -> Unit, onDelete: (Producto) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp),
@@ -222,6 +258,25 @@ fun ProductoBackOfficeCard(producto: Producto) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            // Botones editar / eliminar
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(onClick = { onEdit(producto) }) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar"
+                    )
+                }
+                IconButton(onClick = { onDelete(producto) }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar"
+                    )
+                }
             }
         }
     }
