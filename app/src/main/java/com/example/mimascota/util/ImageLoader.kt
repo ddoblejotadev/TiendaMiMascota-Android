@@ -1,89 +1,92 @@
 package com.example.mimascota.util
 
+import android.content.Context
+import android.graphics.drawable.BitmapDrawable
 import android.widget.ImageView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.engine.DiskCacheStrategy
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.example.mimascota.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import android.util.Log
 
-/**
- * ImageLoader: Utilidad centralizada para cargar imágenes desde el backend
- *
- * Usa Glide para cargar imágenes de manera eficiente con:
- * - Conversión automática de rutas relativas a URLs absolutas
- * - Placeholder mientras carga
- * - Error fallback si falla la carga
- * - Cache en memoria y disco
- * - Transiciones suaves
- */
+@Suppress("unused")
 object ImageLoader {
 
+    private const val TAG = "ImageLoader"
+
     /**
-     * Carga una imagen en un ImageView desde una URL o ruta relativa
-     *
-     * @param imageView El ImageView donde se mostrará la imagen
-     * @param pathOrUrl La ruta relativa ("/images/producto.jpg") o URL absoluta
-     * @param placeholderRes El recurso drawable a mostrar mientras carga (opcional)
-     * @param errorRes El recurso drawable a mostrar si falla la carga (opcional)
+     * Carga una imagen en un ImageView usando Coil
      */
     fun loadImage(
+        context: Context,
+        imageUrl: String?,
         imageView: ImageView,
-        pathOrUrl: String?,
-        placeholderRes: Int = R.drawable.placeholder_product,
-        errorRes: Int = R.drawable.ic_error_image
+        placeholder: Int = R.drawable.placeholder_product,
+        errorDrawable: Int = R.drawable.placeholder_product
     ) {
-        // Convertir a URL absoluta
-        val absoluteUrl = com.example.mimascota.config.ApiConfig.toAbsoluteImageUrl(pathOrUrl)
+        // Corregido: Usar AppConfig para la URL base
+        val fullUrl = AppConfig.toAbsoluteImageUrl(imageUrl) ?: ""
 
-        if (absoluteUrl.isNullOrBlank()) {
-            // Si no hay URL, mostrar placeholder
-            imageView.setImageResource(errorRes)
-            return
-        }
-
-        // Cargar con Glide
-        Glide.with(imageView.context)
-            .load(absoluteUrl)
-            .placeholder(placeholderRes)
-            .error(errorRes)
-            .diskCacheStrategy(DiskCacheStrategy.ALL) // Cache en disco
-            .centerCrop() // Ajustar imagen manteniendo proporción
-            .into(imageView)
+        val request = ImageRequest.Builder(context)
+            .data(fullUrl)
+            .target(imageView)
+            .placeholder(placeholder)
+            .error(errorDrawable)
+            .build()
+        context.imageLoader.enqueue(request)
     }
 
     /**
-     * Carga una imagen circular (útil para avatares)
+     * Descarga una imagen y la guarda en el almacenamiento interno
      */
-    fun loadCircularImage(
-        imageView: ImageView,
-        pathOrUrl: String?,
-        placeholderRes: Int = R.drawable.placeholder_product,
-        errorRes: Int = R.drawable.ic_error_image
-    ) {
-        val absoluteUrl = com.example.mimascota.config.ApiConfig.toAbsoluteImageUrl(pathOrUrl)
+    @Suppress("unused")
+    suspend fun downloadAndSaveImage(
+        context: Context,
+        imageUrl: String
+    ): File? = withContext(Dispatchers.IO) {
+        try {
+            val fullUrl = AppConfig.toAbsoluteImageUrl(imageUrl) ?: imageUrl
+            val request = ImageRequest.Builder(context).data(fullUrl).build()
+            val result = (context.imageLoader.execute(request) as? SuccessResult)?.drawable
 
-        if (absoluteUrl.isNullOrBlank()) {
-            imageView.setImageResource(errorRes)
-            return
+            if (result is BitmapDrawable) {
+                val bitmap = result.bitmap
+                val file = File(context.cacheDir, "${System.currentTimeMillis()}.jpg")
+                FileOutputStream(file).use {
+                    bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it)
+                }
+                file
+            } else {
+                null
+            }
+        } catch (e: IOException) {
+            Log.w(TAG, "Error descargando imagen: ${e.message}")
+            null
         }
-
-        Glide.with(imageView.context)
-            .load(absoluteUrl)
-            .placeholder(placeholderRes)
-            .error(errorRes)
-            .circleCrop() // Recorte circular
-            .diskCacheStrategy(DiskCacheStrategy.ALL)
-            .into(imageView)
     }
 
     /**
-     * Pre-carga una imagen en segundo plano (útil para optimizar carga posterior)
+     * Carga una imagen desde un File en un ImageView
      */
-    fun preloadImage(imageView: ImageView, pathOrUrl: String?) {
-        val absoluteUrl = com.example.mimascota.config.ApiConfig.toAbsoluteImageUrl(pathOrUrl)
-        if (absoluteUrl.isNullOrBlank()) return
-
-        Glide.with(imageView.context)
-            .load(absoluteUrl)
-            .preload()
+    @Suppress("unused")
+    fun loadFileImage(
+        context: Context,
+        file: File,
+        imageView: ImageView,
+        placeholder: Int = R.drawable.placeholder_product,
+        errorDrawable: Int = R.drawable.placeholder_product
+    ) {
+        val request = ImageRequest.Builder(context)
+            .data(file)
+            .target(imageView)
+            .placeholder(placeholder)
+            .error(errorDrawable)
+            .build()
+        context.imageLoader.enqueue(request)
     }
 }

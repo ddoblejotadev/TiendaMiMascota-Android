@@ -1,58 +1,70 @@
-package com.example.mimascota.Model
+package com.example.mimascota.model
 
 import com.google.gson.annotations.SerializedName
 
 /**
- * Producto: Modelo alineado con la respuesta del backend Spring Boot.
- * Backend devuelve números como Double (price, precioAnterior) y stock como Int.
- * Mantenemos las propiedades auxiliares id y name para compatibilidad con UI existente.
+ * Producto: Modelo base y unificado para todos los productos.
+ * Es una clase abierta para permitir la herencia de tipos de productos específicos.
  */
 open class Producto(
     @SerializedName("producto_id")
-    val producto_id: Int = 0,
+    open val producto_id: Int = 0,
 
     @SerializedName("producto_nombre")
-    val producto_nombre: String = "",
+    open val producto_nombre: String = "",
 
     @SerializedName("price")
-    val price: Int = 0,
+    // Cambiado a Double para coincidir con el backend (ej. 25990.0)
+    open val price: Double = 0.0,
 
     @SerializedName("category")
-    val category: String = "",
+    open val category: String = "",
 
     @SerializedName("description")
-    val description: String? = null,
+    open val description: String? = null,
 
     @SerializedName("imageUrl")
-    val imageUrl: String? = null,
+    open val imageUrl: String? = null,
 
     @SerializedName("stock")
-    val stock: Int? = null,
+    open val stock: Int? = null,
 
     @SerializedName("destacado")
-    val destacado: Boolean? = null,
+    open val destacado: Boolean? = null,
 
     @SerializedName("valoracion")
-    val valoracion: Double? = null,
+    open val valoracion: Double? = null,
 
     @SerializedName("precioAnterior")
-    val precioAnterior: Int? = null,
+    // Cambiado a Double?
+    open val precioAnterior: Double? = null,
 
+    // Propiedades para herencia
     @SerializedName("marca")
     open val marca: String? = null,
 
     @SerializedName("peso")
     open val peso: Double? = null,
 
-    // Campos adicionales opcionales (el backend podría agregarlos más adelante)
+    @SerializedName("material")
     open val material: String? = null,
+
+    @SerializedName("tamano")
     open val tamano: String? = null,
+
+    @SerializedName("tipoHigiene")
     open val tipoHigiene: String? = null,
+
+    @SerializedName("fragancia")
     open val fragancia: String? = null,
+
+    @SerializedName("tipo")
     open val tipo: String? = null,
+
+    @SerializedName("tipoAccesorio")
     open val tipoAccesorio: String? = null
 ) {
-    // Propiedades de conveniencia para código existente
+    // Propiedades de conveniencia para mantener compatibilidad
     val id: Int get() = producto_id
     val name: String get() = producto_nombre
 }

@@ -1,4 +1,4 @@
-package com.example.mimascota.Model
+package com.example.mimascota.model
 
 import com.google.gson.annotations.SerializedName
 
@@ -24,8 +24,9 @@ data class CrearOrdenRequest(
     @SerializedName("datos_envio")
     val datosEnvio: DatosEnvio,
 
-    val subtotal: Int,
-    val total: Int,
+    // Cambiado a Double para cumplir con el backend que maneja precios con punto
+    val subtotal: Double,
+    val total: Double,
     val estado: String = "completada"
 )
 
@@ -39,7 +40,7 @@ data class ItemOrden(
     val cantidad: Int,
 
     @SerializedName("precio_unitario")
-    val precioUnitario: Int
+    val precioUnitario: Double
 )
 
 /**
@@ -77,7 +78,8 @@ data class OrdenResponse(
 
     val fecha: String,
     val estado: String,
-    val total: Int,
+    // Cambiado a Double
+    val total: Double,
     val mensaje: String?,
     val items: List<ProductoOrden>?
 )
@@ -93,8 +95,8 @@ data class OrdenHistorial(
 
     val fecha: String,
     val estado: String,
-    val total: Int,
-    val subtotal: Int,
+    val total: Double,
+    val subtotal: Double,
 
     @SerializedName("esInvitado")
     val esInvitado: Boolean,
@@ -137,7 +139,7 @@ data class ProductoOrden(
     val cantidad: Int,
 
     @SerializedName("precioUnitario")
-    val precioUnitario: Int,
+    val precioUnitario: Double,
 
     val imagen: String?
 )
@@ -191,4 +193,3 @@ enum class EstadoOrden(val displayName: String, val value: String) {
     ENTREGADO("Entregado", "entregado"),
     CANCELADO("Cancelado", "cancelado")
 }
-

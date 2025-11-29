@@ -50,6 +50,10 @@ object AppConfig {
             else -> PROD_URL // Release - servidor producción (Render)
         }
 
+    // Base origin sin /api
+    val BASE_ORIGIN: String
+        get() = BASE_URL.substringBefore("/api/")
+
     /**
      * ¿Estamos en producción?
      */
@@ -84,28 +88,16 @@ object AppConfig {
     }
 
     /**
-     * GUÍA DE USO:
-     *
-     * 1. DESARROLLO LOCAL (Spring Boot en tu PC):
-     *    - Ejecutar: Run 'app' (debug)
-     *    - USE_PRODUCTION = false
-     *    - Verás logs detallados en Logcat
-     *    - URL automática: http://10.0.2.2:8080/api/
-     *
-     * 2. PRUEBAS CON PRODUCCIÓN (Render):
-     *    - Cambiar: USE_PRODUCTION = true
-     *    - Ejecutar: Run 'app' (debug)
-     *    - Espera 20-30s si el servidor está dormido
-     *    - URL automática: https://tiendamimascotabackends.onrender.com/api/
-     *
-     * 3. RELEASE (APK para distribuir):
-     *    - Build > Generate Signed Bundle/APK
-     *    - Automáticamente usa servidor de producción
-     *    - No necesitas cambiar nada
-     *
-     * 4. DISPOSITIVO FÍSICO (WiFi):
-     *    - Cambia DEV_URL a "http://TU_IP_LOCAL:8080/api/"
-     *    - Obtén tu IP con: ipconfig (Windows)
-     *    - Ejemplo: "http://192.168.1.100:8080/api/"
+     * Convierte una ruta relativa o ruta parcial a URL absoluta para imágenes estáticas.
+     * Ejemplos:
+     * - "/images/x.jpg" -> "https://mi-dominio.com/images/x.jpg"
+     * - "images/x.jpg"  -> "https://mi-dominio.com/images/x.jpg"
+     * - "https://..."    -> "https://..." (se devuelve tal cual)
      */
+    fun toAbsoluteImageUrl(pathOrUrl: String?): String? {
+        if (pathOrUrl.isNullOrBlank()) return null
+        if (pathOrUrl.startsWith("http://", ignoreCase = true) || pathOrUrl.startsWith("https://", ignoreCase = true)) return pathOrUrl
+        val clean = pathOrUrl.trimStart('/')
+        return "${BASE_ORIGIN}/$clean"
+    }
 }

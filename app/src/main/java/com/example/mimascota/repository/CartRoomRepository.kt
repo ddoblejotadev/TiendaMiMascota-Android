@@ -1,91 +1,57 @@
 package com.example.mimascota.repository
 
-import android.content.Context
-import com.example.mimascota.Model.CartItem
-import com.example.mimascota.Model.Producto
-import com.example.mimascota.data.database.AppDatabase
+import com.example.mimascota.data.dao.CartItemDao
 import com.example.mimascota.data.entity.CartItemEntity
+import com.example.mimascota.model.CartItem
+import com.example.mimascota.model.Producto
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
-/**
- * CartRoomRepository: Intermedia entre CartViewModel y Room Database
- * Convierte entre CartItem (Model) y CartItemEntity (BD)
- */
-@Suppress("unused")
-class CartRoomRepository(context: Context) {
+class CartRoomRepository(private val cartItemDao: CartItemDao) {
 
-    private val cartItemDao = AppDatabase.getInstance(context).cartItemDao()
-
-    suspend fun addToCart(cartItem: CartItem): Boolean {
-        return try {
-            val entity = CartItemEntity(
-                productoId = cartItem.producto.id,
-                nombre = cartItem.producto.name,
-                precio = cartItem.producto.price,
-                cantidad = cartItem.cantidad,
-                imagen = cartItem.producto.imageUrl ?: ""
-            )
-            cartItemDao.insertCartItem(entity)
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
+    val allItems: Flow<List<CartItem>> = cartItemDao.getAllCartItems().map { entities ->
+        entities.map { entity -> entityToCartItem(entity) }
     }
 
-    suspend fun getCartItems(): List<CartItem> {
-        return try {
-            cartItemDao.getAllCartItems().map { it.toCartItem() }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
+    private fun entityToCartItem(entity: CartItemEntity): CartItem {
+        val producto = Producto(
+            producto_id = entity.productoId,
+            producto_nombre = entity.nombre,
+            price = entity.precio,
+            imageUrl = entity.imagen
+            // Nota: otros campos opcionales se dejan nulos
+        )
+        return CartItem(producto, entity.cantidad)
     }
 
-    suspend fun updateCartItemQuantity(itemId: Int, newQuantity: Int): Boolean {
-        return try {
-            cartItemDao.getCartItemById(itemId)?.let { item ->
-                cartItemDao.updateCartItem(item.copy(cantidad = newQuantity))
-                true
-            } ?: false
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
+    private fun cartItemToEntity(cartItem: CartItem): CartItemEntity {
+        return CartItemEntity(
+            id = cartItem.producto.producto_id, // Usar ID del producto como PK para la entidad del carrito
+            productoId = cartItem.producto.producto_id,
+            nombre = cartItem.producto.producto_nombre,
+            precio = cartItem.producto.price,
+            cantidad = cartItem.cantidad,
+            imagen = cartItem.producto.imageUrl ?: ""
+        )
     }
 
-    suspend fun removeFromCart(itemId: Int): Boolean {
-        return try {
-            cartItemDao.getCartItemById(itemId)?.let { item ->
-                cartItemDao.deleteCartItem(item)
-                true
-            } ?: false
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
+    suspend fun insert(cartItem: CartItem) {
+        cartItemDao.insertCartItem(cartItemToEntity(cartItem))
     }
 
-    suspend fun clearCart(): Boolean {
-        return try {
-            cartItemDao.clearCart()
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
+    suspend fun update(cartItem: CartItem) {
+        cartItemDao.updateCartItem(cartItemToEntity(cartItem))
     }
 
-    private fun CartItemEntity.toCartItem() = CartItem(
-        producto = Producto(
-            producto_id = productoId,
-            producto_nombre = nombre,
-            description = null,
-            price = precio,
-            stock = 0,
-            category = "",
-            imageUrl = imagen
-        ),
-        cantidad = cantidad
-    )
+    suspend fun delete(cartItem: CartItem) {
+        cartItemDao.deleteCartItem(cartItemToEntity(cartItem))
+    }
+
+    suspend fun clearCart() {
+        cartItemDao.clearCart()
+    }
+
+    suspend fun getItemById(productId: Int): CartItem? {
+        return cartItemDao.getCartItemById(productId)?.let { entityToCartItem(it) }
+    }
 }
-

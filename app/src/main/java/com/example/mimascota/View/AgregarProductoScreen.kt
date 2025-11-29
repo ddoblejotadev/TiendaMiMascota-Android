@@ -1,57 +1,53 @@
-package com.example.mimascota.View
+package com.example.mimascota.view
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.mimascota.Model.Producto
-import com.example.mimascota.ViewModel.CatalogoViewModel
+import com.example.mimascota.model.Producto
+import com.example.mimascota.viewModel.CatalogoViewModel
 
-// Pantalla para agregar producto (ahora funcional)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AgregarProductoScreen(navController: NavController, viewModel: CatalogoViewModel, productoEdit: Producto? = null) {
-    // Si productoEdit no fue pasado, intentar obtenerlo desde viewModel.selectedProductId
-    val selectedId by viewModel.selectedProductId.collectAsState()
-    val editProduct = productoEdit ?: selectedId?.let { viewModel.getProductoFromCache(it) }
-
-    // Estados para los campos del formulario, con valores por defecto para edición
-    var nombre by remember { mutableStateOf(editProduct?.name ?: "") }
-    var precio by remember { mutableStateOf(editProduct?.price?.toString() ?: "") }
-    var stock by remember { mutableStateOf(editProduct?.stock?.toString() ?: "") }
-    var categoria by remember { mutableStateOf(editProduct?.category ?: "") }
-    var descripcion by remember { mutableStateOf(editProduct?.description ?: "") }
-    var imagenUrl by remember { mutableStateOf(editProduct?.imageUrl ?: "") }
-
-    // Estados para mensajes de error y éxito
-    var errorMsg by remember { mutableStateOf<String?>(null) }
-    var successMsg by remember { mutableStateOf<String?>(null) }
+fun AgregarProductoScreen(
+    navController: NavController,
+    viewModel: CatalogoViewModel
+) {
+    var nombre by remember { mutableStateOf("") }
+    var precio by remember { mutableStateOf("") }
+    var stock by remember { mutableStateOf("") }
+    var categoria by remember { mutableStateOf("") }
+    var descripcion by remember { mutableStateOf("") }
+    var imageUrl by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (productoEdit == null) "Agregar Producto" else "Editar Producto") },
+                title = { Text("Agregar Producto") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                }
             )
         }
     ) { padding ->
@@ -59,149 +55,31 @@ fun AgregarProductoScreen(navController: NavController, viewModel: CatalogoViewM
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp)
         ) {
-            // Formulario
-            OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
-                label = { Text("Nombre del producto *") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
-            )
+            OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") })
+            OutlinedTextField(value = precio, onValueChange = { precio = it }, label = { Text("Precio") })
+            OutlinedTextField(value = stock, onValueChange = { stock = it }, label = { Text("Stock") })
+            OutlinedTextField(value = categoria, onValueChange = { categoria = it }, label = { Text("Categoría") })
+            OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") })
+            OutlinedTextField(value = imageUrl, onValueChange = { imageUrl = it }, label = { Text("URL de Imagen") })
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = precio,
-                onValueChange = { precio = it.filter { ch -> ch.isDigit() } },
-                label = { Text("Precio (CLP) *") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                placeholder = { Text("Ej: 9990") }
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = stock,
-                onValueChange = { stock = it.filter { ch -> ch.isDigit() } },
-                label = { Text("Stock *") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                placeholder = { Text("Ej: 10") }
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = categoria,
-                onValueChange = { categoria = it },
-                label = { Text("Categoría *") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                placeholder = { Text("Ej: Juguete, Alimento, Higiene") }
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = descripcion,
-                onValueChange = { descripcion = it },
-                label = { Text("Descripción") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                maxLines = 5,
-                shape = RoundedCornerShape(12.dp),
-                placeholder = { Text("Describe el producto...") }
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = imagenUrl,
-                onValueChange = { imagenUrl = it },
-                label = { Text("URL de la imagen") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                placeholder = { Text("https://ejemplo.com/imagen.jpg") }
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            // Mostrar mensajes de error o éxito
-            errorMsg?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            successMsg?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
-
-            Spacer(Modifier.height(12.dp))
-
-            // Botones de acción
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Botón: Cancelar
-                OutlinedButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Cancelar")
-                }
-
-                // Botón: Guardar
-                Button(
-                    onClick = {
-                        // Validaciones
-                        if (nombre.isBlank() || precio.isBlank() || stock.isBlank() || categoria.isBlank()) {
-                            errorMsg = "Completa todos los campos obligatorios"
-                            return@Button
-                        }
-
-                        val producto = Producto(
-                            producto_id = productoEdit?.producto_id ?: 0,
-                            producto_nombre = nombre,
-                            price = precio.toIntOrNull() ?: 0,
-                            category = categoria,
-                            description = descripcion.ifBlank { null },
-                            imageUrl = imagenUrl.ifBlank { null },
-                            stock = stock.toIntOrNull() ?: 0
-                        )
-
-                        // Crear o actualizar producto según corresponda
-                        if (productoEdit == null) {
-                            viewModel.createProducto(producto) { success, err ->
-                                if (success) {
-                                    successMsg = "Producto creado exitosamente"
-                                    navController.popBackStack()
-                                } else {
-                                    errorMsg = err ?: "Error al crear producto"
-                                }
-                            }
-                        } else {
-                            viewModel.updateProducto(producto.id, producto) { success, err ->
-                                if (success) {
-                                    successMsg = "Producto actualizado"
-                                    navController.popBackStack()
-                                } else {
-                                    errorMsg = err ?: "Error al actualizar"
-                                }
-                            }
-                        }
-
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Guardar")
-                }
+            Button(onClick = {
+                val priceDouble = precio.toDoubleOrNull() ?: 0.0
+                val nuevoProducto = Producto(
+                    producto_nombre = nombre,
+                    price = priceDouble,
+                    stock = stock.toIntOrNull() ?: 0,
+                    category = categoria,
+                    description = descripcion,
+                    imageUrl = imageUrl
+                )
+                viewModel.createProducto(nuevoProducto, "General") // Asumiendo 'General' como tipo por defecto
+                navController.popBackStack()
+            }) {
+                Text("Guardar Producto")
             }
         }
     }

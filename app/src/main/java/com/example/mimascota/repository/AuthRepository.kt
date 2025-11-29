@@ -4,7 +4,7 @@ import com.example.mimascota.model.LoginRequest
 import com.example.mimascota.model.LoginResponse
 import com.example.mimascota.model.RegistroRequest
 import com.example.mimascota.model.Usuario
-import com.example.mimascota.config.ApiClient // cambio de paquete service->config
+import com.example.mimascota.client.RetrofitClient // Corregido: usar RetrofitClient
 import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,7 +13,8 @@ import kotlinx.coroutines.withContext
  * AuthRepository: Repository para autenticación
  */
 class AuthRepository {
-    private val apiService = ApiClient.apiService
+    // Corregido: Usar la instancia única de apiService desde RetrofitClient
+    private val apiService = RetrofitClient.apiService
 
     /**
      * Login con email y password
@@ -47,7 +48,7 @@ class AuthRepository {
     suspend fun registro(nombre: String, email: String, password: String, telefono: String?): Result<LoginResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                val request = RegistroRequest(nombre, email, password, telefono)
+                val request = RegistroRequest(email, password, nombre, telefono)
                 val response = apiService.registro(request)
 
                 if (response.isSuccessful && response.body() != null) {

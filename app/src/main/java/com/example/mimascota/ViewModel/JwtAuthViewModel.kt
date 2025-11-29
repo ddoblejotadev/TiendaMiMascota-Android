@@ -1,165 +1,79 @@
-package com.example.mimascota.ViewModel
+package com.example.mimascota.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mimascota.Model.AuthResponse
-import com.example.mimascota.Model.LoginRequest
-import com.example.mimascota.Model.RegistroRequest
-import com.example.mimascota.client.RetrofitClient
+import com.example.mimascota.model.AuthResponse
+import com.example.mimascota.model.LoginRequest
+import com.example.mimascota.model.RegistroRequest
+import com.example.mimascota.repository.AuthRepository
 import com.example.mimascota.util.TokenManager
-import com.example.mimascota.model.Usuario
-import com.example.mimascota.util.RutValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * AuthViewModel: ViewModel para gestionar autenticación JWT
- */
-class JwtAuthViewModel : ViewModel() {
+class JwtAuthViewModel(private val tokenManager: TokenManager) : ViewModel() {
 
-    private val authService = RetrofitClient.authService
-    private val tokenManager = TokenManager
+    private val authRepository = AuthRepository()
 
-    private val _loginState = MutableStateFlow<AuthResponse?>(null)
-    val loginState: StateFlow<AuthResponse?> = _loginState.asStateFlow()
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
-    private val _isLoggedIn = MutableStateFlow(false)
-    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
-    private val _usuario = MutableStateFlow<Map<String, Any?>?>(null)
-    val usuario: StateFlow<Map<String, Any?>?> = _usuario.asStateFlow()
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
+    val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    init { checkLoginStatus() }
+    sealed class AuthState {
+        object Loading : AuthState()
+        data class Authenticated(val token: String, val userId: Int) : AuthState()
+        object Unauthenticated : AuthState()
+        data class Error(val message: String) : AuthState()
+    }
 
-    private fun checkLoginStatus() {
-        val loggedIn = tokenManager.isLoggedIn()
-        _isLoggedIn.value = loggedIn
-        if (loggedIn) {
-            tokenManager.getUsuario()?.let { u ->
-                _usuario.value = mapOf(
-                    "usuario_id" to u.usuarioId,
-                    "nombre" to u.nombre,
-                    "email" to u.email,
-                    "telefono" to (u.telefono ?: ""),
-                    "rol" to u.rol
-                )
+    init {
+        checkAuthStatus()
+    }
+
+    private fun checkAuthStatus() {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            if (tokenManager.isLoggedIn()) {
+                val token = tokenManager.getToken()!!
+                val userId = tokenManager.getUserId()
+                _authState.value = AuthState.Authenticated(token, userId)
+            } else {
+                _authState.value = AuthState.Unauthenticated
             }
         }
     }
 
-    fun login(email: String, password: String): Boolean {
-        if (!isValidEmail(email)) { _error.value = "Email inválido"; return false }
-        if (!isValidPassword(password)) { _error.value = "La contraseña debe tener al menos 6 caracteres"; return false }
+    fun login(email: String, password: String) {
         viewModelScope.launch {
-            try {
-                _isLoading.value = true
-                _error.value = null
-                val response = authService.login(LoginRequest(email, password))
-                if (response.isSuccessful) {
-                    response.body()?.let { authResp ->
-                        val usuarioObj = Usuario(
-                            usuarioId = authResp.usuarioId,
-                            nombre = authResp.nombre,
-                            email = authResp.email,
-                            telefono = authResp.telefono,
-                            rol = "USUARIO"
-                        )
-                        tokenManager.saveToken(authResp.token)
-                        tokenManager.saveUsuario(usuarioObj)
-                        _loginState.value = authResp
-                        _isLoggedIn.value = true
-                        _usuario.value = mapOf(
-                            "usuario_id" to usuarioObj.usuarioId,
-                            "nombre" to usuarioObj.nombre,
-                            "email" to usuarioObj.email,
-                            "telefono" to (usuarioObj.telefono ?: ""),
-                            "rol" to usuarioObj.rol
-                        )
-                    } ?: run { _error.value = "Respuesta vacía del servidor" }
-                } else {
-                    _error.value = "Credenciales incorrectas: ${response.message()}"
+            _authState.value = AuthState.Loading
+            authRepository.login(email, password)
+                .onSuccess { response ->
+                    _authState.value = AuthState.Authenticated(response.token, response.usuario.usuarioId)
                 }
-            } catch (e: Exception) {
-                _error.value = "Error de conexión: ${e.localizedMessage}"
-            } finally { _isLoading.value = false }
+                .onFailure { throwable ->
+                    _authState.value = AuthState.Error(throwable.message ?: "Error desconocido")
+                }
         }
-        return true
     }
 
-    fun registro(
-        email: String,
-        password: String,
-        nombre: String,
-        telefono: String? = null,
-        direccion: String? = null,
-        run: String? = null
-    ): Boolean {
-        // Validaciones locales: email, password, nombre, run obligatorio y válido
-        if (!isValidEmail(email)) { _error.value = "Email inválido"; return false }
-        if (!isValidPassword(password)) { _error.value = "La contraseña debe tener al menos 6 caracteres"; return false }
-        if (nombre.isBlank()) { _error.value = "El nombre es obligatorio"; return false }
-        if (run.isNullOrBlank()) { _error.value = "El RUT es obligatorio"; return false }
-        if (!RutValidator.esValido(run)) { _error.value = "RUT inválido"; return false }
-
+    fun registro(nombre: String, email: String, password: String, telefono: String?) {
         viewModelScope.launch {
-            try {
-                _isLoading.value = true
-                _error.value = null
-                val response = authService.registro(
-                    RegistroRequest(
-                        nombre = nombre,
-                        email = email,
-                        password = password,
-                        telefono = telefono,
-                        direccion = direccion,
-                        run = run
-                    )
-                )
-                if (response.isSuccessful) {
-                    response.body()?.let { authResp ->
-                        val usuarioObj = Usuario(
-                            usuarioId = authResp.usuarioId,
-                            nombre = authResp.nombre,
-                            email = authResp.email,
-                            telefono = authResp.telefono,
-                            rol = "USUARIO"
-                        )
-                        tokenManager.saveToken(authResp.token)
-                        tokenManager.saveUsuario(usuarioObj)
-                        _loginState.value = authResp
-                        _isLoggedIn.value = true
-                        _usuario.value = mapOf(
-                            "usuario_id" to usuarioObj.usuarioId,
-                            "nombre" to usuarioObj.nombre,
-                            "email" to usuarioObj.email,
-                            "telefono" to (usuarioObj.telefono ?: ""),
-                            "rol" to usuarioObj.rol
-                        )
-                    } ?: run { _error.value = "Respuesta vacía del servidor" }
-                } else {
-                    _error.value = "Error al registrar: ${response.message()}"
+            _authState.value = AuthState.Loading
+            authRepository.registro(nombre, email, password, telefono)
+                .onSuccess { response ->
+                    _authState.value = AuthState.Authenticated(response.token, response.usuario.usuarioId)
                 }
-            } catch (e: Exception) {
-                _error.value = "Error de conexión: ${e.localizedMessage}"
-            } finally { _isLoading.value = false }
+                .onFailure { throwable ->
+                    _authState.value = AuthState.Error(throwable.message ?: "Error desconocido")
+                }
         }
-        return true
     }
 
     fun logout() {
-        tokenManager.logout()
-        _isLoggedIn.value = false
-        _usuario.value = null
-        _loginState.value = null
-        _error.value = null
+        viewModelScope.launch {
+            authRepository.logout()
+            _authState.value = AuthState.Unauthenticated
+        }
     }
-
-    fun clearError() { _error.value = null }
-
-    private fun isValidEmail(email: String): Boolean = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    private fun isValidPassword(password: String): Boolean = password.length >= 6
 }

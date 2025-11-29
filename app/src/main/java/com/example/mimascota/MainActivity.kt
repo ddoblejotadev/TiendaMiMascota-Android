@@ -5,15 +5,15 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.mimascota.View.*
-import com.example.mimascota.ViewModel.AuthViewModel
-import com.example.mimascota.ViewModel.CartViewModel
-import com.example.mimascota.ViewModel.CatalogoViewModel
+import com.example.mimascota.view.*
+import com.example.mimascota.view.AboutUsScreen
+import com.example.mimascota.viewModel.AuthViewModel
+import com.example.mimascota.viewModel.CartViewModel
+import com.example.mimascota.viewModel.CatalogoViewModel
 import com.example.mimascota.util.ConnectionTester
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,8 +35,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             val viewModel: AuthViewModel = viewModel()
-            val viewModelC = remember{ CatalogoViewModel() }
-            val cartViewModel = remember { CartViewModel() }
+            // Usar viewModel() para que las instancias sean gestionadas por el Activity
+            val viewModelC: CatalogoViewModel = viewModel()
+            val cartViewModel: CartViewModel = viewModel()
+
             NavHost(navController, startDestination = "register") {
                 composable("register") {
                     RegisterScreen(navController, viewModel)
@@ -94,8 +96,7 @@ class MainActivity : ComponentActivity() {
                 if (!connectionInfo.isConnected) {
                     Log.w(TAG, "⚠️ No se pudo conectar con el backend")
                     Log.w(TAG, "💡 Verifica que el servidor esté corriendo")
-                }
-            } catch (e: Exception) {
+                }            } catch (e: Exception) {
                 Log.e(TAG, "❌ Error al probar conexión: ${e.message}")
             }
         }

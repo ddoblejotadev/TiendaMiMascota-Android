@@ -1,4 +1,4 @@
-package com.example.mimascota.View
+package com.example.mimascota.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.mimascota.ViewModel.AuthViewModel
+import com.example.mimascota.viewModel.AuthViewModel
 import com.example.mimascota.util.RutValidator
 import android.util.Patterns
 

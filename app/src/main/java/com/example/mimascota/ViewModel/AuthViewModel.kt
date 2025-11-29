@@ -1,4 +1,4 @@
-package com.example.mimascota.ViewModel
+package com.example.mimascota.viewModel
 
 import android.app.Application
 import androidx.compose.runtime.mutableStateOf

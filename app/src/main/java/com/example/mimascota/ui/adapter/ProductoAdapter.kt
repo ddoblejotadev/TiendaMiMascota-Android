@@ -1,107 +1,93 @@
 package com.example.mimascota.ui.adapter
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.graphics.Paint
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
-import com.example.mimascota.Model.Producto
+import com.bumptech.glide.Glide
 import com.example.mimascota.R
-import com.example.mimascota.config.ApiConfig
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
-import java.text.NumberFormat
+import com.example.mimascota.databinding.ItemProductoBinding
+import com.example.mimascota.model.Producto
+import com.example.mimascota.util.AppConfig // Importar AppConfig
 import java.util.Locale
 
-/**
- * ProductoAdapter: Adaptador para RecyclerView que muestra la lista de productos
- *
- * Características:
- * - Usa DiffUtil para actualizaciones eficientes
- * - Carga imágenes con Coil (URLs absolutas desde backend)
- * - Formato de precio chileno
- * - Click listeners para ver detalles y agregar al carrito
- */
 class ProductoAdapter(
     private val onItemClick: (Producto) -> Unit,
     private val onAddToCartClick: (Producto) -> Unit
 ) : ListAdapter<Producto, ProductoAdapter.ProductoViewHolder>(ProductoDiffCallback()) {
 
+    companion object {
+        private const val TAG = "ProductoAdapter"
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductoViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_producto, parent, false)
-        return ProductoViewHolder(view)
+        val binding = ItemProductoBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ProductoViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ProductoViewHolder, position: Int) {
-        val producto = getItem(position)
-        holder.bind(producto)
-
-        // Mostrar header de categoría si es la primera posición o la categoría cambió respecto al anterior
-        val showHeader = if (position == 0) {
-            true
-        } else {
-            val prev = getItem(position - 1)
-            val prevCat = prev.category?.trim()?.lowercase() ?: ""
-            val curCat = producto.category?.trim()?.lowercase() ?: ""
-            prevCat != curCat
-        }
-        holder.showCategoryHeader(if (showHeader) producto.category?.trim() else null)
+        holder.bind(getItem(position))
     }
 
-    inner class ProductoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val cardView: MaterialCardView = itemView.findViewById(R.id.cardProducto)
-        private val imageView: ImageView = itemView.findViewById(R.id.ivProductoImagen)
-        private val tvNombre: TextView = itemView.findViewById(R.id.tvProductoNombre)
-        private val tvPrecio: TextView = itemView.findViewById(R.id.tvProductoPrecio)
-        private val tvStock: TextView = itemView.findViewById(R.id.tvProductoStock)
-        private val tvCategoria: TextView = itemView.findViewById(R.id.tvProductoCategoria)
-        private val btnAddCart: MaterialButton = itemView.findViewById(R.id.btnAddToCart)
-        private val tvCategoryHeader: TextView? = itemView.findViewById(R.id.tvCategoryHeader)
-
+    inner class ProductoViewHolder(private val binding: ItemProductoBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(producto: Producto) {
-            tvNombre.text = producto.name
+            binding.tvProductoNombre.text = producto.producto_nombre
+            binding.tvProductoPrecio.text = String.format(Locale.getDefault(), "$%.2f", producto.price)
+            binding.tvProductoCategoria.text = producto.category
 
-            // Formato de precio chileno
-            val formato = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CL"))
-            tvPrecio.text = formato.format(producto.price)
-
-            tvStock.text = itemView.context.getString(R.string.product_stock, producto.stock ?: 0)
-            tvCategoria.text = producto.category
-
-            // Construir URL absoluta y cargar con Coil
-            val imageUrl = ApiConfig.toAbsoluteImageUrl(producto.imageUrl)
-            imageView.load(imageUrl) {
-                placeholder(R.drawable.placeholder_product)
-                error(R.drawable.ic_error_image)
-                crossfade(true)
-            }
-
-            // Click en la card para ver detalles
-            cardView.setOnClickListener {
-                onItemClick(producto)
-            }
-
-            // Click en botón para agregar al carrito
-            btnAddCart.setOnClickListener {
-                onAddToCartClick(producto)
-            }
-
-            // Deshabilitar botón si no hay stock
-            btnAddCart.isEnabled = (producto.stock ?: 0) > 0
-        }
-
-        fun showCategoryHeader(category: String?) {
-            if (tvCategoryHeader == null) return
-            if (category.isNullOrBlank()) {
-                tvCategoryHeader.visibility = View.GONE
+            val precioAnterior = producto.precioAnterior
+            if (precioAnterior != null && precioAnterior > producto.price) {
+                binding.tvProductoStock.visibility = View.VISIBLE
+                binding.tvProductoStock.text = String.format(Locale.getDefault(), "$%.2f", precioAnterior)
+                binding.tvProductoStock.paintFlags = binding.tvProductoStock.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
             } else {
-                tvCategoryHeader.visibility = View.VISIBLE
-                tvCategoryHeader.text = category
+                binding.tvProductoStock.visibility = View.GONE
+            }
+
+            // Use AppConfig.toAbsoluteImageUrl to build correct URL
+            val imageUrl = producto.imageUrl
+            val fullUrl = AppConfig.toAbsoluteImageUrl(imageUrl)
+            if (!fullUrl.isNullOrEmpty()) {
+                Log.d(TAG, "Cargando imagen: $fullUrl para productoId=${producto.producto_id}")
+                Glide.with(itemView.context)
+                    .load(fullUrl)
+                    .placeholder(R.drawable.placeholder_product)
+                    .error(R.drawable.placeholder_product)
+                    .into(binding.ivProductoImagen)
+            } else {
+                Log.w(TAG, "URL de imagen vacía para productoId=${producto.producto_id}")
+                binding.ivProductoImagen.setImageResource(R.drawable.placeholder_product)
+            }
+
+            binding.btnAddToCart.setOnClickListener {
+                // Animación simple: escalar la imagen y después ejecutar callback
+                binding.ivProductoImagen.animate()
+                    .scaleX(0.85f)
+                    .scaleY(0.85f)
+                    .setDuration(120)
+                    .setListener(object : AnimatorListenerAdapter() {
+                        override fun onAnimationEnd(animation: Animator) {
+                            binding.ivProductoImagen.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(120)
+                                .setListener(object : AnimatorListenerAdapter() {
+                                    override fun onAnimationEnd(animation: Animator) {
+                                        onAddToCartClick(producto)
+                                    }
+                                }).start()
+                        }
+                    }).start()
+            }
+
+            itemView.setOnClickListener {
+                onItemClick(producto)
             }
         }
     }
@@ -112,11 +98,7 @@ class ProductoAdapter(
         }
 
         override fun areContentsTheSame(oldItem: Producto, newItem: Producto): Boolean {
-            // Opcional: comparar campos relevantes
-            return oldItem.producto_id == newItem.producto_id &&
-                    oldItem.price == newItem.price &&
-                    oldItem.imageUrl == newItem.imageUrl &&
-                    oldItem.producto_nombre == newItem.producto_nombre
+            return oldItem.producto_id == newItem.producto_id && oldItem.producto_nombre == newItem.producto_nombre
         }
     }
 }

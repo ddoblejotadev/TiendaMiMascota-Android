@@ -1,7 +1,10 @@
 package com.example.mimascota.repository
 
-import com.example.mimascota.model.Orden
-import com.example.mimascota.config.ApiClient // cambio de paquete
+import com.example.mimascota.model.CrearOrdenRequest
+import com.example.mimascota.client.RetrofitClient
+import com.example.mimascota.model.ItemOrden
+import com.example.mimascota.model.OrdenHistorial
+import com.example.mimascota.model.OrdenResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -9,12 +12,13 @@ import kotlinx.coroutines.withContext
  * OrdenRepository: Repository para gestionar órdenes
  */
 class OrdenRepository {
-    private val apiService = ApiClient.apiService
+    // Corregido: Usar la instancia única de apiService desde RetrofitClient
+    private val apiService = RetrofitClient.apiService
 
     /**
      * Obtener todas las órdenes del usuario
      */
-    suspend fun obtenerMisOrdenes(usuarioId: Int): Result<List<Orden>> {
+    suspend fun obtenerMisOrdenes(usuarioId: Long): Result<List<OrdenHistorial>> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = apiService.obtenerOrdenesUsuario(usuarioId)
@@ -33,7 +37,7 @@ class OrdenRepository {
     /**
      * Obtener detalle de una orden
      */
-    suspend fun obtenerDetalleOrden(ordenId: Long): Result<Orden> {
+    suspend fun obtenerDetalleOrden(ordenId: Long): Result<OrdenHistorial> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = apiService.obtenerDetalleOrden(ordenId)
@@ -52,10 +56,10 @@ class OrdenRepository {
     /**
      * Crear nueva orden
      */
-    suspend fun crearOrden(orden: Orden): Result<Orden> {
+    suspend fun crearOrden(request: CrearOrdenRequest): Result<OrdenResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = apiService.crearOrden(orden)
+                val response = apiService.crearOrden(request)
 
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!)
@@ -71,13 +75,13 @@ class OrdenRepository {
     /**
      * Cancelar una orden
      */
-    suspend fun cancelarOrden(ordenId: Long): Result<Unit> {
+    suspend fun cancelarOrden(ordenId: Long): Result<OrdenHistorial> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = apiService.cancelarOrden(ordenId)
 
-                if (response.isSuccessful) {
-                    Result.success(Unit)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
                 } else {
                     Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
                 }

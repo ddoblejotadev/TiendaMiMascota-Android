@@ -1,25 +1,35 @@
-package com.example.mimascota.Model
+package com.example.mimascota.model
 
-/**
- * Higiene: Tipo específico de producto para productos de higiene de mascotas
- * Extiende de Producto con campos específicos para higiene
- */
-data class Higiene(
-    val idPro: Int,
-    val namePro: String,
-    val descriptionPro: String,
-    val pricePro: Int,
-    val stockPro: Int,
+import com.google.gson.annotations.SerializedName
+
+class Higiene(
+    // Propiedades de la clase base Producto
+    @SerializedName("producto_id")
+    override val producto_id: Int,
+    @SerializedName("producto_nombre")
+    override val producto_nombre: String,
+    @SerializedName("price")
+    override val price: Double,
+    @SerializedName("category")
+    override val category: String = "Higiene",
+    @SerializedName("description")
+    override val description: String?,
+    @SerializedName("imageUrl")
+    override val imageUrl: String?,
+    @SerializedName("stock")
+    override val stock: Int?,
+
+    // Propiedades específicas de Higiene
+    @SerializedName("tipoHigiene")
     override val tipoHigiene: String?,
+    @SerializedName("fragancia")
     override val fragancia: String?
 ) : Producto(
-    producto_id = idPro,
-    producto_nombre = namePro,
-    description = descriptionPro,
-    price = pricePro,
-    stock = stockPro,
-    category = "Higiene",
-    imageUrl = "",
-    tipoHigiene = tipoHigiene,
-    fragancia = fragancia
+    producto_id = producto_id,
+    producto_nombre = producto_nombre,
+    price = price,
+    category = category,
+    description = description,
+    imageUrl = imageUrl,
+    stock = stock
 )

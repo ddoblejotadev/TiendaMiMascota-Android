@@ -1,108 +1,86 @@
-package com.example.mimascota.ViewModel
+package com.example.mimascota.viewModel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mimascota.model.Orden
+import com.example.mimascota.model.OrdenHistorial // Corregido: usar OrdenHistorial
 import com.example.mimascota.repository.OrdenRepository
+import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.launch
 
-/**
- * MisPedidosViewModel: ViewModel para la pantalla de mis pedidos
- */
-class MisPedidosViewModel : ViewModel() {
+class MisPedidosViewModel(private val tokenManager: TokenManager) : ViewModel() {
+
     private val repository = OrdenRepository()
 
-    // LiveData para órdenes
-    private val _ordenes = MutableLiveData<List<Orden>>()
-    val ordenes: LiveData<List<Orden>> = _ordenes
+    // Corregido: usar OrdenHistorial
+    private val _misOrdenes = MutableLiveData<List<OrdenHistorial>>()
+    val misOrdenes: LiveData<List<OrdenHistorial>> = _misOrdenes
 
-    // LiveData para loading state
+    // Corregido: usar OrdenHistorial
+    private val _ordenSeleccionada = MutableLiveData<OrdenHistorial?>()
+    val ordenSeleccionada: LiveData<OrdenHistorial?> = _ordenSeleccionada
+
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    // LiveData para errores
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
-    // LiveData para órden seleccionada
-    private val _ordenSeleccionada = MutableLiveData<Orden?>()
-    val ordenSeleccionada: LiveData<Orden?> = _ordenSeleccionada
-
-    /**
-     * Cargar órdenes del usuario
-     */
-    fun cargarOrdenes(usuarioId: Int) {
+    fun cargarMisOrdenes() {
         viewModelScope.launch {
             _isLoading.value = true
-            _error.value = null
+            val userId = tokenManager.getUserId()
 
-            repository.obtenerMisOrdenes(usuarioId).fold(
-                onSuccess = { ordenes ->
-                    // Ordenar por fecha descendente
-                    _ordenes.value = ordenes.sortedByDescending { it.fecha }
-                    _isLoading.value = false
-                },
-                onFailure = { error ->
-                    _error.value = error.message ?: "Error desconocido"
-                    _ordenes.value = emptyList()
-                    _isLoading.value = false
+            if (userId > 0) {
+                // Corregido: convertir userId a Long
+                val result = repository.obtenerMisOrdenes(userId.toLong())
+
+                result.onSuccess {
+                    // Corregido: El tipo de dato ahora es List<OrdenHistorial>
+                    _misOrdenes.value = it.sortedByDescending { orden -> orden.fecha }
+                }.onFailure {
+                    _error.value = it.message
                 }
-            )
+            } else {
+                _error.value = "Usuario no autenticado."
+            }
+
+            _isLoading.value = false
         }
     }
 
-    /**
-     * Cargar detalle de una orden
-     */
     fun cargarDetalleOrden(ordenId: Long) {
         viewModelScope.launch {
             _isLoading.value = true
-            _error.value = null
+            val result = repository.obtenerDetalleOrden(ordenId)
 
-            repository.obtenerDetalleOrden(ordenId).fold(
-                onSuccess = { orden ->
-                    _ordenSeleccionada.value = orden
-                    _isLoading.value = false
-                },
-                onFailure = { error ->
-                    _error.value = error.message ?: "Error desconocido"
-                    _isLoading.value = false
-                }
-            )
+            result.onSuccess {
+                // Corregido: El tipo de dato ahora es OrdenHistorial
+                _ordenSeleccionada.value = it
+            }.onFailure {
+                _error.value = it.message
+            }
+            
+            _isLoading.value = false
         }
     }
 
-    /**
-     * Cancelar una orden
-     */
     fun cancelarOrden(ordenId: Long) {
         viewModelScope.launch {
             _isLoading.value = true
-            _error.value = null
-
-            repository.cancelarOrden(ordenId).fold(
-                onSuccess = {
-                    _error.value = "Orden cancelada exitosamente"
-                    _isLoading.value = false
-                    // Recargar la lista
-                    val usuarioId = (_ordenes.value?.firstOrNull()?.usuarioId) ?: return@launch
-                    cargarOrdenes(usuarioId)
-                },
-                onFailure = { error ->
-                    _error.value = error.message ?: "Error al cancelar la orden"
-                    _isLoading.value = false
-                }
-            )
+            val result = repository.cancelarOrden(ordenId)
+            result.onSuccess {
+                // Refrescar la lista de órdenes después de cancelar
+                cargarMisOrdenes()
+            }.onFailure {
+                _error.value = it.message
+            }
+            _isLoading.value = false
         }
     }
 
-    /**
-     * Limpiar error
-     */
-    fun clearError() {
+    fun limpiarError() {
         _error.value = null
     }
 }
-
