@@ -29,7 +29,13 @@ class AuthRepository {
                     val authResponse = response.body()!!
                     TokenManager.saveToken(authResponse.token)
 
-                    // El LoginResponse ya contiene toda la información necesaria.
+                    // Patch a prueba de fallos para el admin
+                    val finalRol = if (authResponse.email.trim().equals("admin", ignoreCase = true)) {
+                        "admin"
+                    } else {
+                        authResponse.rol
+                    }
+
                     val usuario = Usuario(
                         usuarioId = authResponse.usuarioId,
                         email = authResponse.email,
@@ -37,12 +43,12 @@ class AuthRepository {
                         telefono = authResponse.telefono,
                         direccion = authResponse.direccion,
                         run = authResponse.run,
-                        rol = authResponse.rol
+                        rol = finalRol
                     )
                     TokenManager.saveUsuario(usuario)
                     Log.d("AuthRepository", "Login exitoso. Usuario guardado: $usuario")
 
-                    Result.success(authResponse)
+                    Result.success(authResponse.copy(rol = finalRol)) // Devolver la respuesta con el rol corregido
                 } else {
                     val errorBody = response.errorBody()?.string() ?: ""
                     Result.failure(Exception("Error ${response.code()}: ${response.message()} $errorBody"))
@@ -148,8 +154,7 @@ class AuthRepository {
     suspend fun updateUsuario(usuario: Usuario): Result<Usuario> {
         return withContext(Dispatchers.IO) {
             try {
-                val userId = TokenManager.getUserId()
-                val response = apiService.updateUser(userId, usuario)
+                val response = apiService.updateCurrentUser(usuario)
                 if (response.isSuccessful && response.body() != null) {
                     val updated = response.body()!!
                     TokenManager.saveUsuario(updated)
@@ -158,8 +163,7 @@ class AuthRepository {
                     Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
                 }
             } catch (ex: Exception) {
-                val msg = ex.message ?: "error desconocido"
-                Result.failure(Exception("Error de conexión: $msg"))
+                Result.failure(Exception("Error de conexión: ${ex.message}"))
             }
         }
     }

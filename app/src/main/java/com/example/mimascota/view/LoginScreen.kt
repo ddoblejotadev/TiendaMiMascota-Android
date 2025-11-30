@@ -29,22 +29,21 @@ import com.example.mimascota.viewModel.LoginState
 fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val loginState by viewModel.loginState
+    val loginStateValue = viewModel.loginState.value
 
-    LaunchedEffect(loginState) {
-        if (loginState is LoginState.Success) {
-            val successState = loginState as LoginState.Success
-            // Log de diagnóstico para ver el rol exacto
-            Log.d("LoginScreen", "Login successful. User role from state: '${successState.userRole}'")
+    LaunchedEffect(loginStateValue) {
+        if (loginStateValue is LoginState.Success) {
+            val userRole = loginStateValue.userRole?.trim()
+            Log.d("LoginScreen", "Login successful. User role from state: '$userRole'")
 
-            if (successState.userRole.equals("admin", ignoreCase = true)) {
+            if (userRole.equals("admin", ignoreCase = true)) {
                 navController.navigate("backoffice") {
-                    popUpTo("login") { inclusive = true }
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
             } else {
                 val username = TokenManager.getUserName() ?: "Invitado"
                 navController.navigate("home/$username") {
-                    popUpTo("login") { inclusive = true }
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
             }
             viewModel.resetLoginState()
@@ -162,8 +161,6 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
                         onClick = {
                             if (email.isNotBlank() && password.isNotBlank()) {
                                 viewModel.loginUsuario(email, password)
-                            } else {
-                                // No es necesario cambiar el estado aquí, se puede mostrar un error local
                             }
                         },
                         modifier = Modifier
@@ -171,7 +168,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        if (loginState is LoginState.Loading) {
+                        if (loginStateValue is LoginState.Loading) {
                             CircularProgressIndicator(color = Color.White)
                         } else {
                             Text(
@@ -182,10 +179,10 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
                         }
                     }
 
-                    if (loginState is LoginState.Error) {
+                    if (loginStateValue is LoginState.Error) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = (loginState as LoginState.Error).message,
+                            text = (loginStateValue as LoginState.Error).message,
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center
