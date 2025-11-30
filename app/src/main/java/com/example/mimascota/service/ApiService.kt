@@ -96,6 +96,13 @@ interface ApiService {
         @Path("id") ordenId: Long
     ): Response<OrdenHistorial>
 
+    // Algunos backends usan la ruta plural `ordenes/{id}` para obtener órdenes por usuario.
+    // Añadimos una alternativa para maximizar compatibilidad.
+    @GET("ordenes/{id}")
+    suspend fun obtenerOrdenesUsuarioAlt(
+        @Path("id") usuarioId: Long
+    ): Response<List<OrdenHistorial>>
+
     // ============= ADMIN / USUARIOS (opcional, solo si backend soporta) =============
 
     @GET("admin/usuarios")

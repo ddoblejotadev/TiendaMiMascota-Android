@@ -22,35 +22,57 @@ class OrdenRepository {
         return withContext(Dispatchers.IO) {
             try {
                 android.util.Log.d("OrdenRepository", "Solicitando órdenes para usuarioId=$usuarioId")
-                val response = apiService.obtenerOrdenesUsuario(usuarioId)
-                if (response.isSuccessful) {
-                    val body = response.body() ?: emptyList()
-                    android.util.Log.d("OrdenRepository", "Órdenes recibidas: count=${body.size}")
-                    Result.success(body)
-                } else if (response.code() == 404) {
-                    // Backend puede devolver 404 si no hay órdenes o si el endpoint no existe;
-                    // intentamos un fallback a /admin/ordenes y filtramos por usuarioId
-                    android.util.Log.i("OrdenRepository", "Endpoint específico no disponible (404) para userId=$usuarioId. Intentando fallback /admin/ordenes.")
-                    try {
-                        val adminResp = apiService.getAllOrders()
-                        if (adminResp.isSuccessful) {
-                            val all = adminResp.body() ?: emptyList()
-                            val filtered = all.filter { it.usuarioId == usuarioId }
-                            android.util.Log.i("OrdenRepository", "Fallback: órdenes totales=${all.size}, filtradas=${filtered.size}")
-                            return@withContext Result.success(filtered)
-                        } else {
-                            android.util.Log.w("OrdenRepository", "Fallback admin/ordenes devolvió code=${adminResp.code()}")
-                            return@withContext Result.success(emptyList())
-                        }
-                    } catch (ex: Exception) {
-                        android.util.Log.w("OrdenRepository", "Error en fallback admin/ordenes: ${ex.message}")
+
+                // 1) Intentar endpoint canonico /orden/usuario/{id}
+                try {
+                    val response = apiService.obtenerOrdenesUsuario(usuarioId)
+                    if (response.isSuccessful) {
+                        val body = response.body() ?: emptyList()
+                        android.util.Log.d("OrdenRepository", "Órdenes recibidas (orden/usuario): count=${body.size}")
+                        return@withContext Result.success(body)
+                    } else if (response.code() != 404) {
+                        val bodyStr = try { response.errorBody()?.string() } catch (_: Exception) { null }
+                        android.util.Log.w("OrdenRepository", "orden/usuario returned ${response.code()} body=$bodyStr")
+                        return@withContext Result.failure(Exception("Error ${response.code()}: ${response.message()} Body=$bodyStr"))
+                    }
+                } catch (ex: Exception) {
+                    android.util.Log.w("OrdenRepository", "Error llamando orden/usuario: ${ex.message}")
+                }
+
+                // 2) Intentar endpoint alternativo /ordenes/{id}
+                try {
+                    val altResp = apiService.obtenerOrdenesUsuarioAlt(usuarioId)
+                    if (altResp.isSuccessful) {
+                        val body = altResp.body() ?: emptyList()
+                        android.util.Log.d("OrdenRepository", "Órdenes recibidas (ordenes/{id}): count=${body.size}")
+                        return@withContext Result.success(body)
+                    } else if (altResp.code() != 404) {
+                        val bodyStr = try { altResp.errorBody()?.string() } catch (_: Exception) { null }
+                        android.util.Log.w("OrdenRepository", "ordenes/{id} returned ${altResp.code()} body=$bodyStr")
+                        return@withContext Result.failure(Exception("Error ${altResp.code()}: ${altResp.message()} Body=$bodyStr"))
+                    }
+                } catch (ex: Exception) {
+                    android.util.Log.w("OrdenRepository", "Error llamando ordenes/{id}: ${ex.message}")
+                }
+
+                // 3) Fallback: intentar endpoint admin/ordenes y filtrar por usuarioId
+                try {
+                    android.util.Log.i("OrdenRepository", "Endpoint específico no disponible (404). Intentando fallback /admin/ordenes.")
+                    val adminResp = apiService.getAllOrders()
+                    if (adminResp.isSuccessful) {
+                        val all = adminResp.body() ?: emptyList()
+                        val filtered = all.filter { it.usuarioId == usuarioId }
+                        android.util.Log.i("OrdenRepository", "Fallback: órdenes totales=${all.size}, filtradas=${filtered.size}")
+                        return@withContext Result.success(filtered)
+                    } else {
+                        android.util.Log.w("OrdenRepository", "Fallback admin/ordenes devolvió code=${adminResp.code()}")
                         return@withContext Result.success(emptyList())
                     }
-                } else {
-                    val bodyStr = try { response.errorBody()?.string() } catch (e: Exception) { null }
-                    android.util.Log.w("OrdenRepository", "Error al obtener órdenes userId=$usuarioId code=${response.code()} body=$bodyStr")
-                    Result.failure(Exception("Error ${response.code()}: ${response.message()} Body=$bodyStr"))
+                } catch (ex: Exception) {
+                    android.util.Log.w("OrdenRepository", "Error en fallback admin/ordenes: ${ex.message}")
+                    return@withContext Result.success(emptyList())
                 }
+
             } catch (e: Exception) {
                 Result.failure(Exception("Error de conexión: ${e.message}"))
             }
