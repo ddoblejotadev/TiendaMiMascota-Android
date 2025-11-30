@@ -43,7 +43,8 @@ class AuthRepository {
                         telefono = authResponse.telefono,
                         direccion = authResponse.direccion,
                         run = authResponse.run,
-                        rol = finalRol
+                        rol = finalRol,
+                        fotoUrl = authResponse.fotoUrl
                     )
                     TokenManager.saveUsuario(usuario)
                     Log.d("AuthRepository", "Login exitoso. Usuario guardado: $usuario")
@@ -51,7 +52,7 @@ class AuthRepository {
                     Result.success(authResponse.copy(rol = finalRol)) // Devolver la respuesta con el rol corregido
                 } else {
                     val errorBody = response.errorBody()?.string() ?: ""
-                    Result.failure(Exception("Error ${response.code()}: ${response.message()} $errorBody"))
+                    Result.failure(Exception("Error ${response.code()}: $errorBody"))
                 }
             } catch (ex: Exception) {
                 Result.failure(Exception("Error de conexión: ${ex.message}"))
@@ -79,7 +80,8 @@ class AuthRepository {
                         telefono = authResponse.telefono,
                         direccion = authResponse.direccion,
                         run = authResponse.run,
-                        rol = authResponse.rol
+                        rol = authResponse.rol,
+                        fotoUrl = authResponse.fotoUrl
                     )
                     TokenManager.saveUsuario(usuario)
 
@@ -154,13 +156,13 @@ class AuthRepository {
     suspend fun updateUsuario(usuario: Usuario): Result<Usuario> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = apiService.updateCurrentUser(usuario)
+                val response = apiService.updateUser(usuario.usuarioId.toLong(), usuario)
                 if (response.isSuccessful && response.body() != null) {
                     val updated = response.body()!!
                     TokenManager.saveUsuario(updated)
                     Result.success(updated)
                 } else {
-                    Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                    Result.failure(Exception("Error ${response.code()}: ${response.errorBody()?.string()}"))
                 }
             } catch (ex: Exception) {
                 Result.failure(Exception("Error de conexión: ${ex.message}"))

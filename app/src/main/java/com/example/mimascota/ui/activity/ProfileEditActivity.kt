@@ -2,8 +2,14 @@
 
 package com.example.mimascota.ui.activity
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
@@ -27,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
@@ -34,6 +41,7 @@ import com.example.mimascota.R
 import com.example.mimascota.repository.AuthRepository
 import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 class ProfileEditActivity : ComponentActivity() {
@@ -55,31 +63,31 @@ class ProfileEditActivity : ComponentActivity() {
 
             var showImageSourceDialog by remember { mutableStateOf(false) }
 
-            val galleryLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent()
-            ) { uri: Uri? ->
-                if (uri != null) {
-                    Log.d("ProfileEditActivity", "✅ URI de la imagen recibida de la galería: $uri")
-                    imageUri = uri
-                } else {
-                    Log.w("ProfileEditActivity", "❌ El usuario no seleccionó ninguna imagen.")
-                }
+            fun createImageUri(): Uri {
+                val image = File(context.cacheDir, "profile_pic.jpg")
+                return FileProvider.getUriForFile(context, "${context.packageName}.provider", image)
             }
+
+            val galleryLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent(),
+                onResult = { uri: Uri? -> if (uri != null) imageUri = uri }
+            )
 
             val cameraLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.TakePicture()
-            ) { success ->
-                if (success) {
-                    Log.d("ProfileEditActivity", "✅ Foto tomada con éxito. URI: $imageUri")
-                } else {
-                    Log.w("ProfileEditActivity", "❌ El usuario canceló la captura de la foto.")
-                }
-            }
+                contract = ActivityResultContracts.TakePicture(),
+                onResult = { success -> if (success) Log.d("ProfileEditActivity", "✅ Foto tomada con éxito.") }
+            )
 
-            fun createImageUri(): Uri {
-                val image = File(context.cacheDir, "images/profile_pic.jpg")
-                image.parentFile?.mkdirs()
-                return FileProvider.getUriForFile(context, "${context.packageName}.provider", image)
+            val cameraPermissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission()
+            ) { isGranted: Boolean ->
+                if (isGranted) {
+                    val newUri = createImageUri()
+                    imageUri = newUri
+                    cameraLauncher.launch(newUri)
+                } else {
+                    Toast.makeText(context, "Permiso de cámara denegado.", Toast.LENGTH_SHORT).show()
+                }
             }
 
             LaunchedEffect(Unit) {
@@ -131,11 +139,7 @@ class ProfileEditActivity : ComponentActivity() {
 
                     if (showImageSourceDialog) {
                         Dialog(onDismissRequest = { showImageSourceDialog = false }) {
-                            Surface(
-                                shape = MaterialTheme.shapes.medium,
-                                color = MaterialTheme.colorScheme.surface,
-                                tonalElevation = 8.dp
-                            ) {
+                            Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface, tonalElevation = 8.dp) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Text("Cambiar foto de perfil", style = MaterialTheme.typography.titleMedium)
                                     Spacer(modifier = Modifier.height(16.dp))
@@ -151,9 +155,14 @@ class ProfileEditActivity : ComponentActivity() {
                                     TextButton(
                                         onClick = {
                                             showImageSourceDialog = false
-                                            val newUri = createImageUri()
-                                            imageUri = newUri
-                                            cameraLauncher.launch(newUri)
+                                            when (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)) {
+                                                PackageManager.PERMISSION_GRANTED -> {
+                                                    val newUri = createImageUri()
+                                                    imageUri = newUri
+                                                    cameraLauncher.launch(newUri)
+                                                }
+                                                else -> cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                            }
                                         },
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
@@ -199,10 +208,31 @@ class ProfileEditActivity : ComponentActivity() {
                                     }
 
                                     val base64Image = imageUri?.let { uri ->
-                                        Log.d("ProfileEditActivity", "🔄 Convirtiendo imagen a Base64...")
-                                        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                                            val bytes = inputStream.readBytes()
-                                            "data:image/jpeg;base64,${Base64.encodeToString(bytes, Base64.DEFAULT)}"
+                                        Log.d("ProfileEditActivity", "🔄 Redimensionando y convirtiendo imagen a Base64...")
+                                        try {
+                                            val bitmap = if (Build.VERSION.SDK_INT < 28) {
+                                                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                                            } else {
+                                                val source = ImageDecoder.createSource(context.contentResolver, uri)
+                                                ImageDecoder.decodeBitmap(source)
+                                            }
+
+                                            val maxHeight = 800
+                                            val maxWidth = 800
+                                            val scale = minOf(maxHeight.toFloat() / bitmap.height, maxWidth.toFloat() / bitmap.width)
+                                            val newWidth = (bitmap.width * scale).toInt()
+                                            val newHeight = (bitmap.height * scale).toInt()
+
+                                            val resizedBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+
+                                            val outputStream = ByteArrayOutputStream()
+                                            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+                                            val byteArray = outputStream.toByteArray()
+
+                                            "data:image/jpeg;base64,${Base64.encodeToString(byteArray, Base64.DEFAULT)}"
+                                        } catch (e: Exception) {
+                                            Log.e("ProfileEditActivity", "❌ Error al procesar la imagen: ${e.message}", e)
+                                            null
                                         }
                                     }
 
