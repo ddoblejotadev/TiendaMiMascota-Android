@@ -15,6 +15,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.R
 import com.example.mimascota.viewModel.AuthViewModel
+import android.app.Activity
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,7 +142,7 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
-                text = name ?: "Invitado",
+                text = displayName,
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.primary
             )
@@ -209,8 +215,22 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Launcher para Editar Perfil y recibir resultado
+            val context = LocalContext.current
+            val profileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
+                if (activityResult.resultCode == Activity.RESULT_OK) {
+                    val updatedName = activityResult.data?.getStringExtra("updated_name")
+                    if (!updatedName.isNullOrEmpty()) {
+                        // Navegar a home con el nombre actualizado para refrescar saludo
+                        navController.navigate("home/$updatedName") {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        }
+                    }
+                }
+            }
+
             OutlinedButton(
-                onClick = { navController.navigate("editarPerfil") },
+                onClick = { val intent = Intent(context, com.example.mimascota.ui.activity.ProfileEditActivity::class.java); profileLauncher.launch(intent) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
