@@ -21,7 +21,7 @@ class SharedViewModel(context: Context) : ViewModel() {
     private val cartSyncRepository = CartSyncRepository()
     private val tokenManager = RetrofitClient.getTokenManager()
 
-    private val userId: Int get() = tokenManager.getUserId()
+    private val userId: Int get() = tokenManager.getUserId().toInt()
     var sincronizacionAutomatica: Boolean = true
 
     // ========== PRODUCTOS ==========
@@ -212,7 +212,7 @@ class SharedViewModel(context: Context) : ViewModel() {
         viewModelScope.launch {
             try {
                 val items = _carrito.value ?: emptyList()
-                when (val result = cartSyncRepository.sincronizarCarritoConReact(userId, items)) {
+                when (val result = cartSyncRepository.sincronizarCarritoConReact(userId.toInt(), items)) {
                     is CartSyncRepository.SyncResult.Success -> Log.d("SharedViewModel", "Carrito sincronizado con React")
                     is CartSyncRepository.SyncResult.Error -> Log.e("SharedViewModel", "Error sincronizando: ${result.message}")
                 }

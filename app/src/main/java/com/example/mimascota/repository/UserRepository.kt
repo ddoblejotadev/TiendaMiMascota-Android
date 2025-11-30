@@ -1,7 +1,7 @@
 package com.example.mimascota.repository
 
 import android.content.Context
-import com.example.mimascota.Model.User
+import com.example.mimascota.model.User
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File

@@ -1,7 +1,7 @@
 package com.example.mimascota.repository
 
 import android.content.Context
-import com.example.mimascota.Model.User
+import com.example.mimascota.model.User
 import com.example.mimascota.data.database.AppDatabase
 import com.example.mimascota.data.entity.UserEntity
 

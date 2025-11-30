@@ -77,16 +77,16 @@ class AuthRepository {
                 val response = apiService.verificarToken()
 
                 if (response.isSuccessful && response.body() != null) {
-                    Result.success(response.body()!!)
+                    Result.success<Usuario>(response.body()!!)
                 } else {
                     // Si no es exitoso, limpiar el token
                     TokenManager.clearUserData()
-                    Result.failure(Exception("Token inválido"))
+                    Result.failure<Usuario>(Exception("Token inválido"))
                 }
             } catch (e: Exception) {
                 // Si hay error de conexión, limpiar el token
                 TokenManager.clearUserData()
-                Result.failure(Exception("Error de conexión: ${e.message}"))
+                Result.failure<Usuario>(Exception("Error de conexión: ${e.message}"))
             }
         }
     }

@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mimascota.Model.User
+import com.example.mimascota.model.User
 import com.example.mimascota.repository.UserRepository
 import com.example.mimascota.repository.UserRoomRepository
 import kotlinx.coroutines.Dispatchers

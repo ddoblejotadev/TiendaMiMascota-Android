@@ -47,7 +47,7 @@ object TokenManager {
         val json = gson.toJson(usuario)
         prefs.edit().apply {
             putString(KEY_USUARIO, json)
-            putInt(KEY_USER_ID, usuario.usuarioId)
+            putLong(KEY_USER_ID, usuario.usuarioId.toLong())
             apply()
         }
     }
@@ -71,8 +71,8 @@ object TokenManager {
     /**
      * Obtener ID del usuario
      */
-    fun getUserId(): Int {
-        return prefs.getInt(KEY_USER_ID, -1)
+    fun getUserId(): Long {
+        return prefs.getLong(KEY_USER_ID, -1L)
     }
 
     /**
@@ -143,4 +143,3 @@ object TokenManager {
         }
     }
 }
-

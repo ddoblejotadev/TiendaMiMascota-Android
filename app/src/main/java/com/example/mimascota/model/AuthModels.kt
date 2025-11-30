@@ -65,3 +65,25 @@ data class AuthResponse(
     val mensaje: String? = null
 )
 
+/**
+ * Usuario: Modelo de usuario para respuestas de autenticación
+ */
+data class Usuario(
+    @SerializedName("usuario_id")
+    val usuarioId: Int,
+
+    @SerializedName("email")
+    val email: String,
+
+    @SerializedName("nombre")
+    val nombre: String,
+
+    @SerializedName("telefono")
+    val telefono: String? = null,
+
+    @SerializedName("direccion")
+    val direccion: String? = null,
+
+    @SerializedName("run")
+    val run: String? = null
+)

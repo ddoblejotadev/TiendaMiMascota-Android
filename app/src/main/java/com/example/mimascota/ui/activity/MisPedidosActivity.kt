@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mimascota.databinding.ActivityMisPedidosBinding
 import com.example.mimascota.ui.adapter.OrdenesAdapter
+import com.example.mimascota.util.TokenManager
 import com.example.mimascota.viewModel.MisPedidosViewModel
 import com.example.mimascota.viewModel.MisPedidosViewModelFactory
 
@@ -26,7 +27,7 @@ class MisPedidosActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Usar factory por compatibilidad pero sin tokenManager obligatorio
-        val factory = MisPedidosViewModelFactory()
+        val factory = MisPedidosViewModelFactory(TokenManager)
         viewModel = ViewModelProvider(this, factory)[MisPedidosViewModel::class.java]
 
         // Configurar RecyclerView

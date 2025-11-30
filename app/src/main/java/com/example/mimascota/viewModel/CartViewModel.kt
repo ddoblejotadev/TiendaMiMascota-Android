@@ -46,7 +46,7 @@ class CartViewModel : ViewModel() {
         if (TokenManager.isLoggedIn()) {
             viewModelScope.launch {
                 try {
-                    val userId = TokenManager.getUserId()
+                    val userId = TokenManager.getUserId().toInt()
                     val result = cartSyncRepository.sincronizarCarritoConReact(userId, _items.value)
                     when (result) {
                         is CartSyncRepository.SyncResult.Success -> Log.d(TAG, "Carrito sincronizado con backend")
@@ -79,7 +79,7 @@ class CartViewModel : ViewModel() {
         if (TokenManager.isLoggedIn()) {
             viewModelScope.launch {
                 try {
-                    val userId = TokenManager.getUserId()
+                    val userId = TokenManager.getUserId().toInt()
                     val result = cartSyncRepository.sincronizarCarritoConReact(userId, _items.value)
                     when (result) {
                         is CartSyncRepository.SyncResult.Success -> Log.d(TAG, "Carrito sincronizado tras actualizar cantidad")
@@ -99,7 +99,7 @@ class CartViewModel : ViewModel() {
         if (TokenManager.isLoggedIn()) {
             viewModelScope.launch {
                 try {
-                    val userId = TokenManager.getUserId()
+                    val userId = TokenManager.getUserId().toInt()
                     val result = cartSyncRepository.sincronizarCarritoConReact(userId, _items.value)
                     when (result) {
                         is CartSyncRepository.SyncResult.Success -> Log.d(TAG, "Carrito vacío sincronizado")

@@ -36,7 +36,7 @@ class JwtAuthViewModel(private val tokenManager: TokenManager) : ViewModel() {
             _authState.value = AuthState.Loading
             if (tokenManager.isLoggedIn()) {
                 val token = tokenManager.getToken()!!
-                val userId = tokenManager.getUserId()
+                val userId = tokenManager.getUserId().toInt()
                 _authState.value = AuthState.Authenticated(token, userId)
             } else {
                 _authState.value = AuthState.Unauthenticated
