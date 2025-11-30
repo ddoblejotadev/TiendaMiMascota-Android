@@ -3,14 +3,11 @@ package com.example.mimascota.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimascota.model.AuthResponse
-import com.example.mimascota.model.LoginRequest
-import com.example.mimascota.model.RegistroRequest
 import com.example.mimascota.repository.AuthRepository
 import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class JwtAuthViewModel(private val tokenManager: TokenManager) : ViewModel() {
@@ -49,7 +46,7 @@ class JwtAuthViewModel(private val tokenManager: TokenManager) : ViewModel() {
             _authState.value = AuthState.Loading
             authRepository.login(email, password)
                 .onSuccess { response ->
-                    val userId = response.usuario?.usuarioId ?: TokenManager.getUserId().toInt()
+                    val userId = response.usuarioId
                     _authState.value = AuthState.Authenticated(response.token, userId)
                 }
                 .onFailure { throwable ->
@@ -63,7 +60,7 @@ class JwtAuthViewModel(private val tokenManager: TokenManager) : ViewModel() {
             _authState.value = AuthState.Loading
             authRepository.registro(nombre, email, password, telefono)
                 .onSuccess { response ->
-                    val userId = response.usuario?.usuarioId ?: TokenManager.getUserId().toInt()
+                    val userId = response.usuarioId
                     _authState.value = AuthState.Authenticated(response.token, userId)
                 }
                 .onFailure { throwable ->

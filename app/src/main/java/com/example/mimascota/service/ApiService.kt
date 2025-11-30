@@ -12,10 +12,10 @@ interface ApiService {
     // ============= AUTENTICACIÓN =============
 
     @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
     @POST("auth/registro")
-    suspend fun registro(@Body request: RegistroRequest): Response<LoginResponse>
+    suspend fun registro(@Body request: RegistroRequest): Response<AuthResponse>
 
     @GET("auth/verificar")
     suspend fun verificarToken(): Response<Usuario>

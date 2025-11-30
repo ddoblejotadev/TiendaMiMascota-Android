@@ -2,8 +2,8 @@ package com.example.mimascota.repository
 
 import android.util.Log
 import com.example.mimascota.client.RetrofitClient
+import com.example.mimascota.model.AuthResponse
 import com.example.mimascota.model.LoginRequest
-import com.example.mimascota.model.LoginResponse
 import com.example.mimascota.model.RegistroRequest
 import com.example.mimascota.model.Usuario
 import com.example.mimascota.util.TokenManager
@@ -19,25 +19,29 @@ class AuthRepository {
     /**
      * Login con email y password
      */
-    suspend fun login(email: String, password: String): Result<LoginResponse> {
+    suspend fun login(email: String, password: String): Result<AuthResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val request = LoginRequest(email, password)
                 val response = apiService.login(request)
 
                 if (response.isSuccessful && response.body() != null) {
-                    val loginResponse = response.body()!!
-                    TokenManager.saveToken(loginResponse.token)
+                    val authResponse = response.body()!!
+                    TokenManager.saveToken(authResponse.token)
 
-                    // Después de un login exitoso, obtener y guardar el perfil del usuario
-                    val profileResult = obtenerUsuario()
-                    if (profileResult.isSuccess) {
-                        Log.d("AuthRepository", "User profile fetched and saved successfully after login.")
-                        Result.success(loginResponse)
-                    } else {
-                        Log.e("AuthRepository", "Login succeeded but failed to fetch user profile.")
-                        Result.failure(Exception("No se pudo obtener el perfil del usuario después del login."))
-                    }
+                    val usuario = Usuario(
+                        usuarioId = authResponse.usuarioId,
+                        email = authResponse.email,
+                        nombre = authResponse.nombre,
+                        telefono = authResponse.telefono,
+                        direccion = authResponse.direccion,
+                        run = authResponse.run,
+                        rol = authResponse.rol
+                    )
+                    TokenManager.saveUsuario(usuario)
+                    Log.d("AuthRepository", "Login exitoso. Usuario guardado: $usuario")
+
+                    Result.success(authResponse)
                 } else {
                     val errorBody = response.errorBody()?.string() ?: ""
                     Result.failure(Exception("Error ${response.code()}: ${response.message()} $errorBody"))
@@ -51,24 +55,28 @@ class AuthRepository {
     /**
      * Registro de nuevo usuario
      */
-    suspend fun registro(nombre: String, email: String, password: String, telefono: String?): Result<LoginResponse> {
+    suspend fun registro(nombre: String, email: String, password: String, telefono: String?): Result<AuthResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val request = RegistroRequest(email, password, nombre, telefono)
                 val response = apiService.registro(request)
 
                 if (response.isSuccessful && response.body() != null) {
-                    val loginResponse = response.body()!!
-                    TokenManager.saveToken(loginResponse.token)
+                    val authResponse = response.body()!!
+                    TokenManager.saveToken(authResponse.token)
 
-                    val profileResult = obtenerUsuario()
-                    if (profileResult.isSuccess) {
-                        Log.d("AuthRepository", "User profile fetched and saved successfully after registration.")
-                        Result.success(loginResponse)
-                    } else {
-                        Log.e("AuthRepository", "Registration succeeded but failed to fetch user profile.")
-                        Result.failure(Exception("No se pudo obtener el perfil del usuario después del registro."))
-                    }
+                    val usuario = Usuario(
+                        usuarioId = authResponse.usuarioId,
+                        email = authResponse.email,
+                        nombre = authResponse.nombre,
+                        telefono = authResponse.telefono,
+                        direccion = authResponse.direccion,
+                        run = authResponse.run,
+                        rol = authResponse.rol
+                    )
+                    TokenManager.saveUsuario(usuario)
+
+                    Result.success(authResponse)
                 } else {
                     Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
                 }
