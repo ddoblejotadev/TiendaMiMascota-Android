@@ -1,10 +1,11 @@
 package com.example.mimascota.repository
 
+import android.util.Log
+import com.example.mimascota.client.RetrofitClient
 import com.example.mimascota.model.LoginRequest
 import com.example.mimascota.model.LoginResponse
 import com.example.mimascota.model.RegistroRequest
 import com.example.mimascota.model.Usuario
-import com.example.mimascota.client.RetrofitClient // Corregido: usar RetrofitClient
 import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,7 +14,6 @@ import kotlinx.coroutines.withContext
  * AuthRepository: Repository para autenticación
  */
 class AuthRepository {
-    // Corregido: Usar la instancia única de apiService desde RetrofitClient
     private val apiService = RetrofitClient.apiService
 
     /**
@@ -30,13 +30,14 @@ class AuthRepository {
                     TokenManager.saveToken(loginResponse.token)
 
                     // Después de un login exitoso, obtener y guardar el perfil del usuario
-                    val perfilResult = obtenerUsuario()
-                    if (perfilResult.isFailure) {
-                        // Si no se puede obtener el perfil, el login se considera fallido
-                        return@withContext Result.failure(Exception("No se pudo obtener el perfil del usuario después del login."))
+                    val profileResult = obtenerUsuario()
+                    if (profileResult.isSuccess) {
+                        Log.d("AuthRepository", "User profile fetched and saved successfully after login.")
+                        Result.success(loginResponse)
+                    } else {
+                        Log.e("AuthRepository", "Login succeeded but failed to fetch user profile.")
+                        Result.failure(Exception("No se pudo obtener el perfil del usuario después del login."))
                     }
-
-                    Result.success(loginResponse)
                 } else {
                     val errorBody = response.errorBody()?.string() ?: ""
                     Result.failure(Exception("Error ${response.code()}: ${response.message()} $errorBody"))
@@ -59,11 +60,15 @@ class AuthRepository {
                 if (response.isSuccessful && response.body() != null) {
                     val loginResponse = response.body()!!
                     TokenManager.saveToken(loginResponse.token)
-                    val perfilResult = obtenerUsuario()
-                    if (perfilResult.isFailure) {
-                        return@withContext Result.failure(Exception("No se pudo obtener el perfil del usuario después del registro."))
+
+                    val profileResult = obtenerUsuario()
+                    if (profileResult.isSuccess) {
+                        Log.d("AuthRepository", "User profile fetched and saved successfully after registration.")
+                        Result.success(loginResponse)
+                    } else {
+                        Log.e("AuthRepository", "Registration succeeded but failed to fetch user profile.")
+                        Result.failure(Exception("No se pudo obtener el perfil del usuario después del registro."))
                     }
-                    Result.success(loginResponse)
                 } else {
                     Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
                 }
@@ -80,16 +85,15 @@ class AuthRepository {
         return withContext(Dispatchers.IO) {
             try {
                 val response = apiService.verificarToken()
-
                 if (response.isSuccessful && response.body() != null) {
-                    Result.success<Usuario>(response.body()!!)
+                    Result.success(response.body()!!)
                 } else {
                     TokenManager.clearUserData()
-                    Result.failure<Usuario>(Exception("Token inválido"))
+                    Result.failure(Exception("Token inválido"))
                 }
             } catch (ex: Exception) {
                 TokenManager.clearUserData()
-                Result.failure<Usuario>(Exception("Error de conexión: ${ex.message}"))
+                Result.failure(Exception("Error de conexión: ${ex.message}"))
             }
         }
     }
@@ -115,10 +119,10 @@ class AuthRepository {
         return withContext(Dispatchers.IO) {
             try {
                 val response = apiService.obtenerUsuario()
-
                 if (response.isSuccessful && response.body() != null) {
                     val usuario = response.body()!!
                     TokenManager.saveUsuario(usuario)
+                    Log.d("AuthRepository", "Usuario guardado desde obtenerUsuario: $usuario")
                     Result.success(usuario)
                 } else {
                     Result.failure(Exception("Error ${response.code()}: ${response.message()}"))

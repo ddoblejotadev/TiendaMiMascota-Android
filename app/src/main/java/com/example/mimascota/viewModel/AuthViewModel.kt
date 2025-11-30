@@ -4,12 +4,9 @@ import android.app.Application
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mimascota.model.User
-import com.example.mimascota.repository.UserRepository
-import com.example.mimascota.repository.UserRoomRepository
 import com.example.mimascota.repository.AuthRepository
+import com.example.mimascota.repository.UserRoomRepository
 import com.example.mimascota.util.TokenManager
-import com.example.mimascota.model.Usuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,9 +18,8 @@ import kotlinx.coroutines.withContext
  */
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repo = UserRepository()
-    private val roomRepository = UserRoomRepository(application)
     private val authRepository = AuthRepository()
+    private val roomRepository = UserRoomRepository(application)
 
     var registroState = mutableStateOf("")
     var loginState = mutableStateOf("")
@@ -77,24 +73,29 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun actualizarFotoPerfil(fotoPerfil: String) {
+    fun actualizarFotoPerfil(fotoPath: String) {
         viewModelScope.launch {
-            usuarioActualId.value?.takeIf { it != 0 }?.let { userId ->
-                withContext(Dispatchers.IO) {
-                    roomRepository.updateUserPhoto(userId, fotoPerfil)
+            usuarioActualId.value?.let { userId ->
+                if (userId != 0) {
+                    withContext(Dispatchers.IO) {
+                        roomRepository.updateUserPhoto(userId, fotoPath)
+                    }
+                    _fotoPerfil.value = fotoPath
                 }
-                _fotoPerfil.value = fotoPerfil
             }
         }
     }
 
     suspend fun obtenerFotoPerfilActual(): String? {
-        val foto = usuarioActualId.value?.takeIf { it != 0 }?.let { userId ->
-            withContext(Dispatchers.IO) {
+        val userId = usuarioActualId.value
+        if (userId != null && userId != 0) {
+            val foto = withContext(Dispatchers.IO) {
                 roomRepository.getUserPhotoById(userId)
             }
+            _fotoPerfil.value = foto
+            return foto
+        } else {
+            return null
         }
-        _fotoPerfil.value = foto
-        return foto
     }
 }
