@@ -43,7 +43,7 @@
             android:name=".ui.activity.OrdenExitosaActivity"
             android:exported="false"
             android:label="Orden Exitosa"
-            android:theme="@style/Theme.MiMascota" />
+            android:theme="@style/Theme.MiMascota.MaterialComponents" />
         <activity
             android:name=".ui.activity.MisPedidosActivity"
             android:exported="false"
@@ -53,6 +53,11 @@
             android:name=".ui.activity.CompraRechazadaActivity"
             android:exported="false"
             android:label="Compra Rechazada"
+            android:theme="@style/Theme.MiMascota" />
+        <activity
+            android:name=".ui.activity.ProfileEditActivity"
+            android:exported="false"
+            android:label="Editar Perfil"
             android:theme="@style/Theme.MiMascota" />
     </application>
 

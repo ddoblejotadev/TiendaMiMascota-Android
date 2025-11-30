@@ -34,6 +34,14 @@ fun BackOfficeScreen(navController: NavController, viewModel: CatalogoViewModel)
     val ordenes by adminViewModel.orders.collectAsState()
     val isLoading by adminViewModel.isLoading.collectAsState()
     val context = LocalContext.current
+    val errorMsg by adminViewModel.error.collectAsState()
+
+    // Mostrar error en Toast cuando cambie
+    LaunchedEffect(errorMsg) {
+        if (!errorMsg.isNullOrBlank()) {
+            Toast.makeText(context, "Admin error: $errorMsg", Toast.LENGTH_LONG).show()
+        }
+    }
 
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Productos", "Usuarios", "Órdenes")

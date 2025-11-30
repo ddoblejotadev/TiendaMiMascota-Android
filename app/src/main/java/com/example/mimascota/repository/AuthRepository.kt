@@ -135,4 +135,24 @@ class AuthRepository {
             }
         }
     }
+
+    /**
+     * Actualizar usuario (campo dirección, telefono, region, ciudad)
+     */
+    suspend fun updateUsuario(usuario: Usuario): Result<Usuario> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.updateCurrentUser(usuario)
+                if (response.isSuccessful && response.body() != null) {
+                    val updated = response.body()!!
+                    TokenManager.saveUsuario(updated)
+                    Result.success(updated)
+                } else {
+                    Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Error de conexión: ${e.message}"))
+            }
+        }
+    }
 }

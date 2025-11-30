@@ -98,6 +98,22 @@ class CheckoutActivity : AppCompatActivity() {
             checkoutViewModel.crearOrden(items, datosEnvio, subtotal, total)
         }
 
+        // Add: prefill address fields from saved user
+        val savedUser = com.example.mimascota.util.TokenManager.getUsuario()
+        savedUser?.let {
+            binding.etNombreCompleto.setText(it.nombre)
+            binding.etEmail.setText(it.email)
+            binding.etTelefono.setText(it.telefono ?: "")
+            // If backend stores direccion, it will populate; otherwise leave blank
+            binding.etDireccion.setText(it.direccion ?: "")
+        }
+
+        // Allow user to edit address via ProfileEditActivity
+        binding.etDireccion.setOnClickListener {
+            val intent = Intent(this, com.example.mimascota.ui.activity.ProfileEditActivity::class.java)
+            startActivity(intent)
+        }
+
         // Observadores para navegar en base al resultado
         checkoutViewModel.ordenCreada.observe(this) { ordenResponse ->
             if (ordenResponse != null) {

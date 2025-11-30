@@ -26,6 +26,9 @@ interface ApiService {
     @POST("auth/logout")
     suspend fun logout(): Response<Void>
 
+    @PUT("auth/usuario")
+    suspend fun updateCurrentUser(@Body usuario: Usuario): Response<Usuario>
+
     // ============= PRODUCTOS =============
 
     @GET("productos")
