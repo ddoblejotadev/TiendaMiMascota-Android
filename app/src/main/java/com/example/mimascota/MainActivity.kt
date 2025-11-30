@@ -7,6 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -63,18 +65,7 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("Acerca") { AboutUsScreen(navController) }
                 
-                navigation(startDestination = "adopcion_list", route = "huachitos") {
-                    composable("adopcion_list") {
-                        val huachitosViewModel: HuachitosViewModel = viewModel()
-                        AdopcionScreen(navController, huachitosViewModel)
-                    }
-                    composable("animalDetail/{animalId}") {backStackEntry ->
-                        val animalId = backStackEntry.arguments?.getString("animalId")?.toIntOrNull() ?: -1
-                        // Re-obtenemos la instancia del ViewModel del grafo anidado
-                        val huachitosViewModel: HuachitosViewModel = viewModel(navController.getBackStackEntry("huachitos"))
-                        AnimalDetailScreen(animalId, huachitosViewModel)
-                    }
-                }
+                adoptionNavGraph(navController)
                 
                 composable("backOffice") { BackOfficeScreen(navController, catalogoViewModel, authViewModel) }
                 composable(
@@ -114,6 +105,20 @@ class MainActivity : ComponentActivity() {
                 }            } catch (e: Exception) {
                 Log.e(TAG, "❌ Error al probar conexión: ${e.message}")
             }
+        }
+    }
+}
+
+fun NavGraphBuilder.adoptionNavGraph(navController: NavHostController) {
+    navigation(startDestination = "adopcion_list", route = "huachitos") {
+        composable("adopcion_list") {
+            val huachitosViewModel: HuachitosViewModel = viewModel()
+            AdopcionScreen(navController, huachitosViewModel)
+        }
+        composable("animalDetail/{animalId}") { backStackEntry ->
+            val animalId = backStackEntry.arguments?.getString("animalId")?.toIntOrNull() ?: -1
+            val huachitosViewModel: HuachitosViewModel = viewModel(navController.getBackStackEntry("huachitos"))
+            AnimalDetailScreen(navController, animalId, huachitosViewModel)
         }
     }
 }

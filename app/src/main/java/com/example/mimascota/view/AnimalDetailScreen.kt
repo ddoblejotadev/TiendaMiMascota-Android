@@ -4,6 +4,8 @@ import android.webkit.WebView
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -11,12 +13,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.mimascota.viewModel.HuachitosViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnimalDetailScreen(animalId: Int, huachitosViewModel: HuachitosViewModel = viewModel()) {
+fun AnimalDetailScreen(navController: NavController, animalId: Int, huachitosViewModel: HuachitosViewModel) {
     val animal by huachitosViewModel.selectedAnimal.collectAsState()
 
     LaunchedEffect(animalId) {
@@ -25,7 +28,14 @@ fun AnimalDetailScreen(animalId: Int, huachitosViewModel: HuachitosViewModel = v
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(animal?.nombre ?: "Cargando...") })
+            TopAppBar(
+                title = { Text(animal?.nombre ?: "Cargando...") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                }
+            )
         }
     ) { innerPadding ->
         val scrollState = rememberScrollState()
@@ -48,7 +58,7 @@ fun AnimalDetailScreen(animalId: Int, huachitosViewModel: HuachitosViewModel = v
                 Text(animalData.nombre, style = MaterialTheme.typography.headlineLarge)
                 Text("${animalData.tipo} - ${animalData.edad} - ${animalData.genero}", style = MaterialTheme.typography.titleMedium)
                 Text("Encontrado en ${animalData.comuna}, ${animalData.region}", style = MaterialTheme.typography.bodyMedium)
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
                 HtmlText(html = animalData.descFisica, title = "Descripción Física")
                 Spacer(modifier = Modifier.height(16.dp))
@@ -61,11 +71,18 @@ fun AnimalDetailScreen(animalId: Int, huachitosViewModel: HuachitosViewModel = v
 }
 
 @Composable
-fun HtmlText(html: String, title: String) {
-    Text(title, style = MaterialTheme.typography.titleMedium)
-    AndroidView(factory = {
-        WebView(it)
-    }, update = {
-        it.loadData(html, "text/html", "UTF-8")
-    })
+fun HtmlText(html: String?, title: String) {
+    if (!html.isNullOrBlank()) {
+        Column {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            AndroidView(factory = {
+                WebView(it).apply {
+                    settings.javaScriptEnabled = true
+                }
+            }, update = {
+                val htmlData = "<html><head><style>body{padding: 8px; font-family: sans-serif; color: #444;}</style></head><body>$html</body></html>"
+                it.loadData(htmlData, "text/html", "UTF-8")
+            })
+        }
+    }
 }

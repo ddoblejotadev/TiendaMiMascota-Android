@@ -33,7 +33,7 @@ class HuachitosRepository {
         return try {
             val response = apiService.getAnimalById(animalId)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.data)
+                Result.success(response.body()!!)
             } else {
                 Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
             }
