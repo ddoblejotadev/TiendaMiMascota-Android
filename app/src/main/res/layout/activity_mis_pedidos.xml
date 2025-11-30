@@ -18,8 +18,8 @@
             android:background="?attr/colorPrimary"
             app:title="Mis Pedidos"
             app:titleTextColor="@android:color/white"
-            app:navigationIcon="@drawable/ic_arrow_back"
-            app:navigationIconTint="@android:color/white" />
+            android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+            app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
