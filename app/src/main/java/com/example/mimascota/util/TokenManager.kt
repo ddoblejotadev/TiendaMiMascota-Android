@@ -97,21 +97,17 @@ object TokenManager {
     }
 
     /**
-     * Obtener dirección del usuario (temporal - no existe en modelo Usuario actual)
+     * Obtener dirección del usuario (ahora usando el modelo Usuario si existe)
      */
     fun getUserDireccion(): String? {
-        // Este campo no existe en el modelo Usuario actual
-        // Retorna null por ahora
-        return null
+        return getUsuario()?.direccion
     }
 
     /**
-     * Obtener RUN del usuario (temporal - no existe en modelo Usuario actual)
+     * Obtener RUN del usuario
      */
     fun getUserRun(): String? {
-        // Este campo no existe en el modelo Usuario actual
-        // Retorna null por ahora
-        return null
+        return getUsuario()?.run
     }
 
     /**

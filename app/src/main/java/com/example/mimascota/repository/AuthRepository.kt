@@ -52,9 +52,33 @@ class AuthRepository {
                                 TokenManager.saveUsuario(perfilResp.body()!!)
                             } else {
                                 android.util.Log.w("AuthRepository", "Usuario no incluido en LoginResponse y obtenerUsuario devolvió ${perfilResp.code()}")
+                                // Crear usuario provisional a partir del email del request para mejorar UX
+                                try {
+                                    val fallbackNombre = request.email.substringBefore('@').replace('.', ' ').replace('_', ' ').split(' ').joinToString(" ") { it.replaceFirstChar { c -> c.uppercaseChar() } }
+                                    val provisional = Usuario(
+                                        usuarioId = -1,
+                                        email = request.email,
+                                        nombre = fallbackNombre
+                                    )
+                                    TokenManager.saveUsuario(provisional)
+                                } catch (ex: Exception) {
+                                    android.util.Log.w("AuthRepository", "No se pudo crear usuario provisional: ${ex.message}")
+                                }
                             }
                         } catch (e: Exception) {
                             android.util.Log.w("AuthRepository", "Error al obtener perfil tras login: ${e.message}")
+                            // Crear usuario provisional a partir del email del request para mejorar UX
+                            try {
+                                val fallbackNombre = request.email.substringBefore('@').replace('.', ' ').replace('_', ' ').split(' ').joinToString(" ") { it.replaceFirstChar { c -> c.uppercaseChar() } }
+                                val provisional = Usuario(
+                                    usuarioId = -1,
+                                    email = request.email,
+                                    nombre = fallbackNombre
+                                )
+                                TokenManager.saveUsuario(provisional)
+                            } catch (ex: Exception) {
+                                android.util.Log.w("AuthRepository", "No se pudo crear usuario provisional: ${ex.message}")
+                            }
                         }
                     }
 

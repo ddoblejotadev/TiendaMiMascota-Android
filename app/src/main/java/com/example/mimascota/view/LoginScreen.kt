@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.mimascota.util.TokenManager
 import com.example.mimascota.viewModel.AuthViewModel
 
 @Composable
@@ -31,7 +32,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
     // Observar cambios en el estado de login para navegar solo si es exitoso
     LaunchedEffect(loginState) {
         if (loginState.contains("exitoso", ignoreCase = true)) {
-            val username = viewModel.usuarioActual.value ?: "Invitado"
+            val username = TokenManager.getUserName() ?: viewModel.usuarioActual.value ?: "Invitado"
             navController.navigate("home/$username") {
                 // Evitar volver al login presionando atrás
                 popUpTo("login") { inclusive = true }

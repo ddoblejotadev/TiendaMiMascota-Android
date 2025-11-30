@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MiMascota" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Tema base de la app: usar MaterialComponents para compatibilidad con widgets Material (AppBarLayout, MaterialCardView, TextInputLayout) -->
+    <style name="Theme.MiMascota" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
 
     <!-- Tema para Bottom Sheet -->
     <style name="BottomSheetDialogTheme" parent="Theme.Material3.Light.BottomSheetDialog">

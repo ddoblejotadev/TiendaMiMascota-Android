@@ -104,10 +104,26 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     authRepository.login(email, password)
                 }
                 if (result.isSuccess) {
-                    // AuthRepository guarda token y usuario en TokenManager
+                    // AuthRepository guarda token y usuario en TokenManager (o provisional)
                     val resp = result.getOrNull()!!
-                    // usuario puede ser nulo; usar saved values o fallbacks
-                    val nombre = resp.usuario?.nombre ?: TokenManager.getUserName() ?: "Usuario"
+
+                    // Si la respuesta no incluye usuario, intentar obtenerlo del endpoint auth/usuario
+                    if (resp.usuario == null) {
+                        try {
+                            val perfilResult = withContext(Dispatchers.IO) { authRepository.obtenerUsuario() }
+                            if (perfilResult.isSuccess) {
+                                android.util.Log.d("AuthViewModel", "Perfil recuperado correctamente tras login")
+                            } else {
+                                android.util.Log.w("AuthViewModel", "No se pudo recuperar perfil tras login: ${perfilResult}")
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.w("AuthViewModel", "Error al recuperar perfil tras login: ${e.message}")
+                        }
+                    }
+
+                    // Actualizar estado local desde TokenManager en vez de usar valores intermedios
+                    val saved = TokenManager.getUsuario()
+                    val nombre = saved?.nombre ?: resp.usuario?.nombre ?: TokenManager.getUserName() ?: "Usuario"
                     val id = resp.usuario?.usuarioId ?: TokenManager.getUserId().toInt()
                     usuarioActual.value = nombre
                     usuarioActualId.value = if (id == 0) -1 else id

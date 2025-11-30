@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.example.mimascota.ui.activity
 
 import android.app.Activity
@@ -9,17 +11,16 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import com.example.mimascota.model.Usuario
 import com.example.mimascota.repository.AuthRepository
 import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.launch
@@ -28,15 +29,27 @@ class ProfileEditActivity : ComponentActivity() {
 
     private val authRepo = AuthRepository()
 
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             // Inline UI here (previously in ProfileEditScreen())
-            val usuario = TokenManager.getUsuario()
-            var nombre by remember { mutableStateOf(usuario?.nombre ?: "") }
-            var direccion by remember { mutableStateOf(usuario?.direccion ?: "") }
-            var telefono by remember { mutableStateOf(usuario?.telefono ?: "") }
+            // Load usuario from TokenManager and react to updates
+            var nombre by remember { mutableStateOf("") }
+            var direccion by remember { mutableStateOf("") }
+            var telefono by remember { mutableStateOf("") }
+            var email by remember { mutableStateOf("") }
+            var run by remember { mutableStateOf("") }
+            // Populate once on composition and when TokenManager has data
+            LaunchedEffect(Unit) {
+                TokenManager.getUsuario()?.let { u ->
+                    nombre = u.nombre
+                    direccion = u.direccion ?: ""
+                    telefono = u.telefono ?: ""
+                    email = u.email
+                    run = u.run ?: ""
+                }
+            }
+
             var numeroCasa by remember { mutableStateOf("") }
             var isSaving by remember { mutableStateOf(false) }
 
@@ -46,7 +59,7 @@ class ProfileEditActivity : ComponentActivity() {
                         title = { Text("Editar Perfil") },
                         navigationIcon = {
                             IconButton(onClick = { finish() }) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
                             }
                         }
                     )
@@ -67,12 +80,12 @@ class ProfileEditActivity : ComponentActivity() {
 
                     // Email (no editable) en rojo
                     Text(text = "Email (no editable)", color = Color.Red)
-                    Text(text = usuario?.email ?: "", modifier = Modifier.fillMaxWidth().padding(4.dp))
+                    Text(text = email, modifier = Modifier.fillMaxWidth().padding(4.dp))
                     Spacer(modifier = Modifier.height(8.dp))
 
                     // RUN (no editable) en rojo
                     Text(text = "RUT (no editable)", color = Color.Red)
-                    Text(text = usuario?.run ?: "", modifier = Modifier.fillMaxWidth().padding(4.dp))
+                    Text(text = run, modifier = Modifier.fillMaxWidth().padding(4.dp))
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(value = direccion, onValueChange = { direccion = it }, label = { Text("Dirección") }, modifier = Modifier.fillMaxWidth())
@@ -96,7 +109,7 @@ class ProfileEditActivity : ComponentActivity() {
                                         val out = Intent().apply {
                                             putExtra("updated_name", updated.nombre)
                                         }
-                                        setResult(Activity.RESULT_OK, out)
+                                        setResult(RESULT_OK, out)
                                         Toast.makeText(this@ProfileEditActivity, "Perfil actualizado", Toast.LENGTH_SHORT).show()
                                         finish()
                                     } else {

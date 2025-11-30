@@ -110,10 +110,11 @@ class MisPedidosViewModel(private val tokenManager: com.example.mimascota.util.T
      */
     fun cargarMisOrdenes() {
         val usuarioId = tokenManager.getUserId()
-        if (usuarioId != null) {
+        if (usuarioId > 0) {
             cargarOrdenes(usuarioId)
         } else {
             _error.value = "Usuario no autenticado"
+            _misOrdenes.value = emptyList()
         }
     }
 }
