@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                     AboutUsScreen(navController)
                 }
                 composable("backOffice") {
-                    BackOfficeScreen(navController, viewModelC)
+                    BackOfficeScreen(navController)
                 }
                 composable("agregarProducto") {
                     AgregarProductoScreen(navController, viewModelC)
