@@ -106,8 +106,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 if (result.isSuccess) {
                     // AuthRepository guarda token y usuario en TokenManager
                     val resp = result.getOrNull()!!
-                    usuarioActual.value = resp.usuario.nombre
-                    usuarioActualId.value = resp.usuario.usuarioId
+                    // usuario puede ser nulo; usar saved values o fallbacks
+                    val nombre = resp.usuario?.nombre ?: TokenManager.getUserName() ?: "Usuario"
+                    val id = resp.usuario?.usuarioId ?: TokenManager.getUserId().toInt()
+                    usuarioActual.value = nombre
+                    usuarioActualId.value = if (id == 0) -1 else id
                     loginState.value = "Login exitoso 🎉"
                     return@launch
                 } else {

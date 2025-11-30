@@ -23,20 +23,49 @@ class AuthRepository {
         return withContext(Dispatchers.IO) {
             try {
                 val request = LoginRequest(email, password)
+                // Debug logging del request
+                try {
+                    if (com.example.mimascota.util.AppConfig.isLoggingEnabled) {
+                        android.util.Log.d("AuthRepository", "Login request: ${request}")
+                    }
+                } catch (_: Exception) {}
+
                 val response = apiService.login(request)
 
                 if (response.isSuccessful && response.body() != null) {
                     val loginResponse = response.body()!!
 
-                    // Guardar token y usuario
+                    // Guardar token siempre
                     TokenManager.saveToken(loginResponse.token)
-                    TokenManager.saveUsuario(loginResponse.usuario)
+                    // Usuario puede venir nulo en algunas respuestas; manejar defensivamente
+                    if (loginResponse.usuario != null) {
+                        try {
+                            loginResponse.usuario?.let { TokenManager.saveUsuario(it) }
+                        } catch (e: Exception) {
+                            android.util.Log.w("AuthRepository", "No se pudo guardar usuario localmente: ${e.message}")
+                        }
+                    } else {
+                        // Intentar recuperar el perfil actual si el backend ofrece ese endpoint
+                        try {
+                            val perfilResp = apiService.obtenerUsuario()
+                            if (perfilResp.isSuccessful && perfilResp.body() != null) {
+                                TokenManager.saveUsuario(perfilResp.body()!!)
+                            } else {
+                                android.util.Log.w("AuthRepository", "Usuario no incluido en LoginResponse y obtenerUsuario devolvió ${perfilResp.code()}")
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.w("AuthRepository", "Error al obtener perfil tras login: ${e.message}")
+                        }
+                    }
 
                     Result.success(loginResponse)
                 } else {
-                    Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                    val bodyString = try { response.errorBody()?.string() } catch (e: Exception) { null }
+                    android.util.Log.e("AuthRepository", "Login failed: code=${response.code()} message=${response.message()} body=$bodyString")
+                    Result.failure(Exception("Error ${response.code()}: ${response.message()} Body=$bodyString"))
                 }
             } catch (e: Exception) {
+                android.util.Log.e("AuthRepository", "Exception during login: ${e.message}", e)
                 Result.failure(Exception("Error de conexión: ${e.message}"))
             }
         }
@@ -56,7 +85,8 @@ class AuthRepository {
 
                     // Guardar token y usuario
                     TokenManager.saveToken(loginResponse.token)
-                    TokenManager.saveUsuario(loginResponse.usuario)
+                    // Guardar usuario si viene
+                    loginResponse.usuario?.let { TokenManager.saveUsuario(it) }
 
                     Result.success(loginResponse)
                 } else {

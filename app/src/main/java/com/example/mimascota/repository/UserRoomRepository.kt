@@ -11,7 +11,24 @@ import com.example.mimascota.data.entity.UserEntity
  */
 class UserRoomRepository(context: Context) {
 
-    private val userDao = AppDatabase.getInstance(context).userDao()
+    private val userDao = run {
+        try {
+            AppDatabase.getInstance(context).userDao()
+        } catch (e: IllegalStateException) {
+            // Room schema identity mismatch -> attempt to delete DB and recreate
+            try {
+                context.deleteDatabase("tienda_mascota.db")
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+            // Retry
+            AppDatabase.getInstance(context).userDao()
+        } catch (e: Exception) {
+            // Fallback: rethrow after logging
+            e.printStackTrace()
+            throw e
+        }
+    }
 
     suspend fun saveUserToDatabase(user: User): Boolean {
         return try {
@@ -88,5 +105,3 @@ class UserRoomRepository(context: Context) {
         run = run
     )
 }
-
-

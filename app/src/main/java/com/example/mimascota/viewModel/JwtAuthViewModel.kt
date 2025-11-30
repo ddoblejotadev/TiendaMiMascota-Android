@@ -49,7 +49,8 @@ class JwtAuthViewModel(private val tokenManager: TokenManager) : ViewModel() {
             _authState.value = AuthState.Loading
             authRepository.login(email, password)
                 .onSuccess { response ->
-                    _authState.value = AuthState.Authenticated(response.token, response.usuario.usuarioId)
+                    val userId = response.usuario?.usuarioId ?: TokenManager.getUserId().toInt()
+                    _authState.value = AuthState.Authenticated(response.token, userId)
                 }
                 .onFailure { throwable ->
                     _authState.value = AuthState.Error(throwable.message ?: "Error desconocido")
@@ -62,7 +63,8 @@ class JwtAuthViewModel(private val tokenManager: TokenManager) : ViewModel() {
             _authState.value = AuthState.Loading
             authRepository.registro(nombre, email, password, telefono)
                 .onSuccess { response ->
-                    _authState.value = AuthState.Authenticated(response.token, response.usuario.usuarioId)
+                    val userId = response.usuario?.usuarioId ?: TokenManager.getUserId().toInt()
+                    _authState.value = AuthState.Authenticated(response.token, userId)
                 }
                 .onFailure { throwable ->
                     _authState.value = AuthState.Error(throwable.message ?: "Error desconocido")
