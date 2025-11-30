@@ -2,25 +2,34 @@
 
 package com.example.mimascota.ui.activity
 
-import android.app.Activity
-import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Base64
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import coil.compose.AsyncImage
+import com.example.mimascota.R
 import com.example.mimascota.repository.AuthRepository
 import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.launch
@@ -32,14 +41,22 @@ class ProfileEditActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Inline UI here (previously in ProfileEditScreen())
-            // Load usuario from TokenManager and react to updates
             var nombre by remember { mutableStateOf("") }
             var direccion by remember { mutableStateOf("") }
             var telefono by remember { mutableStateOf("") }
             var email by remember { mutableStateOf("") }
             var run by remember { mutableStateOf("") }
-            // Populate once on composition and when TokenManager has data
+            var fotoUrl by remember { mutableStateOf<String?>(null) }
+
+            // State for the new image selected from gallery
+            var imageUri by remember { mutableStateOf<Uri?>(null) }
+            val context = LocalContext.current
+
+            val galleryLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent(),
+                onResult = { uri: Uri? -> imageUri = uri }
+            )
+
             LaunchedEffect(Unit) {
                 TokenManager.getUsuario()?.let { u ->
                     nombre = u.nombre
@@ -47,10 +64,10 @@ class ProfileEditActivity : ComponentActivity() {
                     telefono = u.telefono ?: ""
                     email = u.email
                     run = u.run ?: ""
+                    fotoUrl = u.fotoUrl
                 }
             }
 
-            var numeroCasa by remember { mutableStateOf("") }
             var isSaving by remember { mutableStateOf(false) }
 
             Scaffold(
@@ -65,67 +82,91 @@ class ProfileEditActivity : ComponentActivity() {
                     )
                 }
             ) { padding ->
-                Column(modifier = Modifier
-                    .padding(padding)
-                    .padding(16.dp)) {
+                Column(modifier = Modifier.padding(padding).padding(16.dp)) {
 
-                    // Nombre editable
-                    OutlinedTextField(
-                        value = nombre,
-                        onValueChange = { nombre = it },
-                        label = { Text("Nombre") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        AsyncImage(
+                            model = imageUri ?: fotoUrl,
+                            contentDescription = "Foto de perfil",
+                            placeholder = painterResource(id = R.drawable.logo1),
+                            error = painterResource(id = R.drawable.logo1),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(120.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Email (no editable) en rojo
+                    Text(
+                        text = "Cambiar foto",
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().clickable { galleryLauncher.launch("image/*") }.padding(8.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(text = "Email (no editable)", color = Color.Red)
                     Text(text = email, modifier = Modifier.fillMaxWidth().padding(4.dp))
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    // RUN (no editable) en rojo
                     Text(text = "RUT (no editable)", color = Color.Red)
                     Text(text = run, modifier = Modifier.fillMaxWidth().padding(4.dp))
                     Spacer(modifier = Modifier.height(8.dp))
-
                     OutlinedTextField(value = direccion, onValueChange = { direccion = it }, label = { Text("Dirección") }, modifier = Modifier.fillMaxWidth())
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(value = telefono, onValueChange = { telefono = it }, label = { Text("Teléfono") }, modifier = Modifier.fillMaxWidth())
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(value = numeroCasa, onValueChange = { numeroCasa = it }, label = { Text("Número / Casa") }, modifier = Modifier.fillMaxWidth())
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = {
-                        // Guardar cambios async
-                        isSaving = true
-                        lifecycleScope.launch {
-                            try {
-                                val current = TokenManager.getUsuario()
-                                if (current != null) {
-                                    val updated = current.copy(nombre = nombre, direccion = direccion, telefono = telefono)
+
+                    Button(
+                        onClick = {
+                            isSaving = true
+                            lifecycleScope.launch {
+                                try {
+                                    val current = TokenManager.getUsuario()
+                                    if (current == null) {
+                                        Toast.makeText(context, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
+                                        return@launch
+                                    }
+
+                                    // Convert new image to Base64 if one was selected
+                                    val base64Image = imageUri?.let { uri ->
+                                        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                                            val bytes = inputStream.readBytes()
+                                            "data:image/jpeg;base64,${Base64.encodeToString(bytes, Base64.DEFAULT)}"
+                                        }
+                                    }
+
+                                    val updated = current.copy(
+                                        nombre = nombre,
+                                        direccion = direccion,
+                                        telefono = telefono,
+                                        fotoUrl = base64Image ?: current.fotoUrl // Use new image or keep the old one
+                                    )
+
                                     val result = authRepo.updateUsuario(updated)
                                     if (result.isSuccess) {
-                                        // Devolver el nombre actualizado al Activity que lanzó
-                                        val out = Intent().apply {
-                                            putExtra("updated_name", updated.nombre)
-                                        }
-                                        setResult(RESULT_OK, out)
+                                        TokenManager.saveUsuario(updated)
+                                        setResult(RESULT_OK, intent.apply { putExtra("updated_name", updated.nombre) })
                                         Toast.makeText(this@ProfileEditActivity, "Perfil actualizado", Toast.LENGTH_SHORT).show()
                                         finish()
                                     } else {
                                         Toast.makeText(this@ProfileEditActivity, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
                                     }
-                                } else {
-                                    Toast.makeText(this@ProfileEditActivity, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
+
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    Toast.makeText(this@ProfileEditActivity, "Error al actualizar", Toast.LENGTH_LONG).show()
+                                } finally {
+                                    isSaving = false
                                 }
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                                Toast.makeText(this@ProfileEditActivity, "Error al actualizar", Toast.LENGTH_LONG).show()
-                            } finally {
-                                isSaving = false
                             }
-                        }
-                    }, modifier = Modifier.fillMaxWidth(), enabled = !isSaving) {
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isSaving
+                    ) {
                         Text(if (isSaving) "Guardando..." else "Guardar")
                     }
                 }

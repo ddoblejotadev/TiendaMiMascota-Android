@@ -64,6 +64,9 @@ data class AuthResponse(
     @SerializedName("rol")
     val rol: String? = null,
 
+    @SerializedName("fotoUrl")
+    val fotoUrl: String? = null,
+
     @SerializedName("mensaje")
     val mensaje: String? = null
 )
@@ -91,5 +94,8 @@ data class Usuario(
     val run: String? = null,
 
     @SerializedName("rol")
-    val rol: String? = null
+    val rol: String? = null,
+
+    @SerializedName("fotoUrl")
+    val fotoUrl: String? = null
 )
