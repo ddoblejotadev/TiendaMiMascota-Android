@@ -12,7 +12,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -26,7 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
@@ -51,6 +49,8 @@ class ProfileEditActivity : ComponentActivity() {
 
             var imageUri by remember { mutableStateOf<Uri?>(null) }
             val context = LocalContext.current
+
+            var showImageSourceDialog by remember { mutableStateOf(false) }
 
             val galleryLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.GetContent()
@@ -104,13 +104,36 @@ class ProfileEditActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     TextButton(
-                        onClick = {
-                            Log.d("ProfileEditActivity", "🔘 Botón 'Cambiar Foto' presionado. Lanzando galería...")
-                            galleryLauncher.launch("image/*")
-                        },
+                        onClick = { showImageSourceDialog = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Cambiar Foto")
+                    }
+
+                    if (showImageSourceDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showImageSourceDialog = false },
+                            title = { Text("Seleccionar imagen") },
+                            text = { Text("Elige una opción para cambiar tu foto de perfil.") },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        showImageSourceDialog = false
+                                        Log.d("ProfileEditActivity", "🔘 Opción 'Galería' seleccionada. Lanzando galería...")
+                                        galleryLauncher.launch("image/*")
+                                    }
+                                ) {
+                                    Text("Elegir desde la galería")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = { showImageSourceDialog = false }
+                                ) {
+                                    Text("Cancelar")
+                                }
+                            }
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
