@@ -33,18 +33,22 @@ object RetrofitClient {
 
     private val authInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
-        val token = if (TokenManager.isLoggedIn()) TokenManager.getToken() else null
+        val token = TokenManager.getToken()
+        
         val newRequest = if (!token.isNullOrEmpty()) {
             originalRequest.newBuilder().header("Authorization", "Bearer $token").build()
         } else {
             originalRequest
         }
+        
         val response = chain.proceed(newRequest)
-        if (response.code == 401) {
-            Log.e(TAG, "401 Unauthorized - Token inválido.")
+        
+        if (response.code == 401 || response.code == 403) {
+            Log.e(TAG, "${response.code} Unauthorized/Forbidden - Token inválido o sin permisos.")
             TokenManager.logout()
             onUnauthorized?.invoke()
         }
+        
         response
     }
 
