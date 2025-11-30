@@ -19,4 +19,14 @@
         <item name="cornerSizeBottomLeft">0dp</item>
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
+
+    <!-- Tema basado en MaterialComponents para Activities que usan vistas de Material (AppBarLayout, MaterialToolbar, TextInputLayout, etc.) -->
+    <style name="Theme.MiMascota.MaterialComponents" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Mantener colores heredados o personalizar si se desea -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/primary</item>
+    </style>
+
 </resources>
