@@ -124,8 +124,10 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Mostrar nombre real del cliente en el mensaje de bienvenida si está disponible
+            val displayName = name ?: com.example.mimascota.util.TokenManager.getUserName() ?: "Invitado"
             Text(
-                text = "¡Bienvenido 👋!",
+                text = "¡Bienvenido, $displayName! 👋",
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -188,6 +190,35 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Ver Sobre Nosotros")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Accesos para el cliente: Mis Pedidos y Editar Perfil
+            OutlinedButton(
+                onClick = { navController.context?.let { navController.navigate("MisPedidos") } ?: navController.navigate("MisPedidos") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = "Mis Pedidos")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Mis Pedidos")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = { navController.navigate("editarPerfil") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(imageVector = Icons.Default.Portrait, contentDescription = "Editar Perfil")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Editar Perfil")
             }
 
 

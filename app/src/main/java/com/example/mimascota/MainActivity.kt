@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.platform.LocalContext
 import com.example.mimascota.view.*
 import com.example.mimascota.view.AboutUsScreen
 import com.example.mimascota.viewModel.AuthViewModel
@@ -76,6 +77,24 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("agregarProducto") {
                     AgregarProductoScreen(navController, viewModelC)
+                }
+                // Ruta para lanzar la Activity de Mis Pedidos
+                composable("MisPedidos") {
+                    val context = LocalContext.current
+                    // Start activity and immediately return to previous nav entry
+                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                        context.startActivity(android.content.Intent(context, com.example.mimascota.ui.activity.MisPedidosActivity::class.java))
+                        // Navegar atrás para no quedarse en pantalla vacía
+                        navController.popBackStack()
+                    }
+                }
+                // Ruta para lanzar la Activity de editar perfil
+                composable("editarPerfil") {
+                    val context = LocalContext.current
+                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                        context.startActivity(android.content.Intent(context, com.example.mimascota.ui.activity.ProfileEditActivity::class.java))
+                        navController.popBackStack()
+                    }
                 }
                 composable("fotoDePerfil") {
                     FotoDePerfil(navController, viewModel)
