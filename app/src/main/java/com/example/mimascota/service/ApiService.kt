@@ -44,8 +44,7 @@ interface ApiService {
 
     @POST("productos")
     suspend fun createProducto(
-        @Body producto: Producto, 
-        @Query("tipo") tipoProducto: String
+        @Body producto: ProductoRequest
     ): Response<Producto>
 
     @PUT("productos/{id}")

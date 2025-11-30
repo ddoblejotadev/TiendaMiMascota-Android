@@ -23,12 +23,10 @@ class ProductoRepository {
      */
     suspend fun getAllProductos(): ProductoResult<List<Producto>> {
         return try {
-            // Corregido: pasar el límite para obtener más productos
             val response = apiService.getAllProductos(limite = 50)
             if (response.isSuccessful && response.body() != null) {
                 val productos = response.body()!!
                 Log.d(TAG, "Productos recibidos: ${productos.size}")
-                // Loguear una muestra de las primeras 5 imageUrls para diagnóstico
                 productos.take(5).forEachIndexed { index, producto ->
                     Log.d(TAG, "#${index + 1} id=${producto.producto_id} name=${producto.producto_nombre} imageUrl=${producto.imageUrl}")
                 }
@@ -67,17 +65,34 @@ class ProductoRepository {
     /**
      * Crea un nuevo producto
      */
-    suspend fun createProducto(producto: Producto, tipoProducto: String): ProductoResult<Producto> {
+    suspend fun createProducto(producto: Producto): ProductoResult<Producto> {
         return try {
-            val response = apiService.createProducto(producto, tipoProducto)
+             val productoRequest = ProductoRequest(
+                nombre = producto.producto_nombre,
+                description = producto.description ?: "",
+                price = producto.price ?: 0.0,
+                stock = producto.stock ?: 0,
+                category = producto.category ?: "General",
+                imageUrl = producto.imageUrl ?: "",
+                destacado = producto.destacado ?: false,
+                valoracion = producto.valoracion ?: 0.0,
+                precioAnterior = producto.precioAnterior?.toInt() ?: 0
+            )
+            Log.d(TAG, "Creando producto con datos: $productoRequest")
+            val response = apiService.createProducto(productoRequest)
             if (response.isSuccessful && response.body() != null) {
+                Log.d(TAG, "Producto creado con éxito: ${response.body()}")
                 ProductoResult.Success(response.body()!!)
             } else {
-                ProductoResult.Error("Error ${response.code()}: ${response.message()}")
+                val errorBody = response.errorBody()?.string() ?: ""
+                Log.e(TAG, "Error al crear producto: ${response.code()} - ${response.message()} - $errorBody")
+                ProductoResult.Error("Error ${response.code()}: ${response.message()} $errorBody")
             }
         } catch (e: IOException) {
+            Log.e(TAG, "Error de red al crear producto: ${e.message}")
             ProductoResult.Error("Error de red: ${e.message}")
         } catch (e: Exception) {
+            Log.e(TAG, "Excepción al crear producto: ${e.message}")
             ProductoResult.Error("Excepción: ${e.message}")
         }
     }
@@ -98,15 +113,21 @@ class ProductoRepository {
                 valoracion = producto.valoracion ?: 0.0,
                 precioAnterior = producto.precioAnterior?.toInt() ?: 0
             )
+            Log.d(TAG, "Actualizando producto ID: $id con datos: $productoRequest")
             val response = apiService.updateProducto(id, productoRequest)
             if (response.isSuccessful && response.body() != null) {
+                Log.d(TAG, "Producto actualizado con éxito: ${response.body()}")
                 ProductoResult.Success(response.body()!!)
             } else {
-                ProductoResult.Error("Error ${response.code()}: ${response.message()}")
+                val errorBody = response.errorBody()?.string() ?: ""
+                Log.e(TAG, "Error al actualizar producto: ${response.code()} - ${response.message()} - $errorBody")
+                ProductoResult.Error("Error ${response.code()}: ${response.message()} $errorBody")
             }
         } catch (e: IOException) {
+            Log.e(TAG, "Error de red al actualizar producto: ${e.message}")
             ProductoResult.Error("Error de red: ${e.message}")
         } catch (e: Exception) {
+            Log.e(TAG, "Excepción al actualizar producto: ${e.message}")
             ProductoResult.Error("Excepción: ${e.message}")
         }
     }

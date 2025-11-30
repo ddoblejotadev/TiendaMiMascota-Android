@@ -81,7 +81,7 @@ fun AgregarProductoScreen(
                     if (isEditing) {
                         viewModel.updateProducto(producto.producto_id, producto)
                     } else {
-                        viewModel.createProducto(producto, "General") // Asumiendo 'General' como tipo por defecto
+                        viewModel.createProducto(producto)
                     }
                     navController.popBackStack()
                 },

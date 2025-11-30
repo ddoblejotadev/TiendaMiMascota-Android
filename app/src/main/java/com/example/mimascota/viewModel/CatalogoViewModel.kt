@@ -34,7 +34,6 @@ class CatalogoViewModel : ViewModel() {
                     _productos.value = result.data
                 }
                 is ProductoRepository.ProductoResult.Error -> {
-                    // usar message en lugar de exception
                     Log.e(TAG, "Error al cargar productos: ${result.message}")
                 }
                 else -> {
@@ -55,24 +54,48 @@ class CatalogoViewModel : ViewModel() {
         return productoFlow.asStateFlow()
     }
 
-    fun createProducto(producto: Producto, tipo: String) {
+    fun createProducto(producto: Producto) {
         viewModelScope.launch {
-            repository.createProducto(producto, tipo)
-            cargarProductos() // Recargar la lista
+            when (val result = repository.createProducto(producto)) {
+                is ProductoRepository.ProductoResult.Success -> {
+                    Log.d(TAG, "Producto creado con éxito, recargando lista.")
+                    cargarProductos() // Recargar la lista
+                }
+                is ProductoRepository.ProductoResult.Error -> {
+                    Log.e(TAG, "Error al crear producto: ${result.message}")
+                }
+                else -> {}
+            }
         }
     }
 
     fun updateProducto(id: Int, producto: Producto) {
         viewModelScope.launch {
-            repository.updateProducto(id, producto)
-            cargarProductos() // Recargar la lista
+            when (val result = repository.updateProducto(id, producto)) {
+                is ProductoRepository.ProductoResult.Success -> {
+                    Log.d(TAG, "Producto actualizado con éxito, recargando lista.")
+                    cargarProductos() // Recargar la lista
+                }
+                is ProductoRepository.ProductoResult.Error -> {
+                    Log.e(TAG, "Error al actualizar producto: ${result.message}")
+                }
+                else -> {}
+            }
         }
     }
 
     fun deleteProducto(id: Int) {
         viewModelScope.launch {
-            repository.deleteProducto(id)
-            cargarProductos() // Recargar la lista
+            when (val result = repository.deleteProducto(id)) {
+                is ProductoRepository.ProductoResult.Success -> {
+                    Log.d(TAG, "Producto eliminado con éxito, recargando lista.")
+                    cargarProductos() // Recargar la lista
+                }
+                is ProductoRepository.ProductoResult.Error -> {
+                    Log.e(TAG, "Error al eliminar producto: ${result.message}")
+                }
+                else -> {}
+            }
         }
     }
 }
