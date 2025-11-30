@@ -1,6 +1,7 @@
 package com.example.mimascota.view
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -58,6 +59,11 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                 ) {
                     Text(String.format(Locale.getDefault(), "Total: $%.2f", total), style = MaterialTheme.typography.titleLarge)
                     Button(onClick = {
+                        // Evitar checkout con carrito vacío
+                        if (items.isEmpty()) {
+                            Toast.makeText(context, "El carrito está vacío", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
                         // Iniciar CheckoutActivity con extras del carrito (JSON) y total
                         try {
                             val gson = Gson()
