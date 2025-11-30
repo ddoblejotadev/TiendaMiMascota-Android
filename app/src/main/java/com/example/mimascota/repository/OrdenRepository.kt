@@ -28,9 +28,24 @@ class OrdenRepository {
                     android.util.Log.d("OrdenRepository", "Órdenes recibidas: count=${body.size}")
                     Result.success(body)
                 } else if (response.code() == 404) {
-                    // Backend puede devolver 404 si no hay órdenes; tratar como lista vacía
-                    android.util.Log.i("OrdenRepository", "No se encontraron órdenes para userId=$usuarioId (404). Retornando lista vacía.")
-                    Result.success(emptyList())
+                    // Backend puede devolver 404 si no hay órdenes o si el endpoint no existe;
+                    // intentamos un fallback a /admin/ordenes y filtramos por usuarioId
+                    android.util.Log.i("OrdenRepository", "Endpoint específico no disponible (404) para userId=$usuarioId. Intentando fallback /admin/ordenes.")
+                    try {
+                        val adminResp = apiService.getAllOrders()
+                        if (adminResp.isSuccessful) {
+                            val all = adminResp.body() ?: emptyList()
+                            val filtered = all.filter { it.usuarioId == usuarioId }
+                            android.util.Log.i("OrdenRepository", "Fallback: órdenes totales=${all.size}, filtradas=${filtered.size}")
+                            return@withContext Result.success(filtered)
+                        } else {
+                            android.util.Log.w("OrdenRepository", "Fallback admin/ordenes devolvió code=${adminResp.code()}")
+                            return@withContext Result.success(emptyList())
+                        }
+                    } catch (ex: Exception) {
+                        android.util.Log.w("OrdenRepository", "Error en fallback admin/ordenes: ${ex.message}")
+                        return@withContext Result.success(emptyList())
+                    }
                 } else {
                     val bodyStr = try { response.errorBody()?.string() } catch (e: Exception) { null }
                     android.util.Log.w("OrdenRepository", "Error al obtener órdenes userId=$usuarioId code=${response.code()} body=$bodyStr")
