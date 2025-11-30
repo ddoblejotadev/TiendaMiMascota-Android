@@ -26,12 +26,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
 import com.example.mimascota.R
 import com.example.mimascota.repository.AuthRepository
 import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.launch
+import java.io.File
 
 class ProfileEditActivity : ComponentActivity() {
 
@@ -61,6 +64,22 @@ class ProfileEditActivity : ComponentActivity() {
                 } else {
                     Log.w("ProfileEditActivity", "❌ El usuario no seleccionó ninguna imagen.")
                 }
+            }
+
+            val cameraLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.TakePicture()
+            ) { success ->
+                if (success) {
+                    Log.d("ProfileEditActivity", "✅ Foto tomada con éxito. URI: $imageUri")
+                } else {
+                    Log.w("ProfileEditActivity", "❌ El usuario canceló la captura de la foto.")
+                }
+            }
+
+            fun createImageUri(): Uri {
+                val image = File(context.cacheDir, "images/profile_pic.jpg")
+                image.parentFile?.mkdirs()
+                return FileProvider.getUriForFile(context, "${context.packageName}.provider", image)
             }
 
             LaunchedEffect(Unit) {
@@ -111,29 +130,45 @@ class ProfileEditActivity : ComponentActivity() {
                     }
 
                     if (showImageSourceDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showImageSourceDialog = false },
-                            title = { Text("Seleccionar imagen") },
-                            text = { Text("Elige una opción para cambiar tu foto de perfil.") },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        showImageSourceDialog = false
-                                        Log.d("ProfileEditActivity", "🔘 Opción 'Galería' seleccionada. Lanzando galería...")
-                                        galleryLauncher.launch("image/*")
+                        Dialog(onDismissRequest = { showImageSourceDialog = false }) {
+                            Surface(
+                                shape = MaterialTheme.shapes.medium,
+                                color = MaterialTheme.colorScheme.surface,
+                                tonalElevation = 8.dp
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text("Cambiar foto de perfil", style = MaterialTheme.typography.titleMedium)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    TextButton(
+                                        onClick = {
+                                            showImageSourceDialog = false
+                                            galleryLauncher.launch("image/*")
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Elegir desde la galería")
                                     }
-                                ) {
-                                    Text("Elegir desde la galería")
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(
-                                    onClick = { showImageSourceDialog = false }
-                                ) {
-                                    Text("Cancelar")
+                                    TextButton(
+                                        onClick = {
+                                            showImageSourceDialog = false
+                                            val newUri = createImageUri()
+                                            imageUri = newUri
+                                            cameraLauncher.launch(newUri)
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Tomar foto con la cámara")
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    TextButton(
+                                        onClick = { showImageSourceDialog = false },
+                                        modifier = Modifier.align(Alignment.End)
+                                    ) {
+                                        Text("Cancelar")
+                                    }
                                 }
                             }
-                        )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))

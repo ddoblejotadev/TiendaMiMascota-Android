@@ -41,6 +41,18 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
         authViewModel.obtenerFotoPerfilActual()
     }
 
+    val context = LocalContext.current
+    val profileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
+        if (activityResult.resultCode == Activity.RESULT_OK) {
+            val updatedName = activityResult.data?.getStringExtra("updated_name")
+            if (!updatedName.isNullOrEmpty()) {
+                navController.navigate("home/$updatedName") {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -77,7 +89,10 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                         else
                             MaterialTheme.colorScheme.primaryContainer
                     )
-                    .clickable { navController.navigate("fotoDePerfil") },
+                    .clickable {
+                        val intent = Intent(context, com.example.mimascota.ui.activity.ProfileEditActivity::class.java)
+                        profileLauncher.launch(intent)
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 if (fotoPerfil.value != null) {
@@ -195,18 +210,6 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-
-            val context = LocalContext.current
-            val profileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
-                if (activityResult.resultCode == Activity.RESULT_OK) {
-                    val updatedName = activityResult.data?.getStringExtra("updated_name")
-                    if (!updatedName.isNullOrEmpty()) {
-                        navController.navigate("home/$updatedName") {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        }
-                    }
-                }
-            }
 
             OutlinedButton(
                 onClick = { val intent = Intent(context, com.example.mimascota.ui.activity.ProfileEditActivity::class.java); profileLauncher.launch(intent) },
