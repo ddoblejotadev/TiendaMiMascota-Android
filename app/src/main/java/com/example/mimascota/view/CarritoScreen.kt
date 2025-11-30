@@ -1,5 +1,6 @@
 package com.example.mimascota.view
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +22,8 @@ import coil.compose.AsyncImage
 import com.example.mimascota.util.AppConfig
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
+import com.example.mimascota.ui.activity.CheckoutActivity
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,6 +32,8 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
     val items by viewModel.items.collectAsState()
 
     val total by viewModel.total.collectAsState()
+
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -51,7 +56,11 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(String.format(Locale.getDefault(), "Total: $%.2f", total), style = MaterialTheme.typography.titleLarge)
-                    Button(onClick = { /* TODO: Implementar checkout */ }) {
+                    Button(onClick = {
+                        // Iniciar CheckoutActivity
+                        val intent = Intent(context, CheckoutActivity::class.java)
+                        context.startActivity(intent)
+                    }) {
                         Text("Comprar")
                     }
                 }
