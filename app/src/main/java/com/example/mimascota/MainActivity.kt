@@ -37,45 +37,44 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val navController = rememberNavController()
-            val viewModel: AuthViewModel = viewModel()
-            // Usar viewModel() para que las instancias sean gestionadas por el Activity
-            val viewModelC: CatalogoViewModel = viewModel()
+            val authViewModel: AuthViewModel = viewModel()
+            val catalogoViewModel: CatalogoViewModel = viewModel()
             val cartViewModel: CartViewModel = viewModel()
 
             NavHost(navController, startDestination = "register") {
                 composable("register") {
-                    RegisterScreen(navController, viewModel)
+                    RegisterScreen(navController, authViewModel)
                 }
                 composable("login") {
-                    LoginScreen(navController, viewModel)
+                    LoginScreen(navController, authViewModel)
                 }
                 composable("home/{name}") { backStack ->
                     val name = backStack.arguments?.getString("name")
-                    HomeScreen(navController, name, viewModel)
+                    HomeScreen(navController, name, authViewModel)
                 }
                 composable("Catalogo") {
-                    CatalogoScreen(navController, viewModelC, cartViewModel)
+                    CatalogoScreen(navController, catalogoViewModel, cartViewModel)
                 }
                 composable("Detalle/{id}") { backStack ->
                     val idStr = backStack.arguments?.getString("id")
                     val id = idStr?.toIntOrNull() ?: -1
-                    DetalleProductoScreen(navController, id, viewModelC, cartViewModel)
+                    DetalleProductoScreen(navController, id, catalogoViewModel, cartViewModel)
                 }
                 composable("Carrito") {
                     CarritoScreen(navController, cartViewModel)
                 }
                 composable("compraExitosa") {
-                    CompraExitosaScreenWrapper(navController, cartViewModel, viewModel)
+                    CompraExitosaScreenWrapper(navController, cartViewModel, authViewModel)
                 }
                 composable("compraRechazada/{tipoError}") { backStack ->
                     val tipoError = backStack.arguments?.getString("tipoError") ?: "PAGO"
-                    CompraRechazadaScreenWrapper(navController, tipoError, cartViewModel, viewModel)
+                    CompraRechazadaScreenWrapper(navController, tipoError, cartViewModel, authViewModel)
                 }
                 composable("Acerca"){
                     AboutUsScreen(navController)
                 }
                 composable("backOffice") {
-                    BackOfficeScreen(navController, viewModelC)
+                    BackOfficeScreen(navController, catalogoViewModel, authViewModel)
                 }
                 composable(
                     route = "agregarProducto?id={id}",
@@ -85,15 +84,13 @@ class MainActivity : ComponentActivity() {
                     })
                 ) {
                     val productoId = it.arguments?.getInt("id")
-                    AgregarProductoScreen(navController, viewModelC, if (productoId == -1) null else productoId)
+                    AgregarProductoScreen(navController, catalogoViewModel, if (productoId == -1) null else productoId)
                 }
                 // Ruta para lanzar la Activity de Mis Pedidos
                 composable("MisPedidos") {
                     val context = LocalContext.current
-                    // Start activity and immediately return to previous nav entry
                     androidx.compose.runtime.LaunchedEffect(Unit) {
                         context.startActivity(android.content.Intent(context, com.example.mimascota.ui.activity.MisPedidosActivity::class.java))
-                        // Navegar atrás para no quedarse en pantalla vacía
                         navController.popBackStack()
                     }
                 }
@@ -106,7 +103,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 composable("fotoDePerfil") {
-                    FotoDePerfil(navController, viewModel)
+                    FotoDePerfil(navController, authViewModel)
                 }
             }
         }
