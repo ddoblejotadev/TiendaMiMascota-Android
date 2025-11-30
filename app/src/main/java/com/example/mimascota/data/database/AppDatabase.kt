@@ -19,7 +19,7 @@ import com.example.mimascota.data.entity.UserEntity
  */
 @Database(
     entities = [UserEntity::class, CartItemEntity::class],
-    version = 1,
+    version = 2, // Incrementar la versión de la base de datos
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,24 +34,13 @@ abstract class AppDatabase : RoomDatabase() {
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val dbName = "tienda_mascota.db"
-                val builder = Room.databaseBuilder(
+                val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     dbName
-                ).fallbackToDestructiveMigration(true)
-
-                val instance = try {
-                    builder.build()
-                } catch (e: IllegalStateException) {
-                    // Room schema identity mismatch -> delete DB and recreate (safe for dev)
-                    Log.w("AppDatabase", "Room schema mismatch detected, deleting DB and recreating: ${e.message}")
-                    try {
-                        context.deleteDatabase(dbName)
-                    } catch (ex: Exception) {
-                        Log.e("AppDatabase", "Failed to delete database file: ${ex.message}")
-                    }
-                    builder.build()
-                }
+                )
+                .fallbackToDestructiveMigration() // Añadir migración destructiva
+                .build()
                 INSTANCE = instance
                 instance
             }
