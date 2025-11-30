@@ -17,12 +17,6 @@ class AdminViewModel : ViewModel() {
     private val repo = AdminRepository()
     private val TAG = "AdminViewModel"
 
-    private val _users = MutableStateFlow<List<Usuario>>(emptyList())
-    val users: StateFlow<List<Usuario>> = _users.asStateFlow()
-
-    private val _orders = MutableStateFlow<List<OrdenHistorial>>(emptyList())
-    val orders: StateFlow<List<OrdenHistorial>> = _orders.asStateFlow()
-
     private val _usersWithOrders = MutableStateFlow<List<UserWithOrders>>(emptyList())
     val usersWithOrders: StateFlow<List<UserWithOrders>> = _usersWithOrders.asStateFlow()
 
@@ -39,62 +33,30 @@ class AdminViewModel : ViewModel() {
     fun refreshAll() {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
+
             val usersResult = repo.getAllUsers()
+            if (usersResult is AdminRepository.AdminResult.Error) {
+                _error.value = "Error al cargar usuarios: ${usersResult.message}"
+                _isLoading.value = false
+                return@launch
+            }
+
             val ordersResult = repo.getAllOrders()
-
-            if (usersResult is AdminRepository.AdminResult.Success && ordersResult is AdminRepository.AdminResult.Success) {
-                val users = usersResult.data
-                val orders = ordersResult.data
-                _users.value = users
-                _orders.value = orders
-
-                // Agrupar pedidos por usuario
-                val ordersByUser = orders.groupBy { it.usuarioId }
-                val combinedData = users.map {
-                    UserWithOrders(it, ordersByUser[it.usuarioId.toLong()] ?: emptyList())
-                }
-                _usersWithOrders.value = combinedData
-                _error.value = null
-            } else {
-                // Manejar errores
-                val errorMsg = (usersResult as? AdminRepository.AdminResult.Error)?.message ?: (ordersResult as? AdminRepository.AdminResult.Error)?.message ?: "Error desconocido"
-                _error.value = errorMsg
-                Log.e(TAG, "Error refreshing data: $errorMsg")
+            if (ordersResult is AdminRepository.AdminResult.Error) {
+                _error.value = "Error al cargar órdenes: ${ordersResult.message}"
+                _isLoading.value = false
+                return@launch
             }
-            _isLoading.value = false
-        }
-    }
 
-    fun fetchUsers() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            when (val result = repo.getAllUsers()) {
-                is AdminRepository.AdminResult.Success -> {
-                    _users.value = result.data
-                    _error.value = null
-                }
-                is AdminRepository.AdminResult.Error -> {
-                    _error.value = result.message
-                    Log.e(TAG, "fetchUsers error: ${result.message}")
-                }
-            }
-            _isLoading.value = false
-        }
-    }
+            val users = (usersResult as AdminRepository.AdminResult.Success).data
+            val orders = (ordersResult as AdminRepository.AdminResult.Success).data
 
-    fun fetchOrders() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            when (val result = repo.getAllOrders()) {
-                is AdminRepository.AdminResult.Success -> {
-                    _orders.value = result.data
-                    _error.value = null
-                }
-                is AdminRepository.AdminResult.Error -> {
-                    _error.value = result.message
-                    Log.e(TAG, "fetchOrders error: ${result.message}")
-                }
+            val ordersByUser = orders.groupBy { it.usuarioId }
+            val combinedData = users.map {
+                UserWithOrders(it, ordersByUser[it.usuarioId.toLong()] ?: emptyList())
             }
+            _usersWithOrders.value = combinedData
             _isLoading.value = false
         }
     }
@@ -130,5 +92,4 @@ class AdminViewModel : ViewModel() {
             _isLoading.value = false
         }
     }
-
 }

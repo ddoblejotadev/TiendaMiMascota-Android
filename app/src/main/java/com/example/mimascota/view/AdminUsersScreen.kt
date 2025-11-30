@@ -25,7 +25,8 @@ import com.example.mimascota.viewModel.AdminViewModel
 
 @Composable
 fun AdminUsersScreen(adminViewModel: AdminViewModel = viewModel()) {
-    val usuarios by adminViewModel.users.collectAsState()
+    val usersWithOrders by adminViewModel.usersWithOrders.collectAsState()
+    val usuarios = usersWithOrders.map { it.user }
     val isLoading by adminViewModel.isLoading.collectAsState()
     val errorMsg by adminViewModel.error.collectAsState()
     val context = LocalContext.current
@@ -38,7 +39,7 @@ fun AdminUsersScreen(adminViewModel: AdminViewModel = viewModel()) {
         }
     }
 
-    if (isLoading) {
+    if (isLoading && usuarios.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }

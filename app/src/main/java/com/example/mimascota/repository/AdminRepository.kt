@@ -9,7 +9,6 @@ import java.io.IOException
 
 /**
  * Repository administrativo para operaciones de gestión (usuarios, órdenes)
- * Implementado de forma segura: no se ejecuta si el backend no expone los endpoints (manejo de errores)
  */
 class AdminRepository {
     private val apiService = RetrofitClient.apiService
@@ -23,14 +22,17 @@ class AdminRepository {
     suspend fun getAllUsers(): AdminResult<List<Usuario>> {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "Fetching all users...")
                 val response = apiService.getAllUsers()
                 if (response.isSuccessful && response.body() != null) {
+                    Log.d(TAG, "Users fetched successfully.")
                     AdminResult.Success(response.body()!!)
                 } else {
+                    Log.e(TAG, "Error fetching users: ${response.code()} - ${response.message()}")
                     AdminResult.Error("Error ${response.code()}: ${response.message()}")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error al obtener usuarios: ${e.message}", e)
+                Log.e(TAG, "Exception while fetching users: ${e.message}", e)
                 AdminResult.Error("Error de conexión o endpoint no disponible")
             }
         }
@@ -39,14 +41,17 @@ class AdminRepository {
     suspend fun getAllOrders(): AdminResult<List<OrdenHistorial>> {
         return withContext(Dispatchers.IO) {
             try {
+                Log.d(TAG, "Fetching all orders...")
                 val response = apiService.getAllOrders()
                 if (response.isSuccessful && response.body() != null) {
+                    Log.d(TAG, "Orders fetched successfully.")
                     AdminResult.Success(response.body()!!)
                 } else {
+                    Log.e(TAG, "Error fetching orders: ${response.code()} - ${response.message()}")
                     AdminResult.Error("Error ${response.code()}: ${response.message()}")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error al obtener órdenes: ${e.message}", e)
+                Log.e(TAG, "Exception while fetching orders: ${e.message}", e)
                 AdminResult.Error("Error de conexión o endpoint no disponible")
             }
         }
@@ -85,4 +90,3 @@ class AdminRepository {
         }
     }
 }
-
