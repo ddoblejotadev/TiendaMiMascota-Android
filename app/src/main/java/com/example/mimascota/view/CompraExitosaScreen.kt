@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,8 +12,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.mimascota.R
 import com.example.mimascota.model.CartItem
 import com.example.mimascota.viewModel.AuthViewModel
 import com.example.mimascota.viewModel.CartViewModel
@@ -42,10 +44,10 @@ fun CompraExitosaScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Compra Exitosa") },
+                title = { Text(stringResource(id = R.string.compra_exitosa_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigate("Catalogo") }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver al catálogo")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.volver_label))
                     }
                 }
             )
@@ -59,13 +61,13 @@ fun CompraExitosaScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("¡Gracias por tu compra!", style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(id = R.string.thanks_for_purchase), style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Resumen del pedido:")
+            Text(stringResource(id = R.string.order_summary))
             LazyColumn {
                 items(items) { item ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("${item.cantidad}x ${item.producto.name}")
+                        Text("${item.cantidad}x ${item.producto.producto_nombre}")
                         val subtotal = item.producto.price * item.cantidad
                         Text(String.format("$%.2f", subtotal.toDouble()))
                     }

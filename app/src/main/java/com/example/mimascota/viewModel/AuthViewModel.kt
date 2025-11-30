@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.mimascota.model.User
 import com.example.mimascota.repository.UserRepository
 import com.example.mimascota.repository.UserRoomRepository
+import com.example.mimascota.repository.AuthRepository
+import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +22,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo = UserRepository()
     private val roomRepository = UserRoomRepository(application)
+    private val authRepository = AuthRepository()
 
     var registroState = mutableStateOf("")
     var loginState = mutableStateOf("")
@@ -49,6 +52,28 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         viewModelScope.launch {
+            // Primero intentar registrar en el backend
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    authRepository.registro(username, email, password, null)
+                }
+                if (result.isSuccess) {
+                    // backend guardó token y usuario en TokenManager desde AuthRepository
+                    registroState.value = "Registro completado ✅"
+                    // actualizar estado local de sesión
+                    val savedUser = TokenManager.getUsuario()
+                    usuarioActual.value = savedUser?.nombre ?: username
+                    usuarioActualId.value = savedUser?.usuarioId ?: -1
+                    return@launch
+                } else {
+                    // Si fallo en backend, seguir con fallback local
+                    registroState.value = "Registro en backend falló: ${result.exceptionOrNull()?.message}. Intentando local..."
+                }
+            } catch (e: Exception) {
+                registroState.value = "Error de red al registrar (backend): ${e.message}. Intentando local..."
+            }
+
+            // Fallback: guardar localmente en Room
             val contexto = getApplication<Application>()
             val nuevoUsuario = User(
                 id = repo.generarNuevoId(contexto),
@@ -64,7 +89,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             registroState.value = if (resultado) {
-                "Registro completado ✅"
+                "Registro completado (local) ✅"
             } else {
                 "El usuario ya existe ❌"
             }
@@ -73,6 +98,27 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loginUsuario(email: String, password: String) {
         viewModelScope.launch {
+            // Intentar login con backend
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    authRepository.login(email, password)
+                }
+                if (result.isSuccess) {
+                    // AuthRepository guarda token y usuario en TokenManager
+                    val resp = result.getOrNull()!!
+                    usuarioActual.value = resp.usuario.nombre
+                    usuarioActualId.value = resp.usuario.usuarioId
+                    loginState.value = "Login exitoso 🎉"
+                    return@launch
+                } else {
+                    // Backend devolvió error -> fallback a local
+                    loginState.value = "Login backend falló: ${result.exceptionOrNull()?.message}. Intentando local..."
+                }
+            } catch (e: Exception) {
+                loginState.value = "Error de red al loguear (backend): ${e.message}. Intentando local..."
+            }
+
+            // Fallback local (Room)
             if (email.equals("admin", ignoreCase = true) && password == "admin") {
                 usuarioActual.value = "admin"
                 usuarioActualId.value = 0
@@ -101,6 +147,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         usuarioActualId.value = null
         loginState.value = ""
         registroState.value = ""
+        TokenManager.clearUserData()
     }
 
     fun actualizarFotoPerfil(fotoPerfil: String) {

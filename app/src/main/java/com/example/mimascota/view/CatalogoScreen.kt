@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.mimascota.model.Producto
@@ -42,7 +43,7 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
 
     // --- CATEGORÍAS calculadas localmente a partir de productos ---
     val categorias = remember(productos) {
-        val cats = productos.mapNotNull { it.category?.trim() }
+        val cats = productos.map { it.category.trim() }
             .filter { it.isNotBlank() }
             .distinct()
             .sortedBy { it.lowercase(Locale.getDefault()) }
@@ -60,10 +61,10 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Catálogo") },
+                title = { Text(stringResource(id = com.example.mimascota.R.string.productos)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Atrás")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = com.example.mimascota.R.string.volver_label))
                     }
                 }
             )
@@ -78,7 +79,7 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                 FloatingActionButton(onClick = { navController.navigate("Carrito") }) {
                     Icon(
                         imageVector = Icons.Filled.ShoppingCart,
-                        contentDescription = "Ir al carrito"
+                        contentDescription = stringResource(id = com.example.mimascota.R.string.ver_carrito)
                     )
                 }
             }
@@ -132,12 +133,14 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
 @Composable
 fun ProductoCard(producto: Producto, onProductoClick: () -> Unit, onAddToCart: () -> Unit, cartQuantity: Int = 0) {
     val context = LocalContext.current
+    val agregadoMsg = stringResource(id = com.example.mimascota.R.string.producto_agregado)
+    val sinStockMsg = stringResource(id = com.example.mimascota.R.string.stock_insuficiente)
     val stockVal = producto.stock
     val estaAgotado = stockVal != null && stockVal <= 0
 
     // small press animation when user adds to cart
-    var pressed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(targetValue = if (pressed) 0.96f else 1f)
+    val pressed = remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(targetValue = if (pressed.value) 0.96f else 1f)
 
     // coroutine scope para ejecutar delays desde onClick
     val coroutineScope = rememberCoroutineScope()
@@ -162,27 +165,21 @@ fun ProductoCard(producto: Producto, onProductoClick: () -> Unit, onAddToCart: (
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(producto.producto_nombre, style = MaterialTheme.typography.titleMedium)
-            // Mostrar stock
-            when (stockVal) {
-                null -> Text("Stock: N/D", style = MaterialTheme.typography.bodySmall)
-                else -> {
-                    if (stockVal <= 0) {
-                        Text("Agotado", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                    } else {
-                        Text("Stock: $stockVal", style = MaterialTheme.typography.bodySmall)
-                    }
-                }
+            // Mostrar stock (null = N/D)
+            if (stockVal == null) {
+                Text(stringResource(id = com.example.mimascota.R.string.no_products), style = MaterialTheme.typography.bodySmall)
+            } else if (stockVal <= 0) {
+                Text(stringResource(id = com.example.mimascota.R.string.stock_insuficiente), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            } else {
+                Text(String.format(stringResource(id = com.example.mimascota.R.string.product_stock), stockVal), style = MaterialTheme.typography.bodySmall)
             }
-            // Asegurar formato de precio aunque sea Int o Double
-            val priceDouble = when (val p = producto.price) {
-                is Number -> p.toDouble()
-                else -> 0.0
-            }
-            Text(String.format(Locale.getDefault(), "$%.2f", priceDouble), style = MaterialTheme.typography.bodyMedium)
+
+            // Precio (producto.price ya es Double)
+            Text(String.format(Locale.getDefault(), "$%.2f", producto.price), style = MaterialTheme.typography.bodyMedium)
 
             // Mostrar cantidad en carrito si existe
             if (cartQuantity > 0) {
-                Text("En carrito: $cartQuantity", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(id = com.example.mimascota.R.string.en_carrito, cartQuantity), style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -190,22 +187,22 @@ fun ProductoCard(producto: Producto, onProductoClick: () -> Unit, onAddToCart: (
             Button(
                 onClick = {
                     if (estaAgotado) {
-                        Toast.makeText(context, "Producto sin stock", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, sinStockMsg, Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-                    pressed = true
+                    pressed.value = true
                     onAddToCart()
                     // efecto visual breve usando coroutineScope
                     coroutineScope.launch {
                         kotlinx.coroutines.delay(180)
-                        pressed = false
+                        pressed.value = false
                     }
-                    Toast.makeText(context, "Añadido al carrito", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, agregadoMsg, Toast.LENGTH_SHORT).show()
                 },
                 enabled = !estaAgotado,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Agregar")
+                Text(stringResource(id = com.example.mimascota.R.string.add_to_cart))
             }
         }
     }

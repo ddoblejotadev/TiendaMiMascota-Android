@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.mimascota.ui.activity.CheckoutActivity
 import com.google.gson.Gson
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,10 +41,10 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Carrito de Compras") },
+                title = { Text(stringResource(id = com.example.mimascota.R.string.ver_carrito)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = com.example.mimascota.R.string.volver_label))
                     }
                 }
             )
@@ -57,7 +58,7 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(String.format(Locale.getDefault(), "Total: $%.2f", total), style = MaterialTheme.typography.titleLarge)
+                    Text(String.format(Locale.getDefault(), "%s", String.format(Locale.getDefault(), "Total: $%.2f", total)), style = MaterialTheme.typography.titleLarge)
                     Button(onClick = {
                         // Evitar checkout con carrito vacío
                         if (items.isEmpty()) {
@@ -79,7 +80,7 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                             context.startActivity(intent)
                         }
                     }) {
-                        Text("Comprar")
+                        Text(stringResource(id = com.example.mimascota.R.string.action_cart))
                     }
                 }
             }
@@ -116,11 +117,11 @@ fun CartItemView(item: CartItem, viewModel: CartViewModel) {
             // Mostrar stock si disponible
             val stock = item.producto.stock
             if (stock == null) {
-                Text("Stock: N/D", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(id = com.example.mimascota.R.string.no_products), style = MaterialTheme.typography.bodySmall)
             } else if (stock <= 0) {
-                Text("Agotado", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(id = com.example.mimascota.R.string.stock_insuficiente), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             } else {
-                Text("Stock disponible: ${stock}", style = MaterialTheme.typography.bodySmall)
+                Text(String.format(stringResource(id = com.example.mimascota.R.string.stock_disponible), stock), style = MaterialTheme.typography.bodySmall)
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {

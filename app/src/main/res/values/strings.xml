@@ -44,4 +44,52 @@
     <string name="password_minimo">La contraseña debe tener al menos 6 caracteres</string>
     <string name="nombre_obligatorio">El nombre es obligatorio</string>
     <string name="complete_campos_obligatorios">Completa los campos obligatorios correctamente</string>
+
+    <!-- Diálogos de confirmación -->
+    <string name="confirm_delete_user_title">Eliminar usuario</string>
+    <string name="confirm_delete_user_message">¿Estás seguro que deseas eliminar a este usuario? Esta acción no se puede deshacer.</string>
+    <string name="confirm_update_order_title">Actualizar estado de orden</string>
+    <string name="confirm_update_order_message">¿Cambiar el estado de la orden a %1$s?</string>
+    <string name="confirm_button">Confirmar</string>
+    <string name="cancel_button">Cancelar</string>
+
+    <!-- Back Office -->
+    <string name="back_office_title">Back Office</string>
+    <string name="productos_tab">Productos</string>
+    <string name="usuarios_tab">Usuarios</string>
+    <string name="ordenes_tab">Órdenes</string>
+    <string name="agregar_producto">Agregar Producto</string>
+    <string name="editar_label">Editar</string>
+    <string name="eliminar_label">Eliminar</string>
+    <string name="volver_label">Volver</string>
+    <string name="estado_procesando">Procesando</string>
+    <string name="estado_enviado">Enviado</string>
+    <string name="estado_cancelado">Cancelado</string>
+
+    <!-- Ordenes / labels -->
+    <string name="order_label">Orden: %1$s</string>
+    <string name="user_label">Usuario: %1$s</string>
+    <string name="estado_label">Estado: %1$s</string>
+
+    <!-- Compra Rechazada -->
+    <string name="compra_rechazada_title">Compra Rechazada</string>
+    <string name="pago_rechazado">El pago fue rechazado.</string>
+    <string name="stock_rechazado">No hay suficiente stock de uno o más productos.</string>
+    <string name="error_inesperado">Ocurrió un error inesperado.</string>
+
+    <!-- Compra Exitosa -->
+    <string name="compra_exitosa_title">Compra Exitosa</string>
+    <string name="thanks_for_purchase">¡Gracias por tu compra!</string>
+    <string name="order_summary">Resumen del pedido:</string>
+    <string name="lo_sentimos">Lo sentimos</string>
+
+    <!-- Carrito y Compra -->
+    <string name="comprar">Comprar</string>
+    <string name="carrito_vacio">El carrito está vacío</string>
+
+    <!-- Mensajes administracion -->
+    <string name="usuario_eliminado">Usuario eliminado</string>
+    <string name="estado_actualizado">Estado actualizado</string>
+    <string name="admin_error">Admin error: %1$s</string>
+    <string name="en_carrito">En carrito: %1$d</string>
 </resources>

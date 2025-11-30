@@ -33,6 +33,16 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel) {
     var direccion by remember { mutableStateOf("") }
     var registroState by remember { viewModel.registroState }
 
+    // Navegar al home si el registro es exitoso
+    LaunchedEffect(registroState) {
+        if (registroState.contains("exitoso", ignoreCase = true)) {
+            val username = nombre.ifBlank { "Usuario" }
+            navController.navigate("home/$username") {
+                popUpTo("register") { inclusive = true }
+            }
+        }
+    }
+
     // Estados de error por campo (null = sin error)
     var nombreError by remember { mutableStateOf<String?>(null) }
     var runError by remember { mutableStateOf<String?>(null) }

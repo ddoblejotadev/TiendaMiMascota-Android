@@ -3,16 +3,18 @@ package com.example.mimascota.view
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.mimascota.R
 import com.example.mimascota.model.Producto
 import com.example.mimascota.util.AppConfig
 import com.example.mimascota.viewModel.CartViewModel
@@ -31,10 +33,10 @@ fun DetalleProductoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(producto?.producto_nombre ?: "Detalle") },
+                title = { Text(producto?.producto_nombre ?: stringResource(id = R.string.descripcion)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Atrás")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.volver_label))
                     }
                 }
             )
@@ -68,7 +70,7 @@ fun DetalleProductoScreen(
                 Text(it.description ?: "", style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = { cartViewModel.agregarAlCarrito(it) }) {
-                    Text("Agregar al carrito")
+                    Text(stringResource(id = com.example.mimascota.R.string.agregar_al_carrito))
                 }
             }
         } ?: run {
