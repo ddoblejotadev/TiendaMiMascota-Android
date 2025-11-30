@@ -1,12 +1,14 @@
 package com.example.mimascota.viewModel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimascota.repository.AuthRepository
 import com.example.mimascota.repository.UserRoomRepository
 import com.example.mimascota.util.TokenManager
+import com.example.mimascota.model.Usuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +36,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _fotoPerfil = MutableStateFlow<String?>(null)
     val fotoPerfil: StateFlow<String?> = _fotoPerfil
 
+    init {
+        refrescarUsuarioDesdeToken()
+    }
+
+    fun refrescarUsuarioDesdeToken() {
+        viewModelScope.launch {
+            val usuario = TokenManager.getUsuario()
+            usuarioActual.value = usuario?.nombre
+            usuarioActualId.value = usuario?.usuarioId
+            _fotoPerfil.value = usuario?.fotoUrl
+            Log.d("AuthViewModel", "🔄 Usuario refrescado desde TokenManager: ${usuario?.nombre}, Foto: ${usuario?.fotoUrl}")
+        }
+    }
+
     fun registrarUsuario(run: String, username: String, email: String, password: String, direccion: String) {
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
@@ -41,9 +57,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             }
             if (result.isSuccess) {
                 registroState.value = "Registro completado ✅"
-                val savedUser = TokenManager.getUsuario()
-                usuarioActual.value = savedUser?.nombre
-                usuarioActualId.value = savedUser?.usuarioId
+                refrescarUsuarioDesdeToken()
             } else {
                 registroState.value = "Registro falló: ${result.exceptionOrNull()?.message}"
             }
@@ -57,10 +71,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 authRepository.login(email, password)
             }
             if (result.isSuccess) {
-                val savedUser = TokenManager.getUsuario()
-                usuarioActual.value = savedUser?.nombre
-                usuarioActualId.value = savedUser?.usuarioId
-                loginState.value = LoginState.Success(savedUser?.rol)
+                refrescarUsuarioDesdeToken()
+                loginState.value = LoginState.Success(TokenManager.getUserRole())
             } else {
                 loginState.value = LoginState.Error(result.exceptionOrNull()?.message ?: "Credenciales inválidas")
             }
@@ -78,34 +90,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             authRepository.logout()
             usuarioActual.value = null
             usuarioActualId.value = null
+            _fotoPerfil.value = null
             loginState.value = LoginState.Idle
             registroState.value = ""
-        }
-    }
-
-    fun actualizarFotoPerfil(fotoPath: String) {
-        viewModelScope.launch {
-            usuarioActualId.value?.let { userId ->
-                if (userId != 0) {
-                    withContext(Dispatchers.IO) {
-                        roomRepository.updateUserPhoto(userId, fotoPath)
-                    }
-                    _fotoPerfil.value = fotoPath
-                }
-            }
-        }
-    }
-
-    suspend fun obtenerFotoPerfilActual(): String? {
-        val userId = usuarioActualId.value
-        if (userId != null && userId != 0) {
-            val foto = withContext(Dispatchers.IO) {
-                roomRepository.getUserPhotoById(userId)
-            }
-            _fotoPerfil.value = foto
-            return foto
-        } else {
-            return null
         }
     }
 }

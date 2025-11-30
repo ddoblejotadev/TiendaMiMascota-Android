@@ -2,6 +2,7 @@ package com.example.mimascota.view
 
 import android.Manifest
 import android.graphics.Bitmap
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -157,18 +159,16 @@ fun FotoDePerfil(navController: NavController, viewModel: AuthViewModel) {
 
             // Botón guardar (solo si hay foto)
             if (photoBitmap.value != null) {
+                val context = LocalContext.current
                 Button(
                     onClick = {
-                        // Guardar en BD
-                        try {
-                            val fotoPath = "foto_perfil_${System.currentTimeMillis()}"
-                            viewModel.actualizarFotoPerfil(fotoPath)
-                            isSaved.value = true
-                            // Esperar un momento y volver
-                            navController.popBackStack()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
+                        // Esta pantalla está obsoleta. La lógica de guardado ha sido
+                        // centralizada en ProfileEditActivity.kt para evitar inconsistencias de datos.
+                        Toast.makeText(
+                            context,
+                            "Función obsoleta. Por favor, usa la pantalla 'Editar Perfil'.",
+                            Toast.LENGTH_LONG
+                        ).show()
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(

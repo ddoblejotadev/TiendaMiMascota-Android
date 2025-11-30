@@ -1,5 +1,9 @@
 package com.example.mimascota.view
 
+import android.app.Activity
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,7 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Pets
-import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Portrait
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
@@ -16,40 +19,36 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.mimascota.R
+import com.example.mimascota.ui.activity.ProfileEditActivity
 import com.example.mimascota.viewModel.AuthViewModel
-import android.app.Activity
-import android.content.Intent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthViewModel) {
     val esAdmin = authViewModel.esAdmin() || (name?.equals("admin", ignoreCase = true) == true)
-    val fotoPerfil = authViewModel.fotoPerfil.collectAsState()
+    val fotoPerfilUrl by authViewModel.fotoPerfil.collectAsState()
+    val displayName by authViewModel.usuarioActual
 
     LaunchedEffect(Unit) {
-        authViewModel.obtenerFotoPerfilActual()
+        authViewModel.refrescarUsuarioDesdeToken()
     }
 
     val context = LocalContext.current
     val profileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
         if (activityResult.resultCode == Activity.RESULT_OK) {
-            val updatedName = activityResult.data?.getStringExtra("updated_name")
-            if (!updatedName.isNullOrEmpty()) {
-                navController.navigate("home/$updatedName") {
-                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                }
-            }
+            authViewModel.refrescarUsuarioDesdeToken()
         }
     }
 
@@ -79,75 +78,37 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
             verticalArrangement = Arrangement.Center
         ) {
 
-            Box(
+            AsyncImage(
+                model = fotoPerfilUrl,
+                contentDescription = "Foto de perfil",
+                placeholder = painterResource(id = R.drawable.logo1),
+                error = painterResource(id = R.drawable.logo1),
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (fotoPerfil.value != null)
-                            MaterialTheme.colorScheme.secondaryContainer
-                        else
-                            MaterialTheme.colorScheme.primaryContainer
-                    )
-                    .clickable {
-                        val intent = Intent(context, com.example.mimascota.ui.activity.ProfileEditActivity::class.java)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { 
+                        val intent = Intent(context, ProfileEditActivity::class.java)
                         profileLauncher.launch(intent)
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                if (fotoPerfil.value != null) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.PhotoCamera,
-                            contentDescription = "Foto guardada",
-                            modifier = Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "✓",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
                     }
-                } else {
-                    val iniciales = name?.take(2)?.uppercase() ?: "?"
-                    Text(
-                        text = iniciales,
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = if (fotoPerfil.value != null) "Foto guardada - Toca para cambiar" else "Toca para agregar foto",
+                text = "Toca para cambiar foto",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val displayName = name ?: com.example.mimascota.util.TokenManager.getUserName() ?: "Invitado"
             Text(
-                text = "¡Bienvenido, $displayName! 👋",
+                text = "¡Bienvenido, ${displayName ?: "Invitado"}! 👋",
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Has iniciado sesión como:",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = displayName,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.primary
-            )
-
+            
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
@@ -174,7 +135,6 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botón para la nueva sección de Huachitos
             OutlinedButton(
                 onClick = { navController.navigate("huachitos") },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -200,7 +160,7 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedButton(
-                onClick = { navController.context?.let { navController.navigate("MisPedidos") } ?: navController.navigate("MisPedidos") },
+                onClick = { navController.navigate("MisPedidos") },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
@@ -212,7 +172,10 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedButton(
-                onClick = { val intent = Intent(context, com.example.mimascota.ui.activity.ProfileEditActivity::class.java); profileLauncher.launch(intent) },
+                onClick = { 
+                    val intent = Intent(context, ProfileEditActivity::class.java)
+                    profileLauncher.launch(intent) 
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
