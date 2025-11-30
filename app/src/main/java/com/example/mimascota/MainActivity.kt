@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
                     AboutUsScreen(navController)
                 }
                 composable("backOffice") {
-                    BackOfficeScreen(navController)
+                    BackOfficeScreen(navController, viewModelC)
                 }
                 composable(
                     route = "agregarProducto?id={id}",

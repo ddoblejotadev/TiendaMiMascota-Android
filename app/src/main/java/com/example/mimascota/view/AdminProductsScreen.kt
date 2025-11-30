@@ -1,14 +1,14 @@
 package com.example.mimascota.view
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
@@ -22,22 +22,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.mimascota.R
 import com.example.mimascota.model.Producto
 import com.example.mimascota.viewModel.CatalogoViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun AdminProductsScreen(navController: NavController, catalogoViewModel: CatalogoViewModel = viewModel()) {
+fun AdminProductsScreen(navController: NavController, catalogoViewModel: CatalogoViewModel) {
     val productos by catalogoViewModel.productos.collectAsState()
+    val groupedProducts = productos.groupBy { it.category?.takeIf { it.isNotBlank() } ?: "Sin Categoría" }
 
     Scaffold(
         floatingActionButton = {
@@ -48,12 +47,21 @@ fun AdminProductsScreen(navController: NavController, catalogoViewModel: Catalog
     ) { padding ->
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.padding(padding).padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(productos) { producto ->
-                ProductGridItem(producto, navController, catalogoViewModel)
+            groupedProducts.forEach { (category, productsInCategory) ->
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = category,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp, start = 8.dp, end = 8.dp)
+                    )
+                }
+                items(productsInCategory) { producto ->
+                    ProductGridItem(producto, navController, catalogoViewModel)
+                }
             }
         }
     }
@@ -76,7 +84,6 @@ fun ProductGridItem(producto: Producto, navController: NavController, viewModel:
                 placeholder = painterResource(id = android.R.drawable.ic_menu_gallery),
                 error = painterResource(id = android.R.drawable.ic_dialog_alert)
             )
-
             Column(
                 modifier = Modifier.padding(12.dp)
             ) {
