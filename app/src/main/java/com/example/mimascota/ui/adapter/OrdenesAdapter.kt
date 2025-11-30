@@ -5,18 +5,17 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.mimascota.model.Orden
+import com.example.mimascota.model.OrdenHistorial
 import com.example.mimascota.databinding.ItemOrdenBinding
 import java.text.NumberFormat
-import java.text.SimpleDateFormat
 import java.util.Locale
 
 /**
- * OrdenesAdapter: Adapter para mostrar lista de órdenes
+ * OrdenesAdapter: Adapter para mostrar lista de órdenes (usando OrdenHistorial)
  */
 class OrdenesAdapter(
-    private val onClick: (Orden) -> Unit
-) : ListAdapter<Orden, OrdenesAdapter.ViewHolder>(OrderDiffCallback()) {
+    private val onClick: (OrdenHistorial) -> Unit
+) : ListAdapter<OrdenHistorial, OrdenesAdapter.ViewHolder>(OrderDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemOrdenBinding.inflate(
@@ -33,27 +32,26 @@ class OrdenesAdapter(
 
     class ViewHolder(
         private val binding: ItemOrdenBinding,
-        private val onClick: (Orden) -> Unit
+        private val onClick: (OrdenHistorial) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         private val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CL"))
-        private val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-        fun bind(orden: Orden) {
+        fun bind(orden: OrdenHistorial) {
             with(binding) {
                 // Número de orden
                 tvNumeroOrden.text = "Orden #${orden.numeroOrden}"
 
-                // Fecha
-                tvFecha.text = "Fecha: ${dateFormatter.format(orden.fecha)}"
+                // Fecha (es un String, no necesita formateo)
+                tvFecha.text = "Fecha: ${orden.fecha}"
 
                 // Total
                 tvTotal.text = currencyFormatter.format(orden.total)
 
                 // Estado
-                tvEstado.text = "Estado: ${orden.estado}"
+                tvEstado.text = "Estado: ${orden.estado.replaceFirstChar { it.uppercase() }}"
                 tvEstado.setTextColor(
-                    when (orden.estado) {
+                    when (orden.estado.uppercase()) {
                         "PENDIENTE" -> 0xFFFF9800.toInt()
                         "PROCESANDO" -> 0xFF2196F3.toInt()
                         "ENVIADO" -> 0xFF4CAF50.toInt()
@@ -74,14 +72,13 @@ class OrdenesAdapter(
         }
     }
 
-    class OrderDiffCallback : DiffUtil.ItemCallback<Orden>() {
-        override fun areItemsTheSame(oldItem: Orden, newItem: Orden): Boolean {
-            return oldItem.ordenId == newItem.ordenId
+    class OrderDiffCallback : DiffUtil.ItemCallback<OrdenHistorial>() {
+        override fun areItemsTheSame(oldItem: OrdenHistorial, newItem: OrdenHistorial): Boolean {
+            return oldItem.id == newItem.id
         }
 
-        override fun areContentsTheSame(oldItem: Orden, newItem: Orden): Boolean {
+        override fun areContentsTheSame(oldItem: OrdenHistorial, newItem: OrdenHistorial): Boolean {
             return oldItem == newItem
         }
     }
 }
-

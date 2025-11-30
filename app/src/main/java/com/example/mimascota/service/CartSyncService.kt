@@ -1,171 +1,71 @@
 package com.example.mimascota.service
 
-import com.example.mimascota.Model.CartItem
-import com.example.mimascota.Model.Producto
-import retrofit2.Response
-import retrofit2.http.*
+import com.example.mimascota.model.CartItem
+import com.example.mimascota.model.ApiResponse
+import com.example.mimascota.util.AppConfig
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.IOException
 
-/**
- * CartSyncService: Servicio para sincronizar el carrito con React Context
- *
- * Endpoints para mantener el carrito sincronizado entre Android y React
- */
-interface CartSyncService {
+class CartSyncService {
 
-    /**
-     * Obtiene el carrito del usuario desde el backend (React Context)
-     * GET /carrito/{userId}
-     */
-    @GET("carrito/{userId}")
-    suspend fun obtenerCarrito(@Path("userId") userId: Int): Response<CarritoResponse>
+    private val client = OkHttpClient()
+    private val gson = Gson()
 
-    /**
-     * Sincroniza el carrito local con el backend (React Context)
-     * POST /carrito/sync
-     */
-    @POST("carrito/sync")
-    suspend fun sincronizarCarrito(@Body request: SyncCarritoRequest): Response<SyncCarritoResponse>
+    // Definir el tipo para la respuesta de la API que contiene una lista de CartItem
+    private val cartItemListType = object : TypeToken<ApiResponse<List<CartItem>>>() {}.type
 
     /**
-     * Agrega un item al carrito en el backend
-     * POST /carrito/agregar
+     * Sincroniza el carrito con el backend.
      */
-    @POST("carrito/agregar")
-    suspend fun agregarItem(@Body request: AgregarItemRequest): Response<CarritoResponse>
+    suspend fun sincronizarCarrito(userId: Int, items: List<CartItem>): ApiResponse<Unit> {
+        // Usar AppConfig para construir URL (unificada)
+        val baseOrigin = AppConfig.BASE_ORIGIN
+        val url = "$baseOrigin/api/cart/sync/$userId"
+        val json = gson.toJson(items)
+        val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+        val request = Request.Builder().url(url).post(requestBody).build()
+
+        return try {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    ApiResponse(success = true, data = Unit)
+                } else {
+                    ApiResponse(success = false, message = "Error: ${response.code}")
+                }
+            }
+        } catch (e: IOException) {
+            ApiResponse(success = false, message = e.message)
+        }
+    }
 
     /**
-     * Elimina un item del carrito en el backend
-     * DELETE /carrito/{userId}/producto/{productoId}
+     * Obtiene el carrito del backend.
      */
-    @DELETE("carrito/{userId}/producto/{productoId}")
-    suspend fun eliminarItem(
-        @Path("userId") userId: Int,
-        @Path("productoId") productoId: Int
-    ): Response<CarritoResponse>
+    suspend fun obtenerCarrito(userId: Int): ApiResponse<List<CartItem>> {
+        val baseOrigin = AppConfig.BASE_ORIGIN
+        val url = "$baseOrigin/api/cart/$userId"
+        val request = Request.Builder().url(url).build()
 
-    /**
-     * Actualiza la cantidad de un item en el carrito
-     * PUT /carrito/actualizar
-     */
-    @PUT("carrito/actualizar")
-    suspend fun actualizarCantidad(@Body request: ActualizarCantidadRequest): Response<CarritoResponse>
-
-    /**
-     * Vacía el carrito del usuario
-     * DELETE /carrito/{userId}
-     */
-    @DELETE("carrito/{userId}")
-    suspend fun vaciarCarrito(@Path("userId") userId: Int): Response<Unit>
+        return try {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val json = response.body?.string()
+                    if (json != null) {
+                        gson.fromJson(json, cartItemListType)
+                    } else {
+                        ApiResponse(success = false, message = "Respuesta vacía del servidor")
+                    }
+                } else {
+                    ApiResponse(success = false, message = "Error: ${response.code}")
+                }
+            }
+        } catch (e: IOException) {
+            ApiResponse(success = false, message = e.message)
+        }
+    }
 }
-
-// ========== MODELOS DE REQUEST/RESPONSE ==========
-
-/**
- * Respuesta del carrito (compatible con React Context)
- */
-data class CarritoResponse(
-    val userId: Int,
-    val items: List<CarritoItemDto>,
-    val total: Int,
-    val cantidadItems: Int
-)
-
-/**
- * Item del carrito DTO (compatible con React)
- */
-data class CarritoItemDto(
-    val producto_id: Int,
-    val producto_nombre: String,
-    val price: Int,
-    val cantidad: Int,
-    val subtotal: Int,
-    val imageUrl: String?,
-    val category: String?,
-    val stock: Int?
-)
-
-/**
- * Request para sincronizar carrito completo
- */
-data class SyncCarritoRequest(
-    val userId: Int,
-    val items: List<CarritoItemDto>
-)
-
-/**
- * Response de sincronización
- */
-data class SyncCarritoResponse(
-    val success: Boolean,
-    val message: String,
-    val carrito: CarritoResponse?
-)
-
-/**
- * Request para agregar item
- */
-data class AgregarItemRequest(
-    val userId: Int,
-    val productoId: Int,
-    val cantidad: Int
-)
-
-/**
- * Request para actualizar cantidad
- */
-data class ActualizarCantidadRequest(
-    val userId: Int,
-    val productoId: Int,
-    val cantidad: Int
-)
-
-// ========== FUNCIONES DE CONVERSIÓN ==========
-
-/**
- * Convierte CartItem a CarritoItemDto
- */
-fun CartItem.toDto(): CarritoItemDto {
-    return CarritoItemDto(
-        producto_id = producto.id,
-        producto_nombre = producto.name,
-        price = producto.price,
-        cantidad = cantidad,
-        subtotal = subtotal,
-        imageUrl = producto.imageUrl,
-        category = producto.category,
-        stock = producto.stock
-    )
-}
-
-/**
- * Convierte CarritoItemDto a CartItem
- */
-fun CarritoItemDto.toCartItem(): CartItem {
-    return CartItem(
-        producto = Producto(
-            producto_id = producto_id,
-            producto_nombre = producto_nombre,
-            price = price,
-            stock = stock ?: 0,
-            category = category ?: "",
-            imageUrl = imageUrl,
-            description = null
-        ),
-        cantidad = cantidad
-    )
-}
-
-/**
- * Convierte lista de CartItem a lista de DTOs
- */
-fun List<CartItem>.toDtoList(): List<CarritoItemDto> {
-    return map { it.toDto() }
-}
-
-/**
- * Convierte lista de DTOs a lista de CartItem
- */
-fun List<CarritoItemDto>.toCartItemList(): List<CartItem> {
-    return map { it.toCartItem() }
-}
-

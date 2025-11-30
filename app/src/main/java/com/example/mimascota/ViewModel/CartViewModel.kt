@@ -1,109 +1,128 @@
-package com.example.mimascota.ViewModel
+package com.example.mimascota.viewModel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.example.mimascota.Model.CartItem
-import com.example.mimascota.Model.Producto
+import androidx.lifecycle.viewModelScope
+import com.example.mimascota.model.CartItem
+import com.example.mimascota.model.Producto
+import com.example.mimascota.repository.CartSyncRepository
+import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlin.random.Random
-
-/**
- * CartViewModel: Maneja la lógica del carrito de compras
- *
- * Funcionalidades:
- * - Agregar/eliminar productos del carrito
- * - Calcular totales
- * - Procesar compras con validación de stock
- */
-sealed class AgregarResultado {
-    object Exito : AgregarResultado()
-    data class ExcedeStock(val stockDisponible: Int, val cantidadEnCarrito: Int) : AgregarResultado()
-}
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class CartViewModel : ViewModel() {
 
-    private val _carrito = MutableStateFlow<List<CartItem>>(emptyList())
-    val carrito: StateFlow<List<CartItem>> = _carrito.asStateFlow()
-
-    private val _ultimoPedido = MutableStateFlow<List<CartItem>>(emptyList())
-    val ultimoPedido: StateFlow<List<CartItem>> = _ultimoPedido.asStateFlow()
-
-    private val _totalUltimoPedido = MutableStateFlow(0)
-    val totalUltimoPedido: StateFlow<Int> = _totalUltimoPedido.asStateFlow()
-
-    private val _numeroUltimoPedido = MutableStateFlow("")
-    val numeroUltimoPedido: StateFlow<String> = _numeroUltimoPedido.asStateFlow()
-
-    fun agregarAlCarrito(producto: Producto): AgregarResultado {
-        val cantidadActual = _carrito.value.find { it.producto.id == producto.id }?.cantidad ?: 0
-        val itemExistente = _carrito.value.find { it.producto.id == producto.id }
-
-        _carrito.value = if (itemExistente != null) {
-            _carrito.value.map {
-                if (it.producto.id == producto.id) it.copy(cantidad = it.cantidad + 1) else it
-            }
-        } else {
-            _carrito.value + CartItem(producto, 1)
-        }
-
-        val nuevaCantidad = cantidadActual + 1
-        return if (nuevaCantidad > (producto.stock ?: 0)) {
-            AgregarResultado.ExcedeStock(producto.stock ?: 0, nuevaCantidad)
-        } else {
-            AgregarResultado.Exito
-        }
+    companion object {
+        private const val TAG = "CartViewModel"
     }
 
-    fun disminuirCantidad(producto: Producto) {
-        _carrito.value = _carrito.value.mapNotNull { item ->
-            when {
-                item.producto.id != producto.id -> item
-                item.cantidad > 1 -> item.copy(cantidad = item.cantidad - 1)
-                else -> null
+    private val _items = MutableStateFlow<List<CartItem>>(emptyList())
+    val items: StateFlow<List<CartItem>> = _items.asStateFlow()
+
+    private val _total = MutableStateFlow(0.0)
+    val total: StateFlow<Double> = _total.asStateFlow()
+
+    // Repo para sincronizar carrito con backend/React si se requiere
+    private val cartSyncRepository = CartSyncRepository()
+
+    fun agregarAlCarrito(producto: Producto) {
+        Log.d(TAG, "agregarAlCarrito llamado para producto id=${producto.producto_id} name=${producto.producto_nombre}")
+        _items.update { currentItems ->
+            val existingItem = currentItems.find { it.producto.producto_id == producto.producto_id }
+            if (existingItem != null) {
+                currentItems.map {
+                    if (it.producto.producto_id == producto.producto_id) it.copy(cantidad = it.cantidad + 1) else it
+                }
+            } else {
+                currentItems + CartItem(producto, 1)
             }
         }
+        recalcularTotal()
+
+        // Sincronizar en background si el usuario está logueado
+        if (TokenManager.isLoggedIn()) {
+            viewModelScope.launch {
+                try {
+                    val userId = TokenManager.getUserId()
+                    val result = cartSyncRepository.sincronizarCarritoConReact(userId, _items.value)
+                    when (result) {
+                        is CartSyncRepository.SyncResult.Success -> Log.d(TAG, "Carrito sincronizado con backend")
+                        is CartSyncRepository.SyncResult.Error -> Log.w(TAG, "Fallo sincronizar carrito: ${result.message}")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Excepción sincronizando carrito: ${e.message}")
+                }
+            }
+        }
+
+        Log.d(TAG, "Items ahora: ${_items.value.size}, total=${_total.value}")
     }
 
-    fun eliminarDelCarrito(producto: Producto) {
-        _carrito.value = _carrito.value.filter { it.producto.id != producto.id }
+    fun actualizarCantidad(producto: Producto, nuevaCantidad: Int) {
+        if (nuevaCantidad <= 0) {
+            _items.update { currentItems ->
+                currentItems.filterNot { it.producto.producto_id == producto.producto_id }
+            }
+        } else {
+            _items.update { currentItems ->
+                currentItems.map {
+                    if (it.producto.producto_id == producto.producto_id) it.copy(cantidad = nuevaCantidad) else it
+                }
+            }
+        }
+        recalcularTotal()
+
+        // Sincronizar si está logueado
+        if (TokenManager.isLoggedIn()) {
+            viewModelScope.launch {
+                try {
+                    val userId = TokenManager.getUserId()
+                    val result = cartSyncRepository.sincronizarCarritoConReact(userId, _items.value)
+                    when (result) {
+                        is CartSyncRepository.SyncResult.Success -> Log.d(TAG, "Carrito sincronizado tras actualizar cantidad")
+                        is CartSyncRepository.SyncResult.Error -> Log.w(TAG, "Fallo sincronizar carrito: ${result.message}")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Excepción sincronizando carrito: ${e.message}")
+                }
+            }
+        }
     }
 
     fun vaciarCarrito() {
-        _carrito.value = emptyList()
-    }
+        _items.value = emptyList()
+        recalcularTotal()
 
-    fun getTotal(): Int = _carrito.value.sumOf { it.subtotal }
-
-    fun getTotalItems(): Int = _carrito.value.sumOf { it.cantidad }
-
-    private fun generarNumeroPedido(): String {
-        val timestamp = System.currentTimeMillis().toString().takeLast(6)
-        val random = Random.nextInt(1000, 9999)
-        return "MM-$timestamp-$random"
-    }
-
-    private fun procesarCompra() {
-        _ultimoPedido.value = _carrito.value.toList()
-        _totalUltimoPedido.value = getTotal()
-        _numeroUltimoPedido.value = generarNumeroPedido()
-        vaciarCarrito()
-    }
-
-    fun intentarProcesarCompra(): String? {
-        // Validar stock
-        if (_carrito.value.any { it.cantidad > (it.producto.stock ?: 0) }) {
-            return "STOCK"
-        }
-
-        // Simular errores aleatorios (80% éxito, 20% error)
-        return when (Random.nextInt(1, 11)) {
-            in 1..8 -> {
-                procesarCompra()
-                null
+        if (TokenManager.isLoggedIn()) {
+            viewModelScope.launch {
+                try {
+                    val userId = TokenManager.getUserId()
+                    val result = cartSyncRepository.sincronizarCarritoConReact(userId, _items.value)
+                    when (result) {
+                        is CartSyncRepository.SyncResult.Success -> Log.d(TAG, "Carrito vacío sincronizado")
+                        is CartSyncRepository.SyncResult.Error -> Log.w(TAG, "Fallo sincronizar carrito vacío: ${result.message}")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Excepción sincronizando carrito vacío: ${e.message}")
+                }
             }
-            9 -> "PAGO"
-            else -> "CONEXION"
         }
+    }
+
+    private fun recalcularTotal() {
+        _total.value = _items.value.sumOf { item ->
+            val price = item.producto.price
+            (price ?: 0.0) * item.cantidad
+        }
+    }
+
+    /**
+     * Helper: obtener cantidad en carrito para un producto concreto
+     */
+    fun cantidadParaProducto(productoId: Int): Int {
+        return _items.value.find { it.producto.producto_id == productoId }?.cantidad ?: 0
     }
 }

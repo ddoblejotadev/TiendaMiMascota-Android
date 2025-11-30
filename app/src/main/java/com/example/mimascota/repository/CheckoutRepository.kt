@@ -1,7 +1,7 @@
 package com.example.mimascota.repository
 
 import android.util.Log
-import com.example.mimascota.Model.*
+import com.example.mimascota.model.*
 import com.example.mimascota.client.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -10,11 +10,11 @@ import java.net.UnknownHostException
 
 /**
  * CheckoutRepository: Capa de abstracción para operaciones de checkout y órdenes
- * Incluye manejo de errores específicos para Render (timeout, 400, 500, etc.)
  */
 class CheckoutRepository {
 
-    private val checkoutService = RetrofitClient.checkoutService
+    // Corregido: Usar la instancia única de apiService desde RetrofitClient
+    private val apiService = RetrofitClient.apiService
     private val TAG = "CheckoutRepository"
 
     /**
@@ -35,7 +35,7 @@ class CheckoutRepository {
                 val request = VerificarStockRequest(items)
                 Log.d(TAG, "Verificando stock para ${items.size} productos")
 
-                val response = checkoutService.verificarStock(request)
+                val response = apiService.verificarStock(request)
 
                 if (response.isSuccessful && response.body() != null) {
                     Log.d(TAG, "Stock verificado exitosamente")
@@ -66,15 +66,14 @@ class CheckoutRepository {
 
     /**
      * Crea una nueva orden de compra
-     * IMPORTANTE: Asegúrate de incluir todos los campos obligatorios: subtotal, total, estado, es_invitado
      */
     suspend fun crearOrden(
         usuarioId: Long,
         esInvitado: Boolean,
         datosEnvio: DatosEnvio,
         items: List<ItemOrden>,
-        subtotal: Int,
-        total: Int
+        subtotal: Double,
+        total: Double
     ): CheckoutResult<OrdenResponse> {
         return withContext(Dispatchers.IO) {
             try {
@@ -92,7 +91,7 @@ class CheckoutRepository {
                 Log.d(TAG, "Items: ${items.size}, Subtotal: $subtotal, Total: $total")
                 Log.d(TAG, "Datos envío: ${datosEnvio.nombreCompleto}, ${datosEnvio.ciudad}")
 
-                val response = checkoutService.crearOrden(request)
+                val response = apiService.crearOrden(request)
 
                 if (response.isSuccessful && response.body() != null) {
                     val orden = response.body()!!
@@ -138,7 +137,7 @@ class CheckoutRepository {
             try {
                 Log.d(TAG, "Obteniendo órdenes del usuario $usuarioId")
 
-                val response = checkoutService.obtenerOrdenesUsuario(usuarioId)
+                val response = apiService.obtenerOrdenesUsuario(usuarioId)
 
                 if (response.isSuccessful && response.body() != null) {
                     val ordenes = response.body()!!
@@ -174,7 +173,7 @@ class CheckoutRepository {
     suspend fun obtenerDetalleOrden(ordenId: Long): CheckoutResult<OrdenHistorial> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = checkoutService.obtenerDetalleOrden(ordenId)
+                val response = apiService.obtenerDetalleOrden(ordenId)
 
                 if (response.isSuccessful && response.body() != null) {
                     CheckoutResult.Success(response.body()!!)
@@ -198,7 +197,7 @@ class CheckoutRepository {
     suspend fun cancelarOrden(ordenId: Long): CheckoutResult<OrdenHistorial> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = checkoutService.cancelarOrden(ordenId)
+                val response = apiService.cancelarOrden(ordenId)
 
                 if (response.isSuccessful && response.body() != null) {
                     CheckoutResult.Success(response.body()!!)
@@ -216,4 +215,3 @@ class CheckoutRepository {
         }
     }
 }
-

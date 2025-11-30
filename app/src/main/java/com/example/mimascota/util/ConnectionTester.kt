@@ -1,33 +1,19 @@
 package com.example.mimascota.util
 
 import android.util.Log
-import com.example.mimascota.config.ApiConfig
-import com.example.mimascota.service.HealthService
+import com.example.mimascota.client.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
  * ConnectionTester: Utilidad para verificar la conexión con el backend
- *
- * USO:
- * ```kotlin
- * viewModelScope.launch {
- *     val isConnected = ConnectionTester.testConnection()
- *     if (isConnected) {
- *         Log.d("App", "✅ Backend disponible")
- *     } else {
- *         Log.e("App", "❌ Backend no responde")
- *     }
- * }
- * ```
  */
 object ConnectionTester {
 
     private const val TAG = "ConnectionTester"
 
-    private val healthService: HealthService by lazy {
-        ApiConfig.retrofit.create(HealthService::class.java)
-    }
+    // Corregido: Usar la instancia única de apiService desde RetrofitClient
+    private val apiService = RetrofitClient.apiService
 
     /**
      * Prueba la conexión con el backend
@@ -38,8 +24,8 @@ object ConnectionTester {
             Log.d(TAG, "🔍 Probando conexión con backend...")
             Log.d(TAG, "📡 URL: ${AppConfig.BASE_URL}")
 
-            // Intenta hacer ping al endpoint de productos
-            val response = healthService.pingProductos()
+            // Corregido: Llamar a un endpoint existente en el ApiService unificado
+            val response = apiService.getAllProductos()
 
             val success = response.isSuccessful
 
@@ -113,4 +99,3 @@ object ConnectionTester {
         }
     }
 }
-

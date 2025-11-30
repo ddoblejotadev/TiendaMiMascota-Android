@@ -20,31 +20,6 @@
             app:title="@string/productos"
             app:titleTextColor="@android:color/white" />
 
-        <!-- Spinner de categorías -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:background="@android:color/white">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/categoria"
-                android:textStyle="bold"
-                android:layout_gravity="center_vertical"
-                android:layout_marginEnd="8dp" />
-
-            <Spinner
-                android:id="@+id/spinnerCategoria"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minHeight="48dp" />
-
-        </LinearLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Contenedor principal -->
@@ -58,14 +33,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- RecyclerView de productos -->
+            <!-- RecyclerView principal (ahora para categorías) -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvProductos"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:paddingBottom="80dp"
-                tools:listitem="@layout/item_producto" />
+                tools:listitem="@layout/item_categoria_agrupada" />
 
             <!-- Mensaje de lista vacía -->
             <LinearLayout
@@ -117,4 +92,3 @@
         app:iconGravity="textStart" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

@@ -1,8 +1,8 @@
 package com.example.mimascota.service
 
-import com.example.mimascota.Model.AuthResponse
-import com.example.mimascota.Model.LoginRequest
-import com.example.mimascota.Model.RegistroRequest
+import com.example.mimascota.model.AuthResponse
+import com.example.mimascota.model.LoginRequest
+import com.example.mimascota.model.RegistroRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -30,4 +30,3 @@ interface AuthService {
     @POST("auth/registro")
     suspend fun registro(@Body request: RegistroRequest): Response<AuthResponse>
 }
-

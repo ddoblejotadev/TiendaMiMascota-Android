@@ -13,9 +13,9 @@ data class CartItemEntity(
     val id: Int = 0,
     val productoId: Int,
     val nombre: String,
-    val precio: Int,
+    // Cambiado a Double para soportar decimales
+    val precio: Double,
     val cantidad: Int,
     val imagen: String = "",
     val fechaAñadido: Long = System.currentTimeMillis()
 )
-

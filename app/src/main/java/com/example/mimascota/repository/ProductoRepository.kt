@@ -1,112 +1,83 @@
 package com.example.mimascota.repository
 
-import com.example.mimascota.Model.Producto
+import android.util.Log
 import com.example.mimascota.client.RetrofitClient
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.example.mimascota.model.Producto
+import java.io.IOException
 
-/**
- * ProductoRepository: Capa de abstracción entre el ViewModel y la fuente de datos
- *
- * Implementa el patrón Repository para:
- * - Abstraer las llamadas a la API
- * - Manejar errores de red
- * - Ejecutar operaciones en el dispatcher IO
- * - Proporcionar una interfaz limpia al ViewModel
- */
 class ProductoRepository {
 
-    private val productoService = RetrofitClient.productoService
+    private val apiService = RetrofitClient.apiService
+    private val TAG = "ProductoRepository"
 
-    /**
-     * Resultado de operaciones con productos
-     */
+    // Resultado sellado para manejar éxito, error y carga
     sealed class ProductoResult<out T> {
         data class Success<T>(val data: T) : ProductoResult<T>()
-        data class Error(val message: String, val code: Int? = null) : ProductoResult<Nothing>()
+        data class Error(val message: String) : ProductoResult<Nothing>()
         object Loading : ProductoResult<Nothing>()
     }
 
     /**
-     * Obtiene todos los productos
+     * Obtiene todos los productos desde el ApiService unificado
      */
     suspend fun getAllProductos(): ProductoResult<List<Producto>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = productoService.getAllProductos()
-                if (response.isSuccessful) {
-                    ProductoResult.Success(response.body().orEmpty())
-                } else {
-                    ProductoResult.Error(
-                        message = "Error al obtener productos: ${response.message()}",
-                        code = response.code()
-                    )
+        return try {
+            // Corregido: pasar el límite para obtener más productos
+            val response = apiService.getAllProductos(limite = 50)
+            if (response.isSuccessful && response.body() != null) {
+                val productos = response.body()!!
+                Log.d(TAG, "Productos recibidos: ${productos.size}")
+                // Loguear una muestra de las primeras 5 imageUrls para diagnóstico
+                productos.take(5).forEachIndexed { index, producto ->
+                    Log.d(TAG, "#${index + 1} id=${producto.producto_id} name=${producto.producto_nombre} imageUrl=${producto.imageUrl}")
                 }
-            } catch (e: Exception) {
-                ProductoResult.Error(
-                    message = "Error de conexión: ${e.localizedMessage ?: "Error desconocido"}"
-                )
+                ProductoResult.Success(productos)
+            } else {
+                Log.e(TAG, "Error en respuesta: ${response.code()} - ${response.message()}")
+                ProductoResult.Error("Error ${response.code()}: ${response.message()}")
             }
+        } catch (e: IOException) {
+            Log.e(TAG, "IOException al obtener productos: ${e.message}", e)
+            ProductoResult.Error("Error de red: ${e.message}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Excepción al obtener productos: ${e.message}", e)
+            ProductoResult.Error("Excepción: ${e.message}")
         }
     }
 
     /**
-     * Obtiene un producto por ID
+     * Obtiene un producto por su ID
      */
     suspend fun getProductoById(id: Int): ProductoResult<Producto> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = productoService.getProductoById(id)
-                if (response.isSuccessful && response.body() != null) {
-                    ProductoResult.Success(response.body()!!)
-                } else {
-                    ProductoResult.Error(
-                        message = "Producto no encontrado",
-                        code = response.code()
-                    )
-                }
-            } catch (e: Exception) {
-                ProductoResult.Error(
-                    message = "Error de conexión: ${e.localizedMessage ?: "Error desconocido"}"
-                )
+        return try {
+            val response = apiService.getProductoById(id)
+            if (response.isSuccessful && response.body() != null) {
+                ProductoResult.Success(response.body()!!)
+            } else {
+                ProductoResult.Error("Error ${response.code()}: Producto no encontrado")
             }
-        }
-    }
-
-    /**
-     * Obtiene productos por categoría
-     * NOTA: Filtrado local debido a que el backend no expone el endpoint /productos/categoria/{categoria}
-     */
-    suspend fun getProductosByCategoria(categoria: String): ProductoResult<List<Producto>> {
-        val all = getAllProductos()
-        return if (all is ProductoResult.Success) {
-            val filtered = all.data.filter { it.category.equals(categoria, ignoreCase = true) }
-            ProductoResult.Success(filtered)
-        } else {
-            all as ProductoResult.Error
+        } catch (e: IOException) {
+            ProductoResult.Error("Error de red: ${e.message}")
+        } catch (e: Exception) {
+            ProductoResult.Error("Excepción: ${e.message}")
         }
     }
 
     /**
      * Crea un nuevo producto
      */
-    suspend fun createProducto(producto: Producto): ProductoResult<Producto> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = productoService.createProducto(producto)
-                if (response.isSuccessful && response.body() != null) {
-                    ProductoResult.Success(response.body()!!)
-                } else {
-                    ProductoResult.Error(
-                        message = "Error al crear producto: ${response.message()}",
-                        code = response.code()
-                    )
-                }
-            } catch (e: Exception) {
-                ProductoResult.Error(
-                    message = "Error de conexión: ${e.localizedMessage ?: "Error desconocido"}"
-                )
+    suspend fun createProducto(producto: Producto, tipoProducto: String): ProductoResult<Producto> {
+        return try {
+            val response = apiService.createProducto(producto, tipoProducto)
+            if (response.isSuccessful && response.body() != null) {
+                ProductoResult.Success(response.body()!!)
+            } else {
+                ProductoResult.Error("Error ${response.code()}: ${response.message()}")
             }
+        } catch (e: IOException) {
+            ProductoResult.Error("Error de red: ${e.message}")
+        } catch (e: Exception) {
+            ProductoResult.Error("Excepción: ${e.message}")
         }
     }
 
@@ -114,63 +85,71 @@ class ProductoRepository {
      * Actualiza un producto existente
      */
     suspend fun updateProducto(id: Int, producto: Producto): ProductoResult<Producto> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = productoService.updateProducto(id, producto)
-                if (response.isSuccessful && response.body() != null) {
-                    ProductoResult.Success(response.body()!!)
-                } else {
-                    ProductoResult.Error(
-                        message = "Error al actualizar producto: ${response.message()}",
-                        code = response.code()
-                    )
-                }
-            } catch (e: Exception) {
-                ProductoResult.Error(
-                    message = "Error de conexión: ${e.localizedMessage ?: "Error desconocido"}"
-                )
+        return try {
+            val response = apiService.updateProducto(id, producto)
+            if (response.isSuccessful && response.body() != null) {
+                ProductoResult.Success(response.body()!!)
+            } else {
+                ProductoResult.Error("Error ${response.code()}: ${response.message()}")
             }
+        } catch (e: IOException) {
+            ProductoResult.Error("Error de red: ${e.message}")
+        } catch (e: Exception) {
+            ProductoResult.Error("Excepción: ${e.message}")
         }
     }
 
     /**
-     * Elimina un producto
+     * Elimina un producto por su ID
      */
-    suspend fun deleteProducto(id: Int): ProductoResult<Boolean> {
-        return withContext(Dispatchers.IO) {
-            try {
-                val response = productoService.deleteProducto(id)
-                if (response.isSuccessful) {
-                    ProductoResult.Success(true)
-                } else {
-                    ProductoResult.Error(
-                        message = "Error al eliminar producto: ${response.message()}",
-                        code = response.code()
-                    )
-                }
-            } catch (e: Exception) {
-                ProductoResult.Error(
-                    message = "Error de conexión: ${e.localizedMessage ?: "Error desconocido"}"
-                )
+    suspend fun deleteProducto(id: Int): ProductoResult<Unit> {
+        return try {
+            val response = apiService.deleteProducto(id)
+            if (response.isSuccessful) {
+                ProductoResult.Success(Unit)
+            } else {
+                ProductoResult.Error("Error ${response.code()}: ${response.message()}")
             }
+        } catch (e: IOException) {
+            ProductoResult.Error("Error de red: ${e.message}")
+        } catch (e: Exception) {
+            ProductoResult.Error("Excepción: ${e.message}")
         }
     }
 
     /**
-     * Busca productos por nombre (implementación local - filtrado)
-     * Nota: Si el backend implementa búsqueda, se debería crear un endpoint específico
+     * Obtiene productos por categoría
+     */
+    suspend fun getProductosByCategoria(categoria: String): ProductoResult<List<Producto>> {
+        return try {
+            val response = apiService.getProductosByCategoria(categoria)
+            if (response.isSuccessful && response.body() != null) {
+                ProductoResult.Success(response.body()!!)
+            } else {
+                ProductoResult.Error("Error ${response.code()}: ${response.message()}")
+            }
+        } catch (e: IOException) {
+            ProductoResult.Error("Error de red: ${e.message}")
+        } catch (e: Exception) {
+            ProductoResult.Error("Excepción: ${e.message}")
+        }
+    }
+
+    /**
+     * Busca productos por un término de búsqueda
      */
     suspend fun searchProductos(query: String): ProductoResult<List<Producto>> {
-        return when (val result = getAllProductos()) {
-            is ProductoResult.Success -> {
-                val filtered = result.data.filter {
-                    it.name.contains(query, ignoreCase = true) ||
-                    it.description?.contains(query, ignoreCase = true) == true
-                }
-                ProductoResult.Success(filtered)
+        return try {
+            val response = apiService.searchProductos(query)
+            if (response.isSuccessful && response.body() != null) {
+                ProductoResult.Success(response.body()!!)
+            } else {
+                ProductoResult.Error("Error ${response.code()}: ${response.message()}")
             }
-            is ProductoResult.Error -> result
-            else -> ProductoResult.Error("Error en la búsqueda")
+        } catch (e: IOException) {
+            ProductoResult.Error("Error de red: ${e.message}")
+        } catch (e: Exception) {
+            ProductoResult.Error("Excepción: ${e.message}")
         }
     }
 }

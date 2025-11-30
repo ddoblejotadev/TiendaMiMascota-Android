@@ -1,4 +1,4 @@
-package com.example.mimascota.View
+package com.example.mimascota.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.R
-import com.example.mimascota.ViewModel.AuthViewModel
+import com.example.mimascota.viewModel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

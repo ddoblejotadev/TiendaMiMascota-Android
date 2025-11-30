@@ -6,10 +6,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.mimascota.ViewModel.MisPedidosViewModel
 import com.example.mimascota.databinding.ActivityMisPedidosBinding
 import com.example.mimascota.ui.adapter.OrdenesAdapter
-import com.example.mimascota.util.TokenManager
+import com.example.mimascota.viewModel.MisPedidosViewModel
+import com.example.mimascota.viewModel.MisPedidosViewModelFactory
 
 /**
  * MisPedidosActivity: Pantalla para ver el historial de órdenes del usuario
@@ -25,8 +25,9 @@ class MisPedidosActivity : AppCompatActivity() {
         binding = ActivityMisPedidosBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Inicializar ViewModel
-        viewModel = ViewModelProvider(this).get(MisPedidosViewModel::class.java)
+        // Usar factory por compatibilidad pero sin tokenManager obligatorio
+        val factory = MisPedidosViewModelFactory()
+        viewModel = ViewModelProvider(this, factory)[MisPedidosViewModel::class.java]
 
         // Configurar RecyclerView
         setupRecyclerView()
@@ -38,7 +39,7 @@ class MisPedidosActivity : AppCompatActivity() {
         observeData()
 
         // Cargar órdenes
-        cargarOrdenes()
+        viewModel.cargarMisOrdenes()
     }
 
     /**
@@ -78,8 +79,8 @@ class MisPedidosActivity : AppCompatActivity() {
      */
     private fun observeData() {
         // Observar órdenes
-        viewModel.ordenes.observe(this) { ordenes ->
-            if (ordenes.isEmpty()) {
+        viewModel.misOrdenes.observe(this) { ordenes ->
+            if (ordenes.isNullOrEmpty()) {
                 binding.recyclerViewOrdenes.visibility = View.GONE
                 binding.tvSinOrdenes.visibility = View.VISIBLE
             } else {
@@ -91,29 +92,16 @@ class MisPedidosActivity : AppCompatActivity() {
 
         // Observar loading
         viewModel.isLoading.observe(this) { isLoading ->
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.progressBar.visibility = if (isLoading == true) View.VISIBLE else View.GONE
         }
 
         // Observar errores
         viewModel.error.observe(this) { error ->
             error?.let {
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
-                viewModel.clearError()
+                // Limpiar error
+                viewModel.limpiarError()
             }
         }
     }
-
-    /**
-     * Cargar órdenes del usuario
-     */
-    private fun cargarOrdenes() {
-        val usuario = TokenManager.getUsuario()
-        if (usuario != null) {
-            viewModel.cargarOrdenes(usuario.usuarioId)
-        } else {
-            Toast.makeText(this, "Usuario no identificado", Toast.LENGTH_SHORT).show()
-            finish()
-        }
-    }
 }
-

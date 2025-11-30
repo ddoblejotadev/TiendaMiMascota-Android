@@ -7,8 +7,6 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -16,12 +14,13 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.mimascota.Model.Producto
 import com.example.mimascota.R
-import com.example.mimascota.ViewModel.SharedViewModel
 import com.example.mimascota.client.RetrofitClient
 import com.example.mimascota.databinding.FragmentProductoListaBinding
-import com.example.mimascota.ui.adapter.ProductoAdapter
+import com.example.mimascota.model.Producto
+import com.example.mimascota.ui.adapter.CategoryAdapter
+import com.example.mimascota.viewModel.SharedViewModel
+import com.example.mimascota.viewModel.SharedViewModelFactory
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 
@@ -30,8 +29,10 @@ class ProductoListaFragment : Fragment() {
     private var _binding: FragmentProductoListaBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: SharedViewModel by activityViewModels()
-    private lateinit var productoAdapter: ProductoAdapter
+    private val viewModel: SharedViewModel by activityViewModels { 
+        SharedViewModelFactory(requireContext().applicationContext) 
+    }
+    private lateinit var categoryAdapter: CategoryAdapter
 
     private val tokenManager by lazy { RetrofitClient.getTokenManager() }
 
@@ -47,6 +48,15 @@ class ProductoListaFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupMenu()
+        setupRecyclerView()
+        setupObservers()
+        setupSwipeRefresh()
+
+        viewModel.cargarProductos()
+    }
+
+    private fun setupMenu() {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -58,12 +68,12 @@ class ProductoListaFragment : Fragment() {
                 searchView.queryHint = "Buscar productos..."
                 searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                     override fun onQueryTextSubmit(query: String?): Boolean {
-                        query?.let { viewModel.buscarProductos(it) }
+                        viewModel.buscarProductos(query ?: "")
                         return true
                     }
 
                     override fun onQueryTextChange(newText: String?): Boolean {
-                        newText?.let { viewModel.buscarProductos(it) }
+                        viewModel.buscarProductos(newText ?: "")
                         return true
                     }
                 })
@@ -72,7 +82,7 @@ class ProductoListaFragment : Fragment() {
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
                     R.id.action_cart -> {
-                        // TODO: navegar al carrito si corresponde
+                        // TODO: navegar al carrito
                         true
                     }
                     R.id.action_refresh -> {
@@ -83,30 +93,11 @@ class ProductoListaFragment : Fragment() {
                 }
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
-        setupRecyclerView()
-        setupSpinner()
-        setupObservers()
-        setupSwipeRefresh()
-
-        // Observar productos para actualizar categorías del spinner cuando cambien
-        viewModel.productos.observe(viewLifecycleOwner) { productos ->
-            val categorias = viewModel.obtenerCategorias()
-            val adapterSpinner = ArrayAdapter(
-                requireContext(),
-                android.R.layout.simple_spinner_dropdown_item,
-                categorias
-            )
-            binding.spinnerCategoria.adapter = adapterSpinner
-        }
-
-        // Cargar productos al iniciar (mover al final para que observadores estén listos)
-        viewModel.cargarProductos()
     }
 
     private fun setupRecyclerView() {
-        productoAdapter = ProductoAdapter(
-            onItemClick = { producto -> mostrarDetalleProducto(producto) },
+        categoryAdapter = CategoryAdapter(
+            onProductoClick = { producto -> mostrarDetalleProducto(producto) },
             onAddToCartClick = { producto ->
                 if (tokenManager.isLoggedIn()) {
                     viewModel.agregarAlCarrito(producto)
@@ -118,32 +109,7 @@ class ProductoListaFragment : Fragment() {
 
         binding.rvProductos.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = productoAdapter
-            setHasFixedSize(true)
-        }
-    }
-
-    private fun setupSpinner() {
-        val categorias = viewModel.obtenerCategorias()
-        val adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            categorias
-        )
-        binding.spinnerCategoria.adapter = adapter
-
-        binding.spinnerCategoria.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                val categoriaSeleccionada = categorias.getOrNull(position) ?: return
-                viewModel.cargarProductosPorCategoria(categoriaSeleccionada)
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            adapter = categoryAdapter
         }
     }
 
@@ -154,20 +120,17 @@ class ProductoListaFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        viewModel.productosFiltrados.observe(viewLifecycleOwner) { productos ->
-            productoAdapter.submitList(productos)
-            if (productos.isEmpty()) {
-                binding.tvEmptyState.visibility = View.VISIBLE
-                binding.rvProductos.visibility = View.GONE
-            } else {
-                binding.tvEmptyState.visibility = View.GONE
-                binding.rvProductos.visibility = View.VISIBLE
-            }
+        viewModel.productosAgrupados.observe(viewLifecycleOwner) { categorias ->
+            categoryAdapter.submitList(categorias)
+            binding.tvEmptyState.visibility = if (categorias.isNullOrEmpty()) View.VISIBLE else View.GONE
+            binding.rvProductos.visibility = if (categorias.isNullOrEmpty()) View.GONE else View.VISIBLE
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.swipeRefresh.isRefreshing = isLoading
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            if (!isLoading) {
+                binding.progressBar.visibility = View.GONE
+            }
         }
 
         viewModel.error.observe(viewLifecycleOwner) { error ->
@@ -187,7 +150,6 @@ class ProductoListaFragment : Fragment() {
         }
 
         viewModel.cantidadItems.observe(viewLifecycleOwner) {
-            // Si usas badge en toolbar, invalida el menú del host
             (requireActivity() as MenuHost).invalidateMenu()
         }
     }

@@ -1,392 +1,211 @@
-package com.example.mimascota.View
+package com.example.mimascota.view
 
-import android.annotation.SuppressLint
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.example.mimascota.model.Producto
+import com.example.mimascota.util.AppConfig
+import com.example.mimascota.viewModel.CartViewModel
+import com.example.mimascota.viewModel.CatalogoViewModel
+import android.widget.Toast
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
-import com.example.mimascota.Model.Producto
-import com.example.mimascota.ViewModel.CartViewModel
-import com.example.mimascota.ViewModel.CatalogoViewModel
+import java.util.Locale
+import androidx.compose.ui.draw.scale
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import com.example.mimascota.util.formatCurrencyCLP
 
-@Suppress("DEPRECATION")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, cartViewModel: CartViewModel) {
     val productos by viewModel.productos.collectAsState()
-    val loading by viewModel.loading.collectAsState()
-    val carrito by cartViewModel.carrito.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
-    // Categorías derivadas de los productos (vienen del backend)
+    // Obtener items del carrito para badges y cantidades por producto
+    val cartItems by cartViewModel.items.collectAsState()
+    val totalEnCarrito = cartItems.sumOf { it.cantidad }
+    val cantidadesPorProducto = remember(cartItems) { cartItems.associate { it.producto.producto_id to it.cantidad } }
+
+    // --- CATEGORÍAS calculadas localmente a partir de productos ---
     val categorias = remember(productos) {
-        val cats = productos.mapNotNull { prod ->
-            val t = prod.category.trim()
-            if (t.isEmpty()) null else t
-        }
+        val cats = productos.mapNotNull { it.category?.trim() }
+            .filter { it.isNotBlank() }
             .distinct()
-            .sortedBy { it.lowercase() }
+            .sortedBy { it.lowercase(Locale.getDefault()) }
         listOf("Todas") + cats
     }
 
-    var expanded by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf("Todas") }
+    var selectedCategoria by remember { mutableStateOf("Todas") }
 
-    LaunchedEffect(Unit) { viewModel.cargarProductos() }
+    // Filtrado local por categoría
+    val productosMostrados = remember(productos, selectedCategoria) {
+        if (selectedCategoria == "Todas") productos
+        else productos.filter { it.category.equals(selectedCategoria, ignoreCase = true) }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Catálogo") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                },
-                actions = {
-                    BadgedBox(
-                        badge = {
-                            if (carrito.isNotEmpty()) {
-                                Badge {
-                                    Text("${cartViewModel.getTotalItems()}")
-                                }
-                            }
-                        }
-                    ) {
-                        IconButton(onClick = { navController.navigate("Carrito") }) {
-                            Icon(
-                                imageVector = Icons.Default.ShoppingCart,
-                                contentDescription = "Carrito"
-                            )
-                        }
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Atrás")
                     }
                 }
             )
         },
         floatingActionButton = {
-            // Mostrar botón solo si hay productos en el carrito
-            if (carrito.isNotEmpty()) {
-                ExtendedFloatingActionButton(
-                    onClick = { navController.navigate("Carrito") },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    elevation = FloatingActionButtonDefaults.elevation(8.dp)
-                ) {
+            // Botón flotante para ir al carrito con badge si hay items
+            BadgedBox(badge = {
+                if (totalEnCarrito > 0) {
+                    Badge { Text(totalEnCarrito.toString()) }
+                }
+            }) {
+                FloatingActionButton(onClick = { navController.navigate("Carrito") }) {
                     Icon(
-                        imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = "Ir a pagar"
+                        imageVector = Icons.Filled.ShoppingCart,
+                        contentDescription = "Ir al carrito"
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = "Ir a pagar",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "$${formatCurrencyCLP(cartViewModel.getTotal())}",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
                 }
             }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { padding ->
-        Box(Modifier.padding(padding)) {
-            if (loading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+        Column(modifier = Modifier
+            .padding(padding)
+            .fillMaxSize()
+            .padding(8.dp)) {
+
+            // --- Chips horizontales para categorías (más moderno) ---
+            val scrollState = rememberScrollState()
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(scrollState)
+                .padding(bottom = 8.dp)
+            ) {
+                categorias.forEach { categoria ->
+                    val selected = categoria == selectedCategoria
+                    FilterChip(
+                        selected = selected,
+                        onClick = { selectedCategoria = categoria },
+                        label = { Text(categoria) },
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
                 }
-            } else {
-                // Fila superior: selector de categoría profesional (ExposedDropdown)
-                Column(Modifier.fillMaxSize()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "Categoría:", modifier = Modifier.padding(end = 8.dp))
+            }
 
-                        // ExposedDropdownMenuBox requiere material3
-                        ExposedDropdownMenuBox(
-                            expanded = expanded,
-                            onExpandedChange = { expanded = !expanded }
-                        ) {
-                            // Usar TextField + menuAnchor() para que ExposedDropdownMenu se posicione correctamente
-                            TextField(
-                                value = selectedCategory,
-                                onValueChange = {},
-                                readOnly = true,
-                                modifier = Modifier
-                                    .weight(0.65f)
-                                    .menuAnchor()
-                                    .clickable { expanded = !expanded },
-                                placeholder = { Text("Selecciona una categoría") },
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                // usar colores por defecto para compatibilidad con distintas versiones de Material3
-                                shape = RoundedCornerShape(8.dp)
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }
-                            ) {
-                                categorias.forEach { cat ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(cat, style = MaterialTheme.typography.bodyMedium)
-                                                Spacer(Modifier.weight(1f))
-                                                // contador pequeño
-                                                val count = productos.count { it.category.equals(cat, ignoreCase = true) }
-                                                if (count > 0 && cat != "Todas") {
-                                                    Text("$count", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                                }
-                                            }
-                                        },
-                                        onClick = {
-                                            selectedCategory = cat
-                                            expanded = false
-                                            // Usar filtrado local (rápido) y sincronizar con backend en background
-                                            viewModel.applyCategoryFilter(cat)
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(Modifier.weight(1f))
-
-                        // Botón para refrescar manualmente
-                        IconButton(onClick = { viewModel.cargarProductos() }) {
-                            Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refrescar")
-                        }
-                    }
-
-                    // Ordenar productos por categoría y luego por nombre (sólo para mostrar agrupado)
-                    val productosOrdenados = productos.sortedWith(compareBy(
-                        { it.category.isBlank() },
-                        { it.category.trim().lowercase() },
-                        { it.name.trim().lowercase() }
-                    ))
-
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            start = 8.dp,
-                            end = 8.dp,
-                            top = 8.dp,
-                            bottom = if (carrito.isNotEmpty()) 80.dp else 8.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        itemsIndexed(productosOrdenados, key = { _, p -> p.id }) { index, producto ->
-                            val prevCat = if (index == 0) null else productosOrdenados[index - 1].category.trim().lowercase()
-                            val curCat = producto.category.trim().lowercase()
-                            val showHeader = index == 0 || prevCat != curCat
-
-                            if (showHeader) {
-                                // Header simple visual
-                                Text(
-                                    text = producto.category.trim().uppercase(),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
-                                        .background(MaterialTheme.colorScheme.primary)
-                                        .padding(8.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-
-                            // Calcular cantidad desde el estado del carrito
-                            val cantidad = carrito.find { it.producto.id == producto.id }?.cantidad ?: 0
-
-                            ProductoCard(
-                                producto = producto,
-                                cantidad = cantidad,
-                                onClick = { navController.navigate("Detalle/${producto.id}") },
-                                onAgregar = {
-                                    val resultado = cartViewModel.agregarAlCarrito(producto)
-                                    scope.launch {
-                                        when (resultado) {
-                                            is com.example.mimascota.ViewModel.AgregarResultado.Exito -> {
-                                                snackbarHostState.showSnackbar(
-                                                    message = "✅ ${producto.name} agregado",
-                                                    duration = SnackbarDuration.Short
-                                                )
-                                            }
-                                            is com.example.mimascota.ViewModel.AgregarResultado.ExcedeStock -> {
-                                                snackbarHostState.showSnackbar(
-                                                    message = "⚠️ ${producto.name} agregado • Stock limitado: ${resultado.stockDisponible} disponibles (tienes ${resultado.cantidadEnCarrito} en carrito)",
-                                                    duration = SnackbarDuration.Long
-                                                )
-                                            }
-                                        }
-                                    }
-                                },
-                                onDisminuir = {
-                                    cartViewModel.disminuirCantidad(producto)
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "➖ ${producto.name} disminuido",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
-                                }
-                            )
-                        }
-                    }
+            // Grid de productos filtrados
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                items(productosMostrados, key = { it.producto_id }) { producto ->
+                    val qtyInCart = cantidadesPorProducto[producto.producto_id] ?: 0
+                    ProductoCard(producto = producto, onProductoClick = {
+                        // Navegar al detalle usando id seguro
+                        navController.navigate("Detalle/${producto.producto_id}")
+                    }, onAddToCart = {
+                        Log.d("CatalogoScreen", "Agregar al carrito pedido para id=${producto.producto_id}")
+                        cartViewModel.agregarAlCarrito(producto)
+                    }, cartQuantity = qtyInCart)
                 }
             }
         }
     }
 }
 
-@SuppressLint("DefaultLocale")
-@Suppress("DEPRECATION")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductoCard(
-    producto: Producto,
-    cantidad: Int,
-    onClick: () -> Unit,
-    onAgregar: () -> Unit,
-    onDisminuir: () -> Unit
-) {
+fun ProductoCard(producto: Producto, onProductoClick: () -> Unit, onAddToCart: () -> Unit, cartQuantity: Int = 0) {
+    val context = LocalContext.current
+    val stockVal = producto.stock
+    val estaAgotado = stockVal != null && stockVal <= 0
+
+    // small press animation when user adds to cart
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(targetValue = if (pressed) 0.96f else 1f)
+
+    // coroutine scope para ejecutar delays desde onClick
+    val coroutineScope = rememberCoroutineScope()
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        modifier = Modifier
+            .padding(8.dp),
+        onClick = onProductoClick
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { onClick() }
-            ) {
-                Image(
-                    painter = rememberAsyncImagePainter(producto.imageUrl),
-                    contentDescription = producto.name,
-                    modifier = Modifier.size(80.dp),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(producto.name, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        text = "$${formatCurrencyCLP(producto.price)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    // Mostrar stock disponible
-                    val stockDisponible = (producto.stock ?: 0) - cantidad
-                    Text(
-                        text = if (stockDisponible > 0) {
-                            "Stock: $stockDisponible disponible${if (stockDisponible <= 5) " ⚠️" else ""}"
-                        } else {
-                            "Sin stock disponible ❌"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = when {
-                            stockDisponible == 0 -> MaterialTheme.colorScheme.error
-                            stockDisponible <= 5 -> MaterialTheme.colorScheme.tertiary
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        fontWeight = if (stockDisponible <= 5) FontWeight.Bold else FontWeight.Normal
-                    )
-                    producto.description?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+        Column(modifier = Modifier.padding(8.dp).scale(scale)) {
+            // Imagen del producto usando Coil Compose
+            val imageUrl = AppConfig.toAbsoluteImageUrl(producto.imageUrl)
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = producto.producto_nombre,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = com.example.mimascota.R.drawable.placeholder_product),
+                error = painterResource(id = com.example.mimascota.R.drawable.placeholder_product)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(producto.producto_nombre, style = MaterialTheme.typography.titleMedium)
+            // Mostrar stock
+            when (stockVal) {
+                null -> Text("Stock: N/D", style = MaterialTheme.typography.bodySmall)
+                else -> {
+                    if (stockVal <= 0) {
+                        Text("Agotado", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Text("Stock: $stockVal", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
+            // Asegurar formato de precio aunque sea Int o Double
+            val priceDouble = when (val p = producto.price) {
+                is Number -> p.toDouble()
+                else -> 0.0
+            }
+            Text(String.format(Locale.getDefault(), "$%.2f", priceDouble), style = MaterialTheme.typography.bodyMedium)
 
-            // Controles de cantidad
-            if (cantidad > 0) {
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        IconButton(
-                            onClick = onDisminuir,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Remove,
-                                contentDescription = "Disminuir",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
+            // Mostrar cantidad en carrito si existe
+            if (cartQuantity > 0) {
+                Text("En carrito: $cartQuantity", style = MaterialTheme.typography.bodySmall)
+            }
 
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        ) {
-                            Text(
-                                text = "$cantidad",
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+            Spacer(modifier = Modifier.height(6.dp))
 
-                        IconButton(
-                            onClick = onAgregar,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = "Agregar",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
+            Button(
+                onClick = {
+                    if (estaAgotado) {
+                        Toast.makeText(context, "Producto sin stock", Toast.LENGTH_SHORT).show()
+                        return@Button
                     }
-
-                    Text(
-                        text = "Total: $${formatCurrencyCLP(producto.price * cantidad)}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            } else {
-                Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = onAgregar,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
-                    Text("Agregar al carrito")
-                }
+                    pressed = true
+                    onAddToCart()
+                    // efecto visual breve usando coroutineScope
+                    coroutineScope.launch {
+                        kotlinx.coroutines.delay(180)
+                        pressed = false
+                    }
+                    Toast.makeText(context, "Añadido al carrito", Toast.LENGTH_SHORT).show()
+                },
+                enabled = !estaAgotado,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Agregar")
             }
         }
     }

@@ -1,189 +1,165 @@
-package com.example.mimascota.ViewModel
+package com.example.mimascota.viewModel
 
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mimascota.Model.*
+import com.example.mimascota.model.*
 import com.example.mimascota.repository.CheckoutRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.example.mimascota.util.TokenManager
 import kotlinx.coroutines.launch
 
-/**
- * CheckoutViewModel: ViewModel para gestionar el flujo de checkout
- * Actualizado para funcionar con backend en Render y tipos correctos
- */
-class CheckoutViewModel : ViewModel() {
+class CheckoutViewModel(
+    private val tokenManager: TokenManager
+) : ViewModel() {
 
-    private val repository = CheckoutRepository()
-    private val TAG = "CheckoutViewModel"
+    private val checkoutRepository = CheckoutRepository()
 
-    // Estado de la verificación de stock
-    private val _stockVerificado = MutableStateFlow<VerificarStockResponse?>(null)
-    val stockVerificado: StateFlow<VerificarStockResponse?> = _stockVerificado.asStateFlow()
+    // ========== LiveData para la UI ==========
 
-    // Estado de la orden creada
-    private val _ordenCreada = MutableStateFlow<OrdenResponse?>(null)
-    val ordenCreada: StateFlow<OrdenResponse?> = _ordenCreada.asStateFlow()
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
 
-    // Estado de carga
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    private val _error = MutableLiveData<String?>()
+    val error: LiveData<String?> = _error
 
-    // Estado de error
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    private val _verificacionStock = MutableLiveData<VerificarStockResponse?>()
+    val verificacionStock: LiveData<VerificarStockResponse?> = _verificacionStock
 
-    // Historial de órdenes
-    private val _ordenes = MutableStateFlow<List<OrdenHistorial>>(emptyList())
-    val ordenes: StateFlow<List<OrdenHistorial>> = _ordenes.asStateFlow()
+    private val _ordenCreada = MutableLiveData<OrdenResponse?>()
+    val ordenCreada: LiveData<OrdenResponse?> = _ordenCreada
 
-    /**
-     * Verifica el stock de los productos antes del checkout
-     */
+    private val _navegarAConfirmacion = MutableLiveData<Event<String>>()
+    val navegarAConfirmacion: LiveData<Event<String>> = _navegarAConfirmacion
+
+    private val _navegarARechazo = MutableLiveData<Event<String>>()
+    val navegarARechazo: LiveData<Event<String>> = _navegarARechazo
+
+    private val _ordenesHistorial = MutableLiveData<List<OrdenHistorial>>(emptyList())
+    val ordenesHistorial: LiveData<List<OrdenHistorial>> = _ordenesHistorial
+
+    // ========== Lógica del ViewModel ==========
+
     fun verificarStock(items: List<StockItem>) {
         viewModelScope.launch {
             _isLoading.value = true
-            _error.value = null
-            Log.d(TAG, "Verificando stock para ${items.size} productos")
-
-            when (val result = repository.verificarStock(items)) {
+            when (val result = checkoutRepository.verificarStock(items)) {
                 is CheckoutRepository.CheckoutResult.Success -> {
-                    _stockVerificado.value = result.data
-                    _error.value = null
-                    Log.d(TAG, "Stock verificado exitosamente")
-                }
-                is CheckoutRepository.CheckoutResult.Error -> {
-                    _error.value = result.message
-                    _stockVerificado.value = null
-                    Log.e(TAG, "Error al verificar stock: ${result.message}")
-                }
-                else -> {}
-            }
-
-            _isLoading.value = false
-        }
-    }
-
-    /**
-     * Crea una nueva orden de compra con TODOS los campos obligatorios
-     * IMPORTANTE: Asegúrate de incluir subtotal, total, estado, es_invitado, pais
-     */
-    fun crearOrden(
-        usuarioId: Long,
-        esInvitado: Boolean,
-        datosEnvio: DatosEnvio,
-        items: List<ItemOrden>,
-        subtotal: Int,
-        total: Int
-    ) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
-            Log.d(TAG, "Creando orden para usuario $usuarioId")
-            Log.d(TAG, "Items: $items")
-            Log.d(TAG, "Subtotal: $subtotal, Total: $total")
-            Log.d(TAG, "Datos envío: $datosEnvio")
-
-            when (val result = repository.crearOrden(
-                usuarioId,
-                esInvitado,
-                datosEnvio,
-                items,
-                subtotal,
-                total
-            )) {
-                is CheckoutRepository.CheckoutResult.Success -> {
-                    _ordenCreada.value = result.data
-                    _error.value = null
-                    Log.d(TAG, "Orden creada exitosamente: ${result.data.numeroOrden}")
-                }
-                is CheckoutRepository.CheckoutResult.Error -> {
-                    _error.value = result.message
-                    _ordenCreada.value = null
-                    Log.e(TAG, "Error al crear orden: ${result.message}")
-                }
-                else -> {}
-            }
-
-            _isLoading.value = false
-        }
-    }
-
-    /**
-     * Obtiene el historial de órdenes del usuario
-     */
-    fun cargarOrdenesUsuario(usuarioId: Long) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-            Log.d(TAG, "Cargando órdenes del usuario $usuarioId")
-
-            when (val result = repository.obtenerOrdenesUsuario(usuarioId)) {
-                is CheckoutRepository.CheckoutResult.Success -> {
-                    _ordenes.value = result.data.sortedByDescending { it.fecha }
-                    _error.value = null
-                    Log.d(TAG, "Órdenes cargadas: ${result.data.size}")
-                }
-                is CheckoutRepository.CheckoutResult.Error -> {
-                    _error.value = result.message
-                    _ordenes.value = emptyList()
-                    Log.e(TAG, "Error al cargar órdenes: ${result.message}")
-                }
-                else -> {}
-            }
-
-            _isLoading.value = false
-        }
-    }
-
-    /**
-     * Cancela una orden
-     */
-    fun cancelarOrden(ordenId: Long) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
-            when (val result = repository.cancelarOrden(ordenId)) {
-                is CheckoutRepository.CheckoutResult.Success -> {
-                    // Recargar la lista de órdenes después de cancelar
-                    val usuarioId = _ordenes.value.firstOrNull()?.usuarioId
-                    if (usuarioId != null) {
-                        cargarOrdenesUsuario(usuarioId)
+                    val verificacion = result.data
+                    _verificacionStock.value = verificacion
+                    if (!verificacion.disponible) {
+                        Log.w("CheckoutViewModel", "Stock no disponible para algunos productos")
+                        _navegarARechazo.value = Event("STOCK_INSUFICIENTE")
+                    } else {
+                        Log.d("CheckoutViewModel", "Stock disponible para todos los productos")
                     }
                 }
                 is CheckoutRepository.CheckoutResult.Error -> {
                     _error.value = result.message
+                    Log.e("CheckoutViewModel", "Error al verificar stock: ${result.message}")
                 }
                 else -> {}
             }
+            _isLoading.value = false
+        }
+    }
 
+    fun crearOrden(cartItems: List<CartItem>, datosEnvio: DatosEnvio, subtotal: Double, total: Double) {
+        viewModelScope.launch {
+            _isLoading.value = true
+
+            val itemsOrden = cartItems.map {
+                ItemOrden(
+                    productoId = it.producto.producto_id,
+                    cantidad = it.cantidad,
+                    precioUnitario = it.producto.price
+                )
+            }
+
+            val userId = tokenManager.getUserId()
+            val esInvitado = userId <= 0
+
+            when (val result = checkoutRepository.crearOrden(userId.toLong(), esInvitado, datosEnvio, itemsOrden, subtotal, total)) {
+                is CheckoutRepository.CheckoutResult.Success -> {
+                    val orden = result.data
+                    _ordenCreada.value = orden
+                    _navegarAConfirmacion.value = Event(orden.numeroOrden)
+                    Log.d("CheckoutViewModel", "Orden creada con éxito: ${orden.numeroOrden}")
+                }
+                is CheckoutRepository.CheckoutResult.Error -> {
+                    _error.value = result.message
+                    _navegarARechazo.value = Event("ERROR_CREACION")
+                    Log.e("CheckoutViewModel", "Error al crear orden: ${result.message}")
+                }
+                else -> {}
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun cargarHistorialOrdenes() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val userId = tokenManager.getUserId()
+            if (userId > 0) {
+                when (val result = checkoutRepository.obtenerOrdenesUsuario(userId.toLong())) {
+                    is CheckoutRepository.CheckoutResult.Success -> {
+                        _ordenesHistorial.value = result.data.sortedByDescending { it.fecha }
+                    }
+                    is CheckoutRepository.CheckoutResult.Error -> {
+                        _error.value = result.message
+                    }
+                    else -> {}
+                }
+            }
             _isLoading.value = false
         }
     }
 
     /**
-     * Limpia el estado de la orden creada
+     * Obtiene una orden del historial y la establece como la orden "creada" para reutilizar la pantalla de confirmación
      */
-    fun limpiarOrdenCreada() {
-        _ordenCreada.value = null
+    fun verDetalleDeOrden(ordenId: Long) {
+        val orden = _ordenesHistorial.value?.firstOrNull { it.id == ordenId }
+        if (orden != null) {
+            _ordenCreada.value = OrdenResponse(
+                id = orden.id,
+                numeroOrden = orden.numeroOrden,
+                fecha = orden.fecha,
+                estado = orden.estado,
+                total = orden.total,
+                mensaje = "Orden cargada desde el historial",
+                items = orden.productos.map { 
+                    ProductoOrden(it.productoId, it.nombre, it.cantidad, it.precioUnitario, it.imagen)
+                }
+            )
+            _navegarAConfirmacion.value = Event(orden.numeroOrden)
+        } else {
+            _error.value = "No se encontró la orden en el historial."
+        }
     }
 
-    /**
-     * Limpia el estado de error
-     */
+
     fun limpiarError() {
         _error.value = null
     }
-
-    /**
-     * Limpia el estado de stock verificado
-     */
-    fun limpiarStockVerificado() {
-        _stockVerificado.value = null
-    }
 }
 
+/**
+ * Wrapper para eventos de navegación, para evitar que se disparen múltiples veces
+ */
+class Event<out T>(private val content: T) {
+    private var hasBeenHandled = false
+
+    fun getContentIfNotHandled(): T? {
+        return if (hasBeenHandled) {
+            null
+        } else {
+            hasBeenHandled = true
+            content
+        }
+    }
+
+    fun peekContent(): T = content
+}
