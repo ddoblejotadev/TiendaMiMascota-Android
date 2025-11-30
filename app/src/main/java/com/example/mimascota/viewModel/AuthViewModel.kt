@@ -9,6 +9,7 @@ import com.example.mimascota.repository.UserRepository
 import com.example.mimascota.repository.UserRoomRepository
 import com.example.mimascota.repository.AuthRepository
 import com.example.mimascota.util.TokenManager
+import com.example.mimascota.model.Usuario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -98,6 +99,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loginUsuario(email: String, password: String) {
         viewModelScope.launch {
+            // Fallback local (Room)
+            if (email.equals("admin", ignoreCase = true) && password == "admin") {
+                val adminUser = Usuario(usuarioId = 0, email = "admin", nombre = "Admin", rol = "admin")
+                TokenManager.saveUsuario(adminUser)
+
+                usuarioActual.value = "admin"
+                usuarioActualId.value = 0
+                loginState.value = "Login exitoso 🎉 (Administrador)"
+                return@launch
+            }
+
             // Intentar login con backend
             try {
                 val result = withContext(Dispatchers.IO) {
@@ -135,14 +147,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 loginState.value = "Error de red al loguear (backend): ${e.message}. Intentando local..."
-            }
-
-            // Fallback local (Room)
-            if (email.equals("admin", ignoreCase = true) && password == "admin") {
-                usuarioActual.value = "admin"
-                usuarioActualId.value = 0
-                loginState.value = "Login exitoso 🎉 (Administrador)"
-                return@launch
             }
 
             val usuarioEncontrado = withContext(Dispatchers.IO) {

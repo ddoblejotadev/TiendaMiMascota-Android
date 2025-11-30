@@ -27,15 +27,22 @@ import com.example.mimascota.viewModel.AuthViewModel
 fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var loginState by remember { viewModel.loginState }
+    val loginState by viewModel.loginState
 
     // Observar cambios en el estado de login para navegar solo si es exitoso
     LaunchedEffect(loginState) {
         if (loginState.contains("exitoso", ignoreCase = true)) {
-            val username = TokenManager.getUserName() ?: viewModel.usuarioActual.value ?: "Invitado"
-            navController.navigate("home/$username") {
-                // Evitar volver al login presionando atrás
-                popUpTo("login") { inclusive = true }
+            val userRole = TokenManager.getUserRole()
+            if (userRole == "admin") {
+                navController.navigate("backoffice") {
+                    popUpTo("login") { inclusive = true }
+                }
+            } else {
+                val username = TokenManager.getUserName() ?: viewModel.usuarioActual.value ?: "Invitado"
+                navController.navigate("home/$username") {
+                    // Evitar volver al login presionando atrás
+                    popUpTo("login") { inclusive = true }
+                }
             }
         }
     }

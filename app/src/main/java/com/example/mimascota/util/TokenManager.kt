@@ -88,6 +88,13 @@ object TokenManager {
     fun getUserEmail(): String? {
         return getUsuario()?.email
     }
+    
+    /**
+     * Obtener rol del usuario
+     */
+    fun getUserRole(): String? {
+        return getUsuario()?.rol
+    }
 
     /**
      * Obtener teléfono del usuario
