@@ -1,13 +1,19 @@
 package com.example.mimascota.ui.activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mimascota.databinding.ActivityCheckoutBinding
 import com.example.mimascota.model.CartItem
+import com.example.mimascota.model.DatosEnvio
 import com.example.mimascota.ui.adapter.CheckoutProductoAdapter
+import com.example.mimascota.viewModel.CheckoutViewModel
+import com.example.mimascota.viewModel.CheckoutViewModelFactory
 import com.example.mimascota.viewModel.SharedViewModel
 import com.example.mimascota.viewModel.SharedViewModelFactory
 import com.google.gson.Gson
@@ -19,6 +25,7 @@ class CheckoutActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCheckoutBinding
     private lateinit var viewModel: SharedViewModel
+    private lateinit var checkoutViewModel: CheckoutViewModel
     private lateinit var checkoutAdapter: CheckoutProductoAdapter
 
     // Política de envío
@@ -37,18 +44,91 @@ class CheckoutActivity : AppCompatActivity() {
         val viewModelFactory = SharedViewModelFactory(applicationContext)
         viewModel = ViewModelProvider(this, viewModelFactory).get(SharedViewModel::class.java)
 
+        // Nuevo: CheckoutViewModel con TokenManager
+        val checkoutFactory = CheckoutViewModelFactory(com.example.mimascota.util.TokenManager)
+        checkoutViewModel = ViewModelProvider(this, checkoutFactory).get(CheckoutViewModel::class.java)
+
         setupRecyclerView()
         // Si vinieron items por extras, mostrarlos directamente
         handleIntentExtras()
         setupObservers()
 
-        // Configurar botón realizar pedido (placeholder, no cambia comportamiento existente)
+        // Configurar botón realizar pedido: validar campos y llamar al ViewModel para crear la orden
         binding.btnRealizarPedido.setOnClickListener {
-            // Por ahora sólo mostrar un progress y delegar acción real al ViewModel/Repo existente
-            binding.progressBar.visibility = android.view.View.VISIBLE
-            // Aquí podrías iniciar la creación de la orden real
-            // Simular breve delay o delegar al CheckoutViewModel si existe
-            binding.progressBar.postDelayed({ binding.progressBar.visibility = android.view.View.GONE }, 800)
+            // Recolectar datos de envío del formulario
+            val nombre = binding.etNombreCompleto.text?.toString()?.trim() ?: ""
+            val email = binding.etEmail.text?.toString()?.trim() ?: ""
+            val telefono = binding.etTelefono.text?.toString()?.trim() ?: ""
+            val direccion = binding.etDireccion.text?.toString()?.trim() ?: ""
+            val ciudad = binding.etCiudad.text?.toString()?.trim() ?: ""
+            val region = binding.etRegion.text?.toString()?.trim() ?: ""
+            val codigoPostal = binding.etCodigoPostal.text?.toString()?.trim() ?: ""
+
+            // Validaciones mínimas
+            if (nombre.isEmpty() || email.isEmpty() || direccion.isEmpty() || ciudad.isEmpty()) {
+                Toast.makeText(this, "Por favor completa los datos de envío (nombre, email, dirección, ciudad)", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            val datosEnvio = DatosEnvio(
+                nombreCompleto = nombre,
+                email = email,
+                telefono = telefono,
+                direccion = direccion,
+                ciudad = ciudad,
+                region = region,
+                codigoPostal = codigoPostal
+            )
+
+            // Obtener items desde adapter o ViewModel
+            val items = checkoutAdapter.currentList
+            if (items.isEmpty()) {
+                Toast.makeText(this, "El carrito está vacío", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val subtotal = items.sumOf { it.producto.price * it.cantidad }
+            val shipping = calculateShipping(subtotal)
+            val total = subtotal + shipping
+
+            // Mostrar progress
+            binding.progressBar.visibility = View.VISIBLE
+
+            // Llamar al CheckoutViewModel para crear la orden
+            checkoutViewModel.crearOrden(items, datosEnvio, subtotal, total)
+        }
+
+        // Observadores para navegar en base al resultado
+        checkoutViewModel.ordenCreada.observe(this) { ordenResponse ->
+            if (ordenResponse != null) {
+                // Orden creada; navegar a pantalla Exitosa
+                binding.progressBar.visibility = View.GONE
+                val intent = Intent(this, com.example.mimascota.ui.activity.OrdenExitosaActivity::class.java).apply {
+                    putExtra("NUMERO_ORDEN", ordenResponse.numeroOrden)
+                    putExtra("TOTAL", ordenResponse.total.toInt())
+                    putExtra("ORDEN_ID", ordenResponse.id.toInt())
+                }
+                startActivity(intent)
+                finish()
+            }
+        }
+
+        checkoutViewModel.navegarARechazo.observe(this) { event ->
+            val tipo = event.getContentIfNotHandled()
+            if (tipo != null) {
+                binding.progressBar.visibility = View.GONE
+                val intent = Intent(this, com.example.mimascota.ui.activity.CompraRechazadaActivity::class.java)
+                intent.putExtra("tipoError", tipo)
+                startActivity(intent)
+            }
+        }
+
+        checkoutViewModel.error.observe(this) { err ->
+            err?.let {
+                binding.progressBar.visibility = View.GONE
+                Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+                checkoutViewModel.limpiarError()
+            }
         }
     }
 
@@ -114,10 +194,8 @@ class CheckoutActivity : AppCompatActivity() {
         return try {
             val fmt = NumberFormat.getCurrencyInstance(Locale("es", "CL"))
             fmt.maximumFractionDigits = 0
-            // Algunos locales pueden mostrar "CLP$", si prefieres sólo "$" puedes reemplazar
             fmt.format(amount)
         } catch (e: Exception) {
-            // Fallback simple
             String.format(Locale.getDefault(), "$%.0f", amount)
         }
     }

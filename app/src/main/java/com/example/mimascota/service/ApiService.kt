@@ -92,4 +92,27 @@ interface ApiService {
     suspend fun cancelarOrden(
         @Path("id") ordenId: Long
     ): Response<OrdenHistorial>
+
+    // ============= ADMIN / USUARIOS (opcional, solo si backend soporta) =============
+
+    @GET("admin/usuarios")
+    suspend fun getAllUsers(): Response<List<Usuario>>
+
+    @GET("admin/usuarios/{id}")
+    suspend fun getUserById(@Path("id") id: Long): Response<Usuario>
+
+    @PUT("admin/usuarios/{id}")
+    suspend fun updateUser(@Path("id") id: Long, @Body usuario: Usuario): Response<Usuario>
+
+    @DELETE("admin/usuarios/{id}")
+    suspend fun deleteUser(@Path("id") id: Long): Response<Unit>
+
+    // ============= ADMIN ÓRDENES (opcional) =============
+
+    @GET("admin/ordenes")
+    suspend fun getAllOrders(): Response<List<OrdenHistorial>>
+
+    @PUT("admin/ordenes/{id}")
+    suspend fun updateOrderStatus(@Path("id") id: Long, @Body body: Map<String, String>): Response<OrdenHistorial>
+
 }

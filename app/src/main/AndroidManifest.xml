@@ -49,6 +49,11 @@
             android:exported="false"
             android:label="Mis Pedidos"
             android:theme="@style/Theme.MiMascota" />
+        <activity
+            android:name=".ui.activity.CompraRechazadaActivity"
+            android:exported="false"
+            android:label="Compra Rechazada"
+            android:theme="@style/Theme.MiMascota" />
     </application>
 
 </manifest>

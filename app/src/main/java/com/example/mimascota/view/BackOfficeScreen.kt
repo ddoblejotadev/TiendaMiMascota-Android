@@ -16,11 +16,27 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.model.Producto
 import com.example.mimascota.viewModel.CatalogoViewModel
+import com.example.mimascota.viewModel.AdminViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
+import com.example.mimascota.model.Usuario
+import com.example.mimascota.model.OrdenHistorial
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackOfficeScreen(navController: NavController, viewModel: CatalogoViewModel) {
     val productos by viewModel.productos.collectAsState()
+
+    // AdminViewModel local
+    val adminViewModel: AdminViewModel = composeViewModel()
+    val usuarios by adminViewModel.users.collectAsState()
+    val ordenes by adminViewModel.orders.collectAsState()
+    val isLoading by adminViewModel.isLoading.collectAsState()
+    val context = LocalContext.current
+
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("Productos", "Usuarios", "Órdenes")
 
     Scaffold(
         topBar = {
@@ -34,18 +50,101 @@ fun BackOfficeScreen(navController: NavController, viewModel: CatalogoViewModel)
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate("agregarProducto") }) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar Producto")
+            if (selectedTab == 0) {
+                FloatingActionButton(onClick = { navController.navigate("agregarProducto") }) {
+                    Icon(Icons.Default.Add, contentDescription = "Agregar Producto")
+                }
             }
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            items(productos) { producto ->
-                ProductoBackOfficeItem(producto, navController, viewModel)
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)) {
+
+            TabRow(selectedTabIndex = selectedTab) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(selected = selectedTab == index, onClick = { selectedTab = index }) {
+                        Text(title, modifier = Modifier.padding(16.dp))
+                    }
+                }
+            }
+
+            when (selectedTab) {
+                0 -> ProductsTab(productos = productos, navController = navController, viewModel = viewModel)
+                1 -> UsersTab(usuarios = usuarios, onDelete = { userId ->
+                    adminViewModel.deleteUser(userId) { success, message ->
+                        if (success) Toast.makeText(context, "Usuario eliminado", Toast.LENGTH_SHORT).show() else Toast.makeText(context, "Error: $message", Toast.LENGTH_LONG).show()
+                    }
+                }, isLoading = isLoading)
+                2 -> OrdersTab(ordenes = ordenes, onUpdateStatus = { orderId, newStatus ->
+                    adminViewModel.updateOrderStatus(orderId, newStatus) { success, message ->
+                        if (success) Toast.makeText(context, "Estado actualizado", Toast.LENGTH_SHORT).show() else Toast.makeText(context, "Error: $message", Toast.LENGTH_LONG).show()
+                    }
+                }, isLoading = isLoading)
+            }
+        }
+    }
+}
+
+@Composable
+fun ProductsTab(productos: List<Producto>, navController: NavController, viewModel: CatalogoViewModel) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(productos) { producto ->
+            ProductoBackOfficeItem(producto, navController, viewModel)
+        }
+    }
+}
+
+@Composable
+fun UsersTab(usuarios: List<Usuario>, onDelete: (Long) -> Unit, isLoading: Boolean) {
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(usuarios) { user ->
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)) {
+                Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(user.nombre)
+                        Text(user.email)
+                    }
+                    IconButton(onClick = { onDelete(user.usuarioId.toLong()) }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Eliminar usuario")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun OrdersTab(ordenes: List<OrdenHistorial>, onUpdateStatus: (Long, String) -> Unit, isLoading: Boolean) {
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(ordenes) { orden ->
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Text(text = "Orden: ${orden.numeroOrden}")
+                    Text(text = "Usuario: ${orden.usuarioId}")
+                    Text(text = "Estado: ${orden.estado}")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { onUpdateStatus(orden.id, "procesando") }) { Text("Procesando") }
+                        TextButton(onClick = { onUpdateStatus(orden.id, "enviado") }) { Text("Enviar") }
+                        TextButton(onClick = { onUpdateStatus(orden.id, "cancelado") }) { Text("Cancelar") }
+                    }
+                }
             }
         }
     }
