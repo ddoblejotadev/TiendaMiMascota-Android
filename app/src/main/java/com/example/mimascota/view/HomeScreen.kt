@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Portrait
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -15,12 +16,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,18 +30,13 @@ import com.example.mimascota.R
 import com.example.mimascota.viewModel.AuthViewModel
 import android.app.Activity
 import android.content.Intent
-import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthViewModel) {
-    // Verificar si el usuario es administrador (complentario: también revisamos el parámetro `name`)
     val esAdmin = authViewModel.esAdmin() || (name?.equals("admin", ignoreCase = true) == true)
-
-    // Observar foto de perfil (reactivo)
     val fotoPerfil = authViewModel.fotoPerfil.collectAsState()
 
-    // Cargar foto de perfil cuando la pantalla se carga
     LaunchedEffect(Unit) {
         authViewModel.obtenerFotoPerfilActual()
     }
@@ -71,7 +67,6 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
             verticalArrangement = Arrangement.Center
         ) {
 
-            // Foto de perfil circular clickeable
             Box(
                 modifier = Modifier
                     .size(120.dp)
@@ -82,13 +77,10 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                         else
                             MaterialTheme.colorScheme.primaryContainer
                     )
-                    .clickable {
-                        navController.navigate("fotoDePerfil")
-                    },
+                    .clickable { navController.navigate("fotoDePerfil") },
                 contentAlignment = Alignment.Center
             ) {
                 if (fotoPerfil.value != null) {
-                    // Si tiene foto guardada, mostrar ícono de check
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             imageVector = Icons.Default.PhotoCamera,
@@ -105,7 +97,6 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                         )
                     }
                 } else {
-                    // Mostrar iniciales del usuario
                     val iniciales = name?.take(2)?.uppercase() ?: "?"
                     Text(
                         text = iniciales,
@@ -118,19 +109,14 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Indicador para cambiar foto
             Text(
-                text = if (fotoPerfil.value != null)
-                    "Foto guardada - Toca para cambiar"
-                else
-                    "Toca para agregar foto",
+                text = if (fotoPerfil.value != null) "Foto guardada - Toca para cambiar" else "Toca para agregar foto",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Mostrar nombre real del cliente en el mensaje de bienvenida si está disponible
             val displayName = name ?: com.example.mimascota.util.TokenManager.getUserName() ?: "Invitado"
             Text(
                 text = "¡Bienvenido, $displayName! 👋",
@@ -151,15 +137,10 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             Button(
                 onClick = { navController.navigate("Catalogo") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Icon(
-                    imageVector = Icons.Default.Store,
-                    contentDescription = "Catálogo"
-                )
+                Icon(imageVector = Icons.Default.Store, contentDescription = "Catálogo")
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Ir al Catálogo")
             }
@@ -168,44 +149,44 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             OutlinedButton(
                 onClick = { navController.navigate("Carrito") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = "Carrito"
-                )
+                Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = "Carrito")
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Ver Carrito")
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Botón para la nueva sección de Huachitos
             OutlinedButton(
-                onClick = { navController.navigate("Acerca") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                onClick = { navController.navigate("huachitos") },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Icon(
-                    imageVector = Icons.Default.Portrait,
-                    contentDescription = "Sobre Nosotros"
-                )
+                Icon(imageVector = Icons.Default.Pets, contentDescription = "Adoptar")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Adopta un Huachito")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = { navController.navigate("Acerca") },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(imageVector = Icons.Default.Portrait, contentDescription = "Sobre Nosotros")
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Ver Sobre Nosotros")
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Accesos para el cliente: Mis Pedidos y Editar Perfil
             OutlinedButton(
                 onClick = { navController.context?.let { navController.navigate("MisPedidos") } ?: navController.navigate("MisPedidos") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Icon(imageVector = Icons.Default.ShoppingCart, contentDescription = "Mis Pedidos")
@@ -215,13 +196,11 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Launcher para Editar Perfil y recibir resultado
             val context = LocalContext.current
             val profileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
                 if (activityResult.resultCode == Activity.RESULT_OK) {
                     val updatedName = activityResult.data?.getStringExtra("updated_name")
                     if (!updatedName.isNullOrEmpty()) {
-                        // Navegar a home con el nombre actualizado para refrescar saludo
                         navController.navigate("home/$updatedName") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         }
@@ -231,9 +210,7 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             OutlinedButton(
                 onClick = { val intent = Intent(context, com.example.mimascota.ui.activity.ProfileEditActivity::class.java); profileLauncher.launch(intent) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Icon(imageVector = Icons.Default.Portrait, contentDescription = "Editar Perfil")
@@ -241,39 +218,25 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                 Text("Editar Perfil")
             }
 
-
-            // Mostrar sección de administración solo si es admin
             if (esAdmin) {
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // Separador visual
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
                 Spacer(modifier = Modifier.height(8.dp))
-
-                // Sección de administración
                 Text(
                     text = "Panel de Administración",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
                 Spacer(modifier = Modifier.height(8.dp))
-
                 Button(
                     onClick = { navController.navigate("backOffice") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.secondary
                     )
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Store,
-                        contentDescription = "Panel Administrativo"
-                    )
+                    Icon(imageVector = Icons.Default.Store, contentDescription = "Panel Administrativo")
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Panel Administrativo")
                 }
@@ -281,23 +244,18 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Separador para cerrar sesión
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Botón de cerrar sesión disponible para cualquier usuario
             OutlinedButton(
                 onClick = {
                     authViewModel.cerrarSesion()
-                    // Limpiar la pila de navegación y navegar a login
                     navController.navigate("login") {
                         popUpTo(navController.graph.startDestinationId) { inclusive = true }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colorScheme.error

@@ -73,6 +73,13 @@ class MainActivity : ComponentActivity() {
                 composable("Acerca"){
                     AboutUsScreen(navController)
                 }
+                composable("huachitos") { 
+                    AdopcionScreen(navController)
+                }
+                composable("animalDetail/{animalId}") {
+                    val animalId = it.arguments?.getString("animalId")?.toIntOrNull() ?: -1
+                    AnimalDetailScreen(animalId)
+                }
                 composable("backOffice") {
                     BackOfficeScreen(navController, catalogoViewModel, authViewModel)
                 }
