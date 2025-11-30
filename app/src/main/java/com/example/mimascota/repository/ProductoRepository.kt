@@ -3,6 +3,7 @@ package com.example.mimascota.repository
 import android.util.Log
 import com.example.mimascota.client.RetrofitClient
 import com.example.mimascota.model.Producto
+import com.example.mimascota.model.ProductoRequest
 import java.io.IOException
 
 class ProductoRepository {
@@ -86,7 +87,18 @@ class ProductoRepository {
      */
     suspend fun updateProducto(id: Int, producto: Producto): ProductoResult<Producto> {
         return try {
-            val response = apiService.updateProducto(id, producto)
+            val productoRequest = ProductoRequest(
+                nombre = producto.producto_nombre,
+                description = producto.description ?: "",
+                price = producto.price ?: 0.0,
+                stock = producto.stock ?: 0,
+                category = producto.category ?: "General",
+                imageUrl = producto.imageUrl ?: "",
+                destacado = producto.destacado ?: false,
+                valoracion = producto.valoracion ?: 0.0,
+                precioAnterior = producto.precioAnterior?.toInt() ?: 0
+            )
+            val response = apiService.updateProducto(id, productoRequest)
             if (response.isSuccessful && response.body() != null) {
                 ProductoResult.Success(response.body()!!)
             } else {

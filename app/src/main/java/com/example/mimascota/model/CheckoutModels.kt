@@ -10,6 +10,22 @@ import com.google.gson.annotations.SerializedName
 // ============= Request Models =============
 
 /**
+ * Request para crear o actualizar un producto. Basado en el schema ProductoRequest de Swagger.
+ */
+data class ProductoRequest(
+    val nombre: String,
+    val description: String,
+    val price: Double,
+    val stock: Int,
+    val category: String,
+    val imageUrl: String,
+    val destacado: Boolean,
+    val valoracion: Double,
+    val precioAnterior: Int
+)
+
+
+/**
  * Request para crear una orden de compra
  */
 data class CrearOrdenRequest(
