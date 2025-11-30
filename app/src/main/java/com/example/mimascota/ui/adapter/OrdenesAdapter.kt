@@ -2,77 +2,81 @@ package com.example.mimascota.ui.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.mimascota.model.OrdenHistorial
+import coil.load
+import com.example.mimascota.R
 import com.example.mimascota.databinding.ItemOrdenBinding
-import java.text.NumberFormat
+import com.example.mimascota.model.OrdenHistorial
+import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 
-/**
- * OrdenesAdapter: Adapter para mostrar lista de órdenes (usando OrdenHistorial)
- */
 class OrdenesAdapter(
-    private val onClick: (OrdenHistorial) -> Unit
-) : ListAdapter<OrdenHistorial, OrdenesAdapter.ViewHolder>(OrderDiffCallback()) {
+    private val onItemClicked: (OrdenHistorial) -> Unit
+) : ListAdapter<OrdenHistorial, OrdenesAdapter.OrdenViewHolder>(DiffCallback()) {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemOrdenBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return ViewHolder(binding, onClick)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrdenViewHolder {
+        val binding = ItemOrdenBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return OrdenViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
+    override fun onBindViewHolder(holder: OrdenViewHolder, position: Int) {
+        val orden = getItem(position)
+        holder.bind(orden)
     }
 
-    class ViewHolder(
-        private val binding: ItemOrdenBinding,
-        private val onClick: (OrdenHistorial) -> Unit
-    ) : RecyclerView.ViewHolder(binding.root) {
-
-        private val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CL"))
-
+    inner class OrdenViewHolder(private val binding: ItemOrdenBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(orden: OrdenHistorial) {
-            with(binding) {
-                // Número de orden
-                tvNumeroOrden.text = "Orden #${orden.numeroOrden}"
+            binding.tvNumeroOrden.text = "Orden #${orden.numeroOrden}"
+            binding.tvEstadoOrden.text = orden.estado
 
-                // Fecha (es un String, no necesita formateo)
-                tvFecha.text = "Fecha: ${orden.fecha}"
+            try {
+                val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                parser.timeZone = TimeZone.getTimeZone("UTC")
+                val date = parser.parse(orden.fecha)
+                val formatter = SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault())
+                binding.tvFechaOrden.text = formatter.format(date)
+            } catch (e: Exception) {
+                binding.tvFechaOrden.text = orden.fecha.split("T").firstOrNull() ?: orden.fecha
+            }
 
-                // Total
-                tvTotal.text = currencyFormatter.format(orden.total)
+            binding.tvTotalOrden.text = String.format(Locale.getDefault(), "$%,.0f", orden.total)
 
-                // Estado
-                tvEstado.text = "Estado: ${orden.estado.replaceFirstChar { it.uppercase() }}"
-                tvEstado.setTextColor(
-                    when (orden.estado.uppercase()) {
-                        "PENDIENTE" -> 0xFFFF9800.toInt()
-                        "PROCESANDO" -> 0xFF2196F3.toInt()
-                        "ENVIADO" -> 0xFF4CAF50.toInt()
-                        "ENTREGADO" -> 0xFF4CAF50.toInt()
-                        "CANCELADO" -> 0xFFF44336.toInt()
-                        else -> 0xFF757575.toInt()
-                    }
-                )
+            // Limpiar vistas anteriores
+            binding.productosContainer.removeAllViews()
 
-                // Cantidad de productos
-                tvCantidadProductos.text = "${orden.productos.size} producto(s)"
+            // Añadir vistas de detalle de productos
+            orden.productos.forEach { item ->
+                val inflater = LayoutInflater.from(binding.root.context)
+                val detalleView = inflater.inflate(R.layout.item_detalle_orden, binding.productosContainer, false)
 
-                // Click listener
-                root.setOnClickListener {
-                    onClick(orden)
+                val ivProductoImagen = detalleView.findViewById<ImageView>(R.id.ivProductoImagen)
+                val tvProductoNombre = detalleView.findViewById<TextView>(R.id.tvProductoNombre)
+                val tvCantidad = detalleView.findViewById<TextView>(R.id.tvCantidad)
+                val tvPrecioUnitario = detalleView.findViewById<TextView>(R.id.tvPrecioUnitario)
+
+                tvProductoNombre.text = item.nombre
+                tvCantidad.text = "Cantidad: ${item.cantidad}"
+                tvPrecioUnitario.text = String.format(Locale.getDefault(), "$%,.0f", item.precioUnitario)
+                ivProductoImagen.load(item.imagen) {
+                    placeholder(android.R.drawable.ic_menu_gallery)
+                    error(android.R.drawable.ic_menu_close_clear_cancel)
                 }
+
+                binding.productosContainer.addView(detalleView)
+            }
+
+            itemView.setOnClickListener {
+                onItemClicked(orden)
             }
         }
     }
 
-    class OrderDiffCallback : DiffUtil.ItemCallback<OrdenHistorial>() {
+    class DiffCallback : DiffUtil.ItemCallback<OrdenHistorial>() {
         override fun areItemsTheSame(oldItem: OrdenHistorial, newItem: OrdenHistorial): Boolean {
             return oldItem.id == newItem.id
         }

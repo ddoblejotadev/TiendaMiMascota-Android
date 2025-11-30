@@ -4,7 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
     app:cardElevation="4dp"
     app:cardCornerRadius="8dp">
 
@@ -14,88 +17,85 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Fila 1: Número de orden y total -->
+        <!-- Encabezado de la Orden -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_info_details"
+                app:tint="?attr/colorPrimary" />
 
             <TextView
                 android:id="@+id/tvNumeroOrden"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Orden #123456"
-                android:textSize="16sp"
+                android:layout_marginStart="16dp"
                 android:textStyle="bold"
+                android:textSize="16sp"
                 android:textColor="@android:color/black"
                 tools:text="Orden #123456" />
 
             <TextView
-                android:id="@+id/tvTotal"
+                android:id="@+id/tvEstadoOrden"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="$50.000"
-                android:textSize="16sp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorPrimary"
-                tools:text="$50.000" />
+                tools:text="Pendiente" />
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Fila 2: Fecha y cantidad de productos -->
+        <!-- Fecha y Total -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_marginTop="8dp">
 
             <TextView
-                android:id="@+id/tvFecha"
+                android:id="@+id/tvFechaOrden"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Fecha: 15/01/2025"
                 android:textSize="14sp"
                 android:textColor="@android:color/darker_gray"
-                tools:text="Fecha: 15/01/2025" />
+                tools:text="15 de Mayo, 2024" />
 
             <TextView
-                android:id="@+id/tvCantidadProductos"
+                android:id="@+id/tvTotalOrden"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="3 producto(s)"
-                android:textSize="14sp"
-                android:textColor="@android:color/darker_gray"
-                tools:text="3 producto(s)" />
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="?attr/colorPrimary"
+                tools:text="$11.980" />
         </LinearLayout>
 
+        <!-- Separador -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@android:color/darker_gray"
-            android:layout_marginTop="8dp"
+            android:background="#E0E0E0"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp" />
 
-        <!-- Fila 3: Estado -->
-        <TextView
-            android:id="@+id/tvEstado"
+        <!-- Contenedor para los detalles de los productos -->
+        <LinearLayout
+            android:id="@+id/productos_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Estado: PENDIENTE"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/darker_gray"
-            tools:text="Estado: PENDIENTE" />
+            android:orientation="vertical"
+            android:visibility="visible" />
 
     </LinearLayout>
-
 </com.google.android.material.card.MaterialCardView>
-

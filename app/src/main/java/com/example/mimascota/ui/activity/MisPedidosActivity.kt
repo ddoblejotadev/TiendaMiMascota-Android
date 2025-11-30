@@ -66,10 +66,6 @@ class MisPedidosActivity : AppCompatActivity() {
         viewModel.error.observe(this) { err ->
             err?.let {
                 if (it.contains("Usuario no autenticado") || it.contains("No se pudo recuperar perfil")) {
-                    // Mostrar debug info cuando hay problemas de autenticación
-                    val info = "userId=${TokenManager.getUserId()} token=${TokenManager.getToken()?.take(30)}"
-                    binding.tvDebugInfo.visibility = View.VISIBLE
-                    binding.tvDebugInfo.text = info
                     Snackbar.make(binding.root, it, Snackbar.LENGTH_INDEFINITE)
                         .setAction("Sincronizar perfil") {
                             lifecycleScope.launch {
