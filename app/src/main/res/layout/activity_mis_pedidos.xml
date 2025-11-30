@@ -18,6 +18,7 @@
             android:background="?attr/colorPrimary"
             app:title="Mis Pedidos"
             app:titleTextColor="@android:color/white"
+            app:navigationIcon="?attr/homeAsUpIndicator"
             android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
             app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
 
@@ -65,7 +66,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android.paddingBottom="8dp"
         android:clipToPadding="false"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:listitem="@layout/item_orden" />
