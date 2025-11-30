@@ -71,27 +71,27 @@ interface ApiService {
 
     // ============= ÓRDENES (CHECKOUT) =============
 
-    @POST("orden/verificar-stock")
+    @POST("ordenes/verificar-stock")
     suspend fun verificarStock(
         @Body request: VerificarStockRequest
     ): Response<VerificarStockResponse>
 
-    @POST("orden/crear")
+    @POST("ordenes")
     suspend fun crearOrden(
         @Body request: CrearOrdenRequest
     ): Response<OrdenResponse>
 
-    @GET("orden/usuario/{id}")
+    @GET("ordenes/usuario/{id}")
     suspend fun obtenerOrdenesUsuario(
         @Path("id") usuarioId: Long
     ): Response<List<OrdenHistorial>>
 
-    @GET("orden/detalle/{id}")
+    @GET("ordenes/{id}")
     suspend fun obtenerDetalleOrden(
         @Path("id") ordenId: Long
     ): Response<OrdenHistorial>
 
-    @POST("orden/cancelar/{id}")
+    @DELETE("ordenes/{id}")
     suspend fun cancelarOrden(
         @Path("id") ordenId: Long
     ): Response<OrdenHistorial>
@@ -119,7 +119,7 @@ interface ApiService {
 
     // ============= ADMIN ÓRDENES (opcional) =============
 
-    @GET("admin/ordenes")
+    @GET("ordenes")
     suspend fun getAllOrders(): Response<List<OrdenHistorial>>
 
     @PUT("admin/ordenes/{id}")
