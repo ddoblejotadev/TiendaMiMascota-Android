@@ -5,6 +5,7 @@ package com.example.mimascota.ui.activity
 import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -48,14 +49,19 @@ class ProfileEditActivity : ComponentActivity() {
             var run by remember { mutableStateOf("") }
             var fotoUrl by remember { mutableStateOf<String?>(null) }
 
-            // State for the new image selected from gallery
             var imageUri by remember { mutableStateOf<Uri?>(null) }
             val context = LocalContext.current
 
             val galleryLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent(),
-                onResult = { uri: Uri? -> imageUri = uri }
-            )
+                contract = ActivityResultContracts.GetContent()
+            ) { uri: Uri? ->
+                if (uri != null) {
+                    Log.d("ProfileEditActivity", "✅ URI de la imagen recibida de la galería: $uri")
+                    imageUri = uri
+                } else {
+                    Log.w("ProfileEditActivity", "❌ El usuario no seleccionó ninguna imagen.")
+                }
+            }
 
             LaunchedEffect(Unit) {
                 TokenManager.getUsuario()?.let { u ->
@@ -97,12 +103,15 @@ class ProfileEditActivity : ComponentActivity() {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = "Cambiar foto",
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().clickable { galleryLauncher.launch("image/*") }.padding(8.dp)
-                    )
+                    TextButton(
+                        onClick = {
+                            Log.d("ProfileEditActivity", "🔘 Botón 'Cambiar Foto' presionado. Lanzando galería...")
+                            galleryLauncher.launch("image/*")
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Cambiar Foto")
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -131,8 +140,8 @@ class ProfileEditActivity : ComponentActivity() {
                                         return@launch
                                     }
 
-                                    // Convert new image to Base64 if one was selected
                                     val base64Image = imageUri?.let { uri ->
+                                        Log.d("ProfileEditActivity", "🔄 Convirtiendo imagen a Base64...")
                                         context.contentResolver.openInputStream(uri)?.use { inputStream ->
                                             val bytes = inputStream.readBytes()
                                             "data:image/jpeg;base64,${Base64.encodeToString(bytes, Base64.DEFAULT)}"
@@ -143,21 +152,25 @@ class ProfileEditActivity : ComponentActivity() {
                                         nombre = nombre,
                                         direccion = direccion,
                                         telefono = telefono,
-                                        fotoUrl = base64Image ?: current.fotoUrl // Use new image or keep the old one
+                                        fotoUrl = base64Image ?: current.fotoUrl
                                     )
 
+                                    Log.d("ProfileEditActivity", "🚀 Enviando actualización al repositorio...")
                                     val result = authRepo.updateUsuario(updated)
+
                                     if (result.isSuccess) {
+                                        Log.d("ProfileEditActivity", "✅ Perfil actualizado con éxito en el backend.")
                                         TokenManager.saveUsuario(updated)
                                         setResult(RESULT_OK, intent.apply { putExtra("updated_name", updated.nombre) })
                                         Toast.makeText(this@ProfileEditActivity, "Perfil actualizado", Toast.LENGTH_SHORT).show()
                                         finish()
                                     } else {
+                                        Log.e("ProfileEditActivity", "❌ Error al actualizar perfil: ${result.exceptionOrNull()?.message}")
                                         Toast.makeText(this@ProfileEditActivity, "Error: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
                                     }
 
                                 } catch (e: Exception) {
-                                    e.printStackTrace()
+                                    Log.e("ProfileEditActivity", "🔥 Excepción catastrófica al guardar: ${e.message}", e)
                                     Toast.makeText(this@ProfileEditActivity, "Error al actualizar", Toast.LENGTH_LONG).show()
                                 } finally {
                                     isSaving = false

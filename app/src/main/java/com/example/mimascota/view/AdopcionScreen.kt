@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -49,7 +51,14 @@ fun AdopcionScreen(navController: NavController, huachitosViewModel: HuachitosVi
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Adopta un Huachito") })
+            TopAppBar(
+                title = { Text("Adopta un Huachito") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                }
+            )
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
