@@ -6,9 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.compose.ui.platform.LocalContext
 import com.example.mimascota.view.*
 import com.example.mimascota.view.AboutUsScreen
@@ -75,8 +77,15 @@ class MainActivity : ComponentActivity() {
                 composable("backOffice") {
                     BackOfficeScreen(navController)
                 }
-                composable("agregarProducto") {
-                    AgregarProductoScreen(navController, viewModelC)
+                composable(
+                    route = "agregarProducto?id={id}",
+                    arguments = listOf(navArgument("id") { 
+                        type = NavType.IntType
+                        defaultValue = -1 
+                    })
+                ) {
+                    val productoId = it.arguments?.getInt("id")
+                    AgregarProductoScreen(navController, viewModelC, if (productoId == -1) null else productoId)
                 }
                 // Ruta para lanzar la Activity de Mis Pedidos
                 composable("MisPedidos") {
