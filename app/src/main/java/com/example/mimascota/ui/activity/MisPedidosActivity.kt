@@ -82,14 +82,6 @@ class MisPedidosActivity : AppCompatActivity() {
                 viewModel.limpiarError()
             }
         }
-        // En modo DEBUG mostrar siempre información útil para diagnóstico
-        try {
-            val debugInfo = "[DEBUG] userId=${TokenManager.getUserId()} token=${TokenManager.getToken()?.take(30)}"
-            binding.tvDebugInfo.visibility = View.VISIBLE
-            binding.tvDebugInfo.text = debugInfo
-        } catch (e: Exception) {
-            // ignorar
-        }
     }
 
     /**
