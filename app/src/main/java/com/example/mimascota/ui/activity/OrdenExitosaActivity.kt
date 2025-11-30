@@ -2,6 +2,7 @@ package com.example.mimascota.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mimascota.databinding.ActivityOrdenExitosaBinding
 import java.text.NumberFormat
@@ -58,11 +59,13 @@ class OrdenExitosaActivity : AppCompatActivity() {
 
     // Deshabilitar el botón de back para evitar volver al checkout
     @Deprecated("Deprecated in Java")
+    @SuppressLint("GestureBackNavigation")
     override fun onBackPressed() {
+        // Mantener comportamiento personalizado y llamar a super para no romper expectativas de ciclo de vida
         val intent = Intent(this, com.example.mimascota.MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
+        super.onBackPressed()
         finish()
     }
 }
-

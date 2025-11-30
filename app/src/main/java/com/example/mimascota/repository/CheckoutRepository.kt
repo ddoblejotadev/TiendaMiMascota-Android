@@ -7,6 +7,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * CheckoutRepository: Capa de abstracción para operaciones de checkout y órdenes
@@ -101,7 +104,13 @@ class CheckoutRepository {
                     // Endpoint no disponible: simular una respuesta profesional para no bloquear UX
                     Log.w(TAG, "Endpoint crearOrden no disponible (404). Simulando orden localmente.")
                     val simulatedOrderNumber = "MM-${System.currentTimeMillis().toString().takeLast(6)}"
-                    val fecha = java.time.ZonedDateTime.now().toString()
+                    val fecha = try {
+                        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault())
+                        sdf.format(Date())
+                    } catch (e: Exception) {
+                        // Fallback simple
+                        Date().toString()
+                    }
                     val simulatedItems = items.map {
                         ProductoOrden(
                             productoId = it.productoId,
