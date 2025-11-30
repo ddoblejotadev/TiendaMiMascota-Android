@@ -13,16 +13,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * AuthViewModel: Maneja autenticación y perfil de usuarios
- */
+sealed class LoginState {
+    object Idle : LoginState()
+    object Loading : LoginState()
+    data class Success(val userRole: String?) : LoginState()
+    data class Error(val message: String) : LoginState()
+}
+
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authRepository = AuthRepository()
     private val roomRepository = UserRoomRepository(application)
 
     var registroState = mutableStateOf("")
-    var loginState = mutableStateOf("")
+    var loginState = mutableStateOf<LoginState>(LoginState.Idle)
+        private set
     var usuarioActual = mutableStateOf<String?>(null)
     var usuarioActualId = mutableStateOf<Int?>(null)
 
@@ -47,6 +52,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loginUsuario(email: String, password: String) {
         viewModelScope.launch {
+            loginState.value = LoginState.Loading
             val result = withContext(Dispatchers.IO) {
                 authRepository.login(email, password)
             }
@@ -54,11 +60,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val savedUser = TokenManager.getUsuario()
                 usuarioActual.value = savedUser?.nombre
                 usuarioActualId.value = savedUser?.usuarioId
-                loginState.value = "Login exitoso 🎉"
+                loginState.value = LoginState.Success(savedUser?.rol)
             } else {
-                loginState.value = "Error: ${result.exceptionOrNull()?.message ?: "Credenciales inválidas"}"
+                loginState.value = LoginState.Error(result.exceptionOrNull()?.message ?: "Credenciales inválidas")
             }
         }
+    }
+    
+    fun resetLoginState() {
+        loginState.value = LoginState.Idle
     }
 
     fun esAdmin(): Boolean = TokenManager.getUserRole() == "admin"
@@ -68,7 +78,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             authRepository.logout()
             usuarioActual.value = null
             usuarioActualId.value = null
-            loginState.value = ""
+            loginState.value = LoginState.Idle
             registroState.value = ""
         }
     }

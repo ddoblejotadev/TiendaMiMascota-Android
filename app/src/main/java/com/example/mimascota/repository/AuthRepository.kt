@@ -29,6 +29,13 @@ class AuthRepository {
                     val authResponse = response.body()!!
                     TokenManager.saveToken(authResponse.token)
 
+                    // Patch para el admin: si el email es 'admin', forzar el rol a 'admin'.
+                    val finalRol = if (authResponse.email.equals("admin", ignoreCase = true)) {
+                        "admin"
+                    } else {
+                        authResponse.rol
+                    }
+
                     val usuario = Usuario(
                         usuarioId = authResponse.usuarioId,
                         email = authResponse.email,
@@ -36,7 +43,7 @@ class AuthRepository {
                         telefono = authResponse.telefono,
                         direccion = authResponse.direccion,
                         run = authResponse.run,
-                        rol = authResponse.rol
+                        rol = finalRol // Usar el rol (posiblemente parcheado)
                     )
                     TokenManager.saveUsuario(usuario)
                     Log.d("AuthRepository", "Login exitoso. Usuario guardado: $usuario")

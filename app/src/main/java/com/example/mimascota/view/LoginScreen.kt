@@ -1,5 +1,6 @@
 package com.example.mimascota.view
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.mimascota.util.TokenManager
 import com.example.mimascota.viewModel.AuthViewModel
+import com.example.mimascota.viewModel.LoginState
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
@@ -29,25 +31,26 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
     var password by remember { mutableStateOf("") }
     val loginState by viewModel.loginState
 
-    // Observar cambios en el estado de login para navegar solo si es exitoso
     LaunchedEffect(loginState) {
-        if (loginState.contains("exitoso", ignoreCase = true)) {
-            val userRole = TokenManager.getUserRole()
-            if (userRole == "admin") {
+        if (loginState is LoginState.Success) {
+            val successState = loginState as LoginState.Success
+            // Log de diagnóstico para ver el rol exacto
+            Log.d("LoginScreen", "Login successful. User role from state: '${successState.userRole}'")
+
+            if (successState.userRole.equals("admin", ignoreCase = true)) {
                 navController.navigate("backoffice") {
                     popUpTo("login") { inclusive = true }
                 }
             } else {
-                val username = TokenManager.getUserName() ?: viewModel.usuarioActual.value ?: "Invitado"
+                val username = TokenManager.getUserName() ?: "Invitado"
                 navController.navigate("home/$username") {
-                    // Evitar volver al login presionando atrás
                     popUpTo("login") { inclusive = true }
                 }
             }
+            viewModel.resetLoginState()
         }
     }
 
-    // Fondo con gradiente
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -67,7 +70,6 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo y título
             Box(
                 modifier = Modifier
                     .size(120.dp)
@@ -103,7 +105,6 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Card con el formulario
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(8.dp),
@@ -122,7 +123,6 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Campo Email
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -140,7 +140,6 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Campo Password
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -159,13 +158,12 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Botón de login
                     Button(
                         onClick = {
                             if (email.isNotBlank() && password.isNotBlank()) {
                                 viewModel.loginUsuario(email, password)
                             } else {
-                                viewModel.loginState.value = "Por favor completa todos los campos ❌"
+                                // No es necesario cambiar el estado aquí, se puede mostrar un error local
                             }
                         },
                         modifier = Modifier
@@ -173,23 +171,22 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(
-                            text = "Entrar",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        if (loginState is LoginState.Loading) {
+                            CircularProgressIndicator(color = Color.White)
+                        } else {
+                            Text(
+                                text = "Entrar",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
 
-                    // Mostrar estado de login si hay mensaje
-                    if (loginState.isNotEmpty()) {
+                    if (loginState is LoginState.Error) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = loginState,
-                            color = if (loginState.contains("exitoso", ignoreCase = true)) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.error
-                            },
+                            text = (loginState as LoginState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center
                         )
@@ -199,7 +196,6 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Botón para ir a registro
             TextButton(
                 onClick = { navController.navigate("register") }
             ) {
@@ -216,7 +212,6 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Footer
             Text(
                 text = "© 2025 Mi Mascota",
                 style = MaterialTheme.typography.bodySmall,
