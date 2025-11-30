@@ -29,13 +29,7 @@ class AuthRepository {
                     val authResponse = response.body()!!
                     TokenManager.saveToken(authResponse.token)
 
-                    // Patch para el admin: si el email es 'admin', forzar el rol a 'admin'.
-                    val finalRol = if (authResponse.email.equals("admin", ignoreCase = true)) {
-                        "admin"
-                    } else {
-                        authResponse.rol
-                    }
-
+                    // El LoginResponse ya contiene toda la información necesaria.
                     val usuario = Usuario(
                         usuarioId = authResponse.usuarioId,
                         email = authResponse.email,
@@ -43,7 +37,7 @@ class AuthRepository {
                         telefono = authResponse.telefono,
                         direccion = authResponse.direccion,
                         run = authResponse.run,
-                        rol = finalRol // Usar el rol (posiblemente parcheado)
+                        rol = authResponse.rol
                     )
                     TokenManager.saveUsuario(usuario)
                     Log.d("AuthRepository", "Login exitoso. Usuario guardado: $usuario")
@@ -154,7 +148,8 @@ class AuthRepository {
     suspend fun updateUsuario(usuario: Usuario): Result<Usuario> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = apiService.updateCurrentUser(usuario)
+                val userId = TokenManager.getUserId()
+                val response = apiService.updateUser(userId, usuario)
                 if (response.isSuccessful && response.body() != null) {
                     val updated = response.body()!!
                     TokenManager.saveUsuario(updated)
@@ -163,7 +158,8 @@ class AuthRepository {
                     Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
                 }
             } catch (ex: Exception) {
-                Result.failure(Exception("Error de conexión: ${ex.message}"))
+                val msg = ex.message ?: "error desconocido"
+                Result.failure(Exception("Error de conexión: $msg"))
             }
         }
     }
