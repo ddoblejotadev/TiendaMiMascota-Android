@@ -111,6 +111,64 @@ object TokenManager {
     }
 
     /**
+     * Extrae el user id del payload del token JWT si está presente (sin verificar firma).
+     * Devuelve null si no es posible extraer.
+     */
+    fun getUserIdFromToken(): Long? {
+        val token = getToken() ?: return null
+        try {
+            val parts = token.split('.')
+            if (parts.size < 2) return null
+            var payload = parts[1]
+            // Base64 url-safe decode
+            payload = payload.replace('-', '+').replace('_', '/')
+            val pad = payload.length % 4
+            if (pad > 0) payload += "=".repeat(4 - pad)
+            val decoded = String(android.util.Base64.decode(payload, android.util.Base64.DEFAULT))
+            val map: Map<String, Any> = gson.fromJson(decoded, Map::class.java) as Map<String, Any>
+            // Buscar claves comunes
+            val keys = listOf("usuario_id", "user_id", "sub", "id")
+            for (k in keys) {
+                if (map.containsKey(k)) {
+                    val v = map[k]
+                    when (v) {
+                        is Double -> return v.toLong()
+                        is Float -> return v.toLong()
+                        is Int -> return v.toLong()
+                        is Long -> return v
+                        is String -> return v.toLongOrNull()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+        return null
+    }
+
+    fun getUserNameFromToken(): String? {
+        val token = getToken() ?: return null
+        try {
+            val parts = token.split('.')
+            if (parts.size < 2) return null
+            var payload = parts[1]
+            payload = payload.replace('-', '+').replace('_', '/')
+            val pad = payload.length % 4
+            if (pad > 0) payload += "=".repeat(4 - pad)
+            val decoded = String(android.util.Base64.decode(payload, android.util.Base64.DEFAULT))
+            val map: Map<String, Any> = gson.fromJson(decoded, Map::class.java) as Map<String, Any>
+            val possible = listOf("nombre", "name", "email")
+            for (k in possible) {
+                val v = map[k]
+                if (v is String) return v
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+        return null
+    }
+
+    /**
      * Verificar si está logueado
      */
     fun isLoggedIn(): Boolean {

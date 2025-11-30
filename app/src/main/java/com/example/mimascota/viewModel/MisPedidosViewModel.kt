@@ -6,13 +6,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimascota.model.OrdenHistorial
 import com.example.mimascota.repository.OrdenRepository
+import com.example.mimascota.repository.AuthRepository
 import kotlinx.coroutines.launch
 
 /**
  * MisPedidosViewModel: ViewModel para la pantalla de mis pedidos
  */
+@Suppress("unused")
 class MisPedidosViewModel(private val tokenManager: com.example.mimascota.util.TokenManager) : ViewModel() {
     private val repository = OrdenRepository()
+    private val authRepository = AuthRepository()
 
     // LiveData para órdenes
     private val _misOrdenes = MutableLiveData<List<OrdenHistorial>>()
@@ -44,8 +47,8 @@ class MisPedidosViewModel(private val tokenManager: com.example.mimascota.util.T
                     _misOrdenes.value = ordenes.sortedByDescending { it.fecha }
                     _isLoading.value = false
                 },
-                onFailure = { error ->
-                    _error.value = error.message ?: "Error desconocido"
+                onFailure = { err ->
+                    _error.value = err.message ?: "Error desconocido"
                     _misOrdenes.value = emptyList()
                     _isLoading.value = false
                 }
@@ -66,8 +69,8 @@ class MisPedidosViewModel(private val tokenManager: com.example.mimascota.util.T
                     _ordenSeleccionada.value = orden
                     _isLoading.value = false
                 },
-                onFailure = { error ->
-                    _error.value = error.message ?: "Error desconocido"
+                onFailure = { err ->
+                    _error.value = err.message ?: "Error desconocido"
                     _isLoading.value = false
                 }
             )
@@ -86,12 +89,12 @@ class MisPedidosViewModel(private val tokenManager: com.example.mimascota.util.T
                 onSuccess = {
                     _error.value = "Orden cancelada exitosamente"
                     _isLoading.value = false
-                    // Recargar la lista
+                    // Recargar la lista si conocemos el usuario
                     val usuarioId = (_misOrdenes.value?.firstOrNull()?.usuarioId) ?: return@launch
                     cargarOrdenes(usuarioId)
                 },
-                onFailure = { error ->
-                    _error.value = error.message ?: "Error al cancelar la orden"
+                onFailure = { err ->
+                    _error.value = err.message ?: "Error al cancelar la orden"
                     _isLoading.value = false
                 }
             )
@@ -106,15 +109,45 @@ class MisPedidosViewModel(private val tokenManager: com.example.mimascota.util.T
     }
 
     /**
-     * Cargar órdenes del usuario usando el ID del token
+     * Cargar órdenes del usuario usando el ID del token. Si no hay userId en TokenManager,
+     * intentamos recuperar el perfil desde el backend y usar el id que devuelva.
      */
     fun cargarMisOrdenes() {
-        val usuarioId = tokenManager.getUserId()
-        if (usuarioId > 0) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+
+            var usuarioId = tokenManager.getUserId()
+            if (usuarioId <= 0) {
+                // Primero intentar extraer el userId del token JWT (fallback sin llamar al backend)
+                val idFromToken = tokenManager.getUserIdFromToken()
+                if (idFromToken != null && idFromToken > 0) {
+                    usuarioId = idFromToken
+                } else {
+                    // Intentar recuperar perfil desde el backend
+                    try {
+                        val perfilResult = authRepository.obtenerUsuario()
+                        if (perfilResult.isSuccess) {
+                            val usuario = perfilResult.getOrNull()!!
+                            tokenManager.saveUsuario(usuario)
+                            usuarioId = usuario.usuarioId.toLong()
+                        } else {
+                            _error.value = "Usuario no autenticado"
+                            _misOrdenes.value = emptyList()
+                            _isLoading.value = false
+                            return@launch
+                        }
+                    } catch (e: Exception) {
+                        _error.value = "No se pudo recuperar perfil: ${e.message}"
+                        _misOrdenes.value = emptyList()
+                        _isLoading.value = false
+                        return@launch
+                    }
+                }
+            }
+
+            // Si llegamos aquí, tenemos un usuarioId válido
             cargarOrdenes(usuarioId)
-        } else {
-            _error.value = "Usuario no autenticado"
-            _misOrdenes.value = emptyList()
         }
     }
 }

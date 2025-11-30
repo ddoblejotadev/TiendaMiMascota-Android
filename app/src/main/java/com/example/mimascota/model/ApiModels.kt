@@ -8,6 +8,11 @@ import com.google.gson.annotations.SerializedName
 data class LoginResponse(
     val token: String,
     val usuario: Usuario? = null,
+    // Algunos backends devuelven usuario_id y nombre directamente en la respuesta de login
+    @SerializedName("usuario_id")
+    val usuarioId: Int? = null,
+    @SerializedName("nombre")
+    val nombre: String? = null,
     val mensaje: String? = null
 )
 

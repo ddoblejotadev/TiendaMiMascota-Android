@@ -23,6 +23,17 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- Debug info (visible solo en DEBUG) -->
+    <TextView
+        android:id="@+id/tvDebugInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:visibility="gone"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
     <!-- Mensaje sin órdenes -->
     <LinearLayout
         android:id="@+id/tvSinOrdenes"

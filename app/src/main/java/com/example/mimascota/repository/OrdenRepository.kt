@@ -21,12 +21,20 @@ class OrdenRepository {
     suspend fun obtenerMisOrdenes(usuarioId: Long): Result<List<OrdenHistorial>> {
         return withContext(Dispatchers.IO) {
             try {
+                android.util.Log.d("OrdenRepository", "Solicitando órdenes para usuarioId=$usuarioId")
                 val response = apiService.obtenerOrdenesUsuario(usuarioId)
-
-                if (response.isSuccessful && response.body() != null) {
-                    Result.success(response.body()!!)
+                if (response.isSuccessful) {
+                    val body = response.body() ?: emptyList()
+                    android.util.Log.d("OrdenRepository", "Órdenes recibidas: count=${body.size}")
+                    Result.success(body)
+                } else if (response.code() == 404) {
+                    // Backend puede devolver 404 si no hay órdenes; tratar como lista vacía
+                    android.util.Log.i("OrdenRepository", "No se encontraron órdenes para userId=$usuarioId (404). Retornando lista vacía.")
+                    Result.success(emptyList())
                 } else {
-                    Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                    val bodyStr = try { response.errorBody()?.string() } catch (e: Exception) { null }
+                    android.util.Log.w("OrdenRepository", "Error al obtener órdenes userId=$usuarioId code=${response.code()} body=$bodyStr")
+                    Result.failure(Exception("Error ${response.code()}: ${response.message()} Body=$bodyStr"))
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Error de conexión: ${e.message}"))

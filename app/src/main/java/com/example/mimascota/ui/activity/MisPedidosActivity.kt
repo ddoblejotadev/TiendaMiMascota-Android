@@ -4,13 +4,19 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mimascota.databinding.ActivityMisPedidosBinding
 import com.example.mimascota.ui.adapter.OrdenesAdapter
 import com.example.mimascota.util.TokenManager
 import com.example.mimascota.viewModel.MisPedidosViewModel
 import com.example.mimascota.viewModel.MisPedidosViewModelFactory
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 
 /**
  * MisPedidosActivity: Pantalla para ver el historial de órdenes del usuario
@@ -26,6 +32,13 @@ class MisPedidosActivity : AppCompatActivity() {
         binding = ActivityMisPedidosBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Ajustar padding superior para el toolbar (botón atrás accesible)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v, insets ->
+            val sysBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = sysBarInsets.top)
+            insets
+        }
+
         // Usar factory por compatibilidad pero sin tokenManager obligatorio
         val factory = MisPedidosViewModelFactory(TokenManager)
         viewModel = ViewModelProvider(this, factory)[MisPedidosViewModel::class.java]
@@ -40,7 +53,43 @@ class MisPedidosActivity : AppCompatActivity() {
         observeData()
 
         // Cargar órdenes
+        // Intentar cargar órdenes; si TokenManager no tiene userId, ViewModel intentará recuperar perfil.
         viewModel.cargarMisOrdenes()
+
+        // Añadir acción para sincronizar perfil desde la UI si está vacío
+        binding.tvSinOrdenes.setOnClickListener {
+            // al tocar el área vacía forzamos recarga
+            viewModel.cargarMisOrdenes()
+        }
+
+        // Observadores adicionales
+        viewModel.error.observe(this) { err ->
+            err?.let {
+                if (it.contains("Usuario no autenticado") || it.contains("No se pudo recuperar perfil")) {
+                    // Mostrar debug info cuando hay problemas de autenticación
+                    val info = "userId=${TokenManager.getUserId()} token=${TokenManager.getToken()?.take(30)}"
+                    binding.tvDebugInfo.visibility = View.VISIBLE
+                    binding.tvDebugInfo.text = info
+                    Snackbar.make(binding.root, it, Snackbar.LENGTH_INDEFINITE)
+                        .setAction("Sincronizar perfil") {
+                            lifecycleScope.launch {
+                                viewModel.cargarMisOrdenes()
+                            }
+                        }.show()
+                } else {
+                    Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+                }
+                viewModel.limpiarError()
+            }
+        }
+        // En modo DEBUG mostrar siempre información útil para diagnóstico
+        try {
+            val debugInfo = "[DEBUG] userId=${TokenManager.getUserId()} token=${TokenManager.getToken()?.take(30)}"
+            binding.tvDebugInfo.visibility = View.VISIBLE
+            binding.tvDebugInfo.text = debugInfo
+        } catch (e: Exception) {
+            // ignorar
+        }
     }
 
     /**
@@ -104,5 +153,11 @@ class MisPedidosActivity : AppCompatActivity() {
                 viewModel.limpiarError()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refrescar órdenes cada vez que la actividad vuelve a primer plano
+        viewModel.cargarMisOrdenes()
     }
 }

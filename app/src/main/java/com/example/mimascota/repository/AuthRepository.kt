@@ -40,47 +40,60 @@ class AuthRepository {
                     // Usuario puede venir nulo en algunas respuestas; manejar defensivamente
                     if (loginResponse.usuario != null) {
                         try {
-                            loginResponse.usuario?.let { TokenManager.saveUsuario(it) }
+                            TokenManager.saveUsuario(loginResponse.usuario)
                         } catch (e: Exception) {
                             android.util.Log.w("AuthRepository", "No se pudo guardar usuario localmente: ${e.message}")
                         }
-                    } else {
-                        // Intentar recuperar el perfil actual si el backend ofrece ese endpoint
+                    } else if (loginResponse.usuarioId != null && loginResponse.usuarioId > 0) {
+                        // Algunos backends devuelven campos sueltos en la respuesta de login
                         try {
-                            val perfilResp = apiService.obtenerUsuario()
-                            if (perfilResp.isSuccessful && perfilResp.body() != null) {
-                                TokenManager.saveUsuario(perfilResp.body()!!)
-                            } else {
-                                android.util.Log.w("AuthRepository", "Usuario no incluido en LoginResponse y obtenerUsuario devolvió ${perfilResp.code()}")
-                                // Crear usuario provisional a partir del email del request para mejorar UX
-                                try {
-                                    val fallbackNombre = request.email.substringBefore('@').replace('.', ' ').replace('_', ' ').split(' ').joinToString(" ") { it.replaceFirstChar { c -> c.uppercaseChar() } }
-                                    val provisional = Usuario(
-                                        usuarioId = -1,
-                                        email = request.email,
-                                        nombre = fallbackNombre
-                                    )
-                                    TokenManager.saveUsuario(provisional)
-                                } catch (ex: Exception) {
-                                    android.util.Log.w("AuthRepository", "No se pudo crear usuario provisional: ${ex.message}")
-                                }
-                            }
+                            val usuario = Usuario(
+                                usuarioId = loginResponse.usuarioId,
+                                email = email,
+                                nombre = loginResponse.nombre ?: email.substringBefore('@')
+                            )
+                            TokenManager.saveUsuario(usuario)
+                            android.util.Log.d("AuthRepository", "Usuario creado desde LoginResponse usuarioId=${loginResponse.usuarioId}")
                         } catch (e: Exception) {
-                            android.util.Log.w("AuthRepository", "Error al obtener perfil tras login: ${e.message}")
-                            // Crear usuario provisional a partir del email del request para mejorar UX
-                            try {
-                                val fallbackNombre = request.email.substringBefore('@').replace('.', ' ').replace('_', ' ').split(' ').joinToString(" ") { it.replaceFirstChar { c -> c.uppercaseChar() } }
-                                val provisional = Usuario(
-                                    usuarioId = -1,
-                                    email = request.email,
-                                    nombre = fallbackNombre
-                                )
-                                TokenManager.saveUsuario(provisional)
-                            } catch (ex: Exception) {
-                                android.util.Log.w("AuthRepository", "No se pudo crear usuario provisional: ${ex.message}")
-                            }
+                            android.util.Log.w("AuthRepository", "No se pudo crear usuario desde LoginResponse: ${e.message}")
                         }
-                    }
+                    } else {
+                         // Intentar recuperar el perfil actual si el backend ofrece ese endpoint
+                         try {
+                             val perfilResp = apiService.obtenerUsuario()
+                             if (perfilResp.isSuccessful && perfilResp.body() != null) {
+                                 TokenManager.saveUsuario(perfilResp.body()!!)
+                             } else {
+                                 android.util.Log.w("AuthRepository", "Usuario no incluido en LoginResponse y obtenerUsuario devolvió ${perfilResp.code()}")
+                                 // Fallback: intentar verificar token para obtener usuario
+                                 try {
+                                     val vResp = apiService.verificarToken()
+                                     if (vResp.isSuccessful && vResp.body() != null) {
+                                         TokenManager.saveUsuario(vResp.body()!!)
+                                         android.util.Log.d("AuthRepository", "Perfil recuperado via verificarToken()")
+                                     } else {
+                                         android.util.Log.w("AuthRepository", "verificarToken devolvió ${vResp.code()}")
+                                     }
+                                 } catch (ex: Exception) {
+                                     android.util.Log.w("AuthRepository", "Error fallback verificarToken: ${ex.message}")
+                                 }
+                             }
+                         } catch (e: Exception) {
+                             android.util.Log.w("AuthRepository", "Error al obtener perfil tras login: ${e.message}")
+                             // Intentar fallback verificarToken
+                             try {
+                                 val vResp = apiService.verificarToken()
+                                 if (vResp.isSuccessful && vResp.body() != null) {
+                                     TokenManager.saveUsuario(vResp.body()!!)
+                                     android.util.Log.d("AuthRepository", "Perfil recuperado via verificarToken() (catch)")
+                                 } else {
+                                     android.util.Log.w("AuthRepository", "verificarToken devolvió ${vResp.code()} (catch)")
+                                 }
+                             } catch (_: Exception) {
+                                 // ignorar
+                             }
+                         }
+                     }
 
                     Result.success(loginResponse)
                 } else {
@@ -182,7 +195,19 @@ class AuthRepository {
                     TokenManager.saveUsuario(usuario)
                     Result.success(usuario)
                 } else {
-                    Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                    // Fallback: intentar verificar token para obtener usuario
+                    try {
+                        val vResp = apiService.verificarToken()
+                        if (vResp.isSuccessful && vResp.body() != null) {
+                            TokenManager.saveUsuario(vResp.body()!!)
+                            android.util.Log.d("AuthRepository", "Perfil recuperado via verificarToken()")
+                            Result.success(vResp.body()!!)
+                        } else {
+                            Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                        }
+                    } catch (ex: Exception) {
+                        Result.failure(Exception("Error de conexión: error desconocido"))
+                    }
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Error de conexión: ${e.message}"))
