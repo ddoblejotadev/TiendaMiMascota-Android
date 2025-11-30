@@ -4,9 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -32,13 +29,6 @@ class MisPedidosActivity : AppCompatActivity() {
         binding = ActivityMisPedidosBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Ajustar padding superior para el toolbar (botón atrás accesible)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v, insets ->
-            val sysBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-            v.updatePadding(top = sysBarInsets.top)
-            insets
-        }
-
         // Usar factory por compatibilidad pero sin tokenManager obligatorio
         val factory = MisPedidosViewModelFactory(TokenManager)
         viewModel = ViewModelProvider(this, factory)[MisPedidosViewModel::class.java]
@@ -53,12 +43,10 @@ class MisPedidosActivity : AppCompatActivity() {
         observeData()
 
         // Cargar órdenes
-        // Intentar cargar órdenes; si TokenManager no tiene userId, ViewModel intentará recuperar perfil.
         viewModel.cargarMisOrdenes()
 
         // Añadir acción para sincronizar perfil desde la UI si está vacío
         binding.tvSinOrdenes.setOnClickListener {
-            // al tocar el área vacía forzamos recarga
             viewModel.cargarMisOrdenes()
         }
 
@@ -85,9 +73,7 @@ class MisPedidosActivity : AppCompatActivity() {
      */
     private fun setupRecyclerView() {
         adapter = OrdenesAdapter { orden ->
-            // Click en orden - puedes navegar a detalle o mostrar más info
             Toast.makeText(this, "Orden #${orden.numeroOrden}", Toast.LENGTH_SHORT).show()
-            // TODO: Navegar a pantalla de detalle de orden
         }
 
         binding.recyclerViewOrdenes.apply {
@@ -101,11 +87,7 @@ class MisPedidosActivity : AppCompatActivity() {
      */
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
-        supportActionBar?.apply {
-            setDisplayHomeAsUpEnabled(true)
-            setDisplayShowHomeEnabled(true)
-            title = "Mis Pedidos"
-        }
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         binding.toolbar.setNavigationOnClickListener {
             finish()
@@ -116,7 +98,6 @@ class MisPedidosActivity : AppCompatActivity() {
      * Observar datos del ViewModel
      */
     private fun observeData() {
-        // Observar órdenes
         viewModel.misOrdenes.observe(this) { ordenes ->
             if (ordenes.isNullOrEmpty()) {
                 binding.recyclerViewOrdenes.visibility = View.GONE
@@ -128,16 +109,13 @@ class MisPedidosActivity : AppCompatActivity() {
             }
         }
 
-        // Observar loading
         viewModel.isLoading.observe(this) { isLoading ->
             binding.progressBar.visibility = if (isLoading == true) View.VISIBLE else View.GONE
         }
 
-        // Observar errores
         viewModel.error.observe(this) { error ->
             error?.let {
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
-                // Limpiar error
                 viewModel.limpiarError()
             }
         }
@@ -145,7 +123,6 @@ class MisPedidosActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Refrescar órdenes cada vez que la actividad vuelve a primer plano
         viewModel.cargarMisOrdenes()
     }
 }
