@@ -24,6 +24,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import com.example.mimascota.ui.activity.CheckoutActivity
+import com.google.gson.Gson
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,9 +58,20 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                 ) {
                     Text(String.format(Locale.getDefault(), "Total: $%.2f", total), style = MaterialTheme.typography.titleLarge)
                     Button(onClick = {
-                        // Iniciar CheckoutActivity
-                        val intent = Intent(context, CheckoutActivity::class.java)
-                        context.startActivity(intent)
+                        // Iniciar CheckoutActivity con extras del carrito (JSON) y total
+                        try {
+                            val gson = Gson()
+                            val itemsJson = gson.toJson(items)
+                            val intent = Intent(context, CheckoutActivity::class.java).apply {
+                                putExtra("cart_items_json", itemsJson)
+                                putExtra("cart_total", total)
+                            }
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            // Si falla la serialización, abrir igualmente CheckoutActivity sin extras
+                            val intent = Intent(context, CheckoutActivity::class.java)
+                            context.startActivity(intent)
+                        }
                     }) {
                         Text("Comprar")
                     }
