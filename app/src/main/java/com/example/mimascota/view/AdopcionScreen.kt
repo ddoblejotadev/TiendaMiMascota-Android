@@ -18,32 +18,15 @@ import com.example.mimascota.viewModel.HuachitosViewModel
 
 // --- Datos para los filtros ---
 data class Comuna(val id: Int, val nombre: String)
-val comunas = listOf(
-    // Región Metropolitana
+val comunasMetropolitanas = listOf(
     Comuna(131, "Santiago"), Comuna(127, "Puente Alto"), Comuna(118, "Maipú"), Comuna(111, "La Florida"),
     Comuna(121, "Las Condes"), Comuna(141, "Providencia"), Comuna(151, "San Bernardo"), Comuna(161, "Peñalolén"),
-    // Valparaíso
-    Comuna(51, "Valparaíso"), Comuna(52, "Viña del Mar"), Comuna(53, "Quilpué"),
-    // Biobío
-    Comuna(81, "Concepción"), Comuna(82, "Talcahuano"), Comuna(83, "San Pedro de la Paz"),
-    // Antofagasta
-    Comuna(21, "Antofagasta"), Comuna(22, "Calama"),
-    // La Araucanía
-    Comuna(91, "Temuco"),
-    // O'Higgins
-    Comuna(101, "Rancagua"),
-    // Maule
-    Comuna(71, "Talca"),
-    // Arica y Parinacota
-    Comuna(1, "Arica"),
-    // Tarapacá
-    Comuna(11, "Iquique"),
-    // Atacama
-    Comuna(31, "Copiapó"),
-    // Coquimbo
-    Comuna(41, "La Serena"),
-    // Los Ríos
-    Comuna(10, "Valdivia")
+    Comuna(106, "La Reina"), Comuna(126, "Ñuñoa"), Comuna(162, "Macul"), Comuna(105, "La Granja"),
+    Comuna(109, "Lo Barnechea"), Comuna(110, "Vitacura"), Comuna(103, "Estación Central"), Comuna(104, "Independencia"),
+    Comuna(116, "Pudahuel"), Comuna(117, "Quilicura"), Comuna(120, "Recoleta"), Comuna(122, "Renca"),
+    Comuna(125, "San Miguel"), Comuna(130, "Lo Espejo"), Comuna(132, "San Joaquín"), Comuna(134, "La Cisterna"),
+    Comuna(135, "El Bosque"), Comuna(136, "Pedro Aguirre Cerda"), Comuna(138, "Lo Prado"), Comuna(139, "Cerro Navia"),
+    Comuna(140, "Conchalí"), Comuna(142, "Huechuraba"), Comuna(144, "Quinta Normal"), Comuna(145, "San Ramón")
 ).sortedBy { it.nombre }
 
 val tipos = listOf("Perro", "Gato")
@@ -56,11 +39,10 @@ fun AdopcionScreen(navController: NavController, huachitosViewModel: HuachitosVi
     val isLoading by huachitosViewModel.isLoading.collectAsState()
     val error by huachitosViewModel.error.collectAsState()
 
-    var selectedComuna by remember { mutableStateOf(comunas.first()) }
+    var selectedComuna by remember { mutableStateOf(comunasMetropolitanas.first()) }
     var selectedTipo by remember { mutableStateOf<String?>(null) }
     var selectedEstado by remember { mutableStateOf<String?>(null) }
 
-    // Cargar animales al iniciar con la comuna por defecto
     LaunchedEffect(Unit) {
         huachitosViewModel.cargarAnimales(selectedComuna.id)
     }
@@ -71,8 +53,8 @@ fun AdopcionScreen(navController: NavController, huachitosViewModel: HuachitosVi
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
-            FilterDropdown(label = "Comuna", options = comunas.map { it.nombre }, selectedOption = selectedComuna.nombre) { newSelection ->
-                selectedComuna = comunas.find { it.nombre == newSelection } ?: comunas.first()
+            FilterDropdown(label = "Comuna", options = comunasMetropolitanas.map { it.nombre }, selectedOption = selectedComuna.nombre) { newSelection ->
+                selectedComuna = comunasMetropolitanas.find { it.nombre == newSelection } ?: comunasMetropolitanas.first()
             }
             Spacer(modifier = Modifier.height(8.dp))
             FilterDropdown(label = "Tipo", options = tipos, selectedOption = selectedTipo, isOptional = true) { selectedTipo = it }
@@ -150,7 +132,7 @@ fun AdopcionAnimalCard(animal: Animal, onClick: (Int) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick(animal.id) }, // Navegar al hacer clic
+            .clickable { onClick(animal.id) },
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column {
