@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.mimascota.client.RetrofitClient
 import com.example.mimascota.databinding.ActivityMisPedidosBinding
 import com.example.mimascota.ui.adapter.OrdenesAdapter
 import com.example.mimascota.viewModel.MisPedidosViewModel
@@ -26,9 +25,8 @@ class MisPedidosActivity : AppCompatActivity() {
         binding = ActivityMisPedidosBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Corregido: Usar la factory para instanciar el ViewModel
-        val tokenManager = RetrofitClient.getTokenManager()
-        val factory = MisPedidosViewModelFactory(tokenManager)
+        // Usar factory por compatibilidad pero sin tokenManager obligatorio
+        val factory = MisPedidosViewModelFactory()
         viewModel = ViewModelProvider(this, factory)[MisPedidosViewModel::class.java]
 
         // Configurar RecyclerView
@@ -80,9 +78,9 @@ class MisPedidosActivity : AppCompatActivity() {
      * Observar datos del ViewModel
      */
     private fun observeData() {
-        // Corregido: observar 'misOrdenes'
+        // Observar órdenes
         viewModel.misOrdenes.observe(this) { ordenes ->
-            if (ordenes.isEmpty()) {
+            if (ordenes.isNullOrEmpty()) {
                 binding.recyclerViewOrdenes.visibility = View.GONE
                 binding.tvSinOrdenes.visibility = View.VISIBLE
             } else {
@@ -94,14 +92,14 @@ class MisPedidosActivity : AppCompatActivity() {
 
         // Observar loading
         viewModel.isLoading.observe(this) { isLoading ->
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.progressBar.visibility = if (isLoading == true) View.VISIBLE else View.GONE
         }
 
         // Observar errores
         viewModel.error.observe(this) { error ->
             error?.let {
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
-                // Corregido: llamar a 'limpiarError()'
+                // Limpiar error
                 viewModel.limpiarError()
             }
         }
