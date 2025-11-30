@@ -18,18 +18,17 @@ import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.mimascota.R
 import com.example.mimascota.ui.activity.ProfileEditActivity
 import com.example.mimascota.viewModel.AuthViewModel
@@ -38,7 +37,7 @@ import com.example.mimascota.viewModel.AuthViewModel
 @Composable
 fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthViewModel) {
     val esAdmin = authViewModel.esAdmin() || (name?.equals("admin", ignoreCase = true) == true)
-    val fotoPerfilUrl by authViewModel.fotoPerfil.collectAsState()
+    val fotoPerfilBitmap by authViewModel.fotoPerfil
     val displayName by authViewModel.usuarioActual
 
     LaunchedEffect(Unit) {
@@ -78,21 +77,34 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
             verticalArrangement = Arrangement.Center
         ) {
 
-            AsyncImage(
-                model = fotoPerfilUrl,
-                contentDescription = "Foto de perfil",
-                placeholder = painterResource(id = R.drawable.logo1),
-                error = painterResource(id = R.drawable.logo1),
-                contentScale = ContentScale.Crop,
+            Box(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable { 
+                    .clickable {
                         val intent = Intent(context, ProfileEditActivity::class.java)
                         profileLauncher.launch(intent)
-                    }
-            )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                if (fotoPerfilBitmap != null) {
+                    Image(
+                        bitmap = fotoPerfilBitmap!!.asImageBitmap(),
+                        contentDescription = "Foto de perfil",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    val iniciales = displayName?.take(2)?.uppercase() ?: "?"
+                    Text(
+                        text = iniciales,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -108,7 +120,7 @@ fun HomeScreen(navController: NavController, name: String?, authViewModel: AuthV
                 text = "¡Bienvenido, ${displayName ?: "Invitado"}! 👋",
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
