@@ -95,8 +95,6 @@ interface ApiService {
         @Path("id") ordenId: Long
     ): Response<OrdenHistorial>
 
-    // Algunos backends usan la ruta plural `ordenes/{id}` para obtener órdenes por usuario.
-    // Añadimos una alternativa para maximizar compatibilidad.
     @GET("ordenes/{id}")
     suspend fun obtenerOrdenesUsuarioAlt(
         @Path("id") usuarioId: Long
@@ -104,16 +102,16 @@ interface ApiService {
 
     // ============= ADMIN / USUARIOS (opcional, solo si backend soporta) =============
 
-    @GET("admin/usuarios")
+    @GET("usuarios")
     suspend fun getAllUsers(): Response<List<Usuario>>
 
-    @GET("admin/usuarios/{id}")
+    @GET("usuarios/{id}")
     suspend fun getUserById(@Path("id") id: Long): Response<Usuario>
 
-    @PUT("admin/usuarios/{id}")
+    @PUT("usuarios/{id}")
     suspend fun updateUser(@Path("id") id: Long, @Body usuario: Usuario): Response<Usuario>
 
-    @DELETE("admin/usuarios/{id}")
+    @DELETE("usuarios/{id}")
     suspend fun deleteUser(@Path("id") id: Long): Response<Unit>
 
     // ============= ADMIN ÓRDENES (opcional) =============
@@ -121,7 +119,7 @@ interface ApiService {
     @GET("ordenes")
     suspend fun getAllOrders(): Response<List<OrdenHistorial>>
 
-    @PUT("admin/ordenes/{id}")
+    @PUT("ordenes/{id}")
     suspend fun updateOrderStatus(@Path("id") id: Long, @Body body: Map<String, String>): Response<OrdenHistorial>
 
 }

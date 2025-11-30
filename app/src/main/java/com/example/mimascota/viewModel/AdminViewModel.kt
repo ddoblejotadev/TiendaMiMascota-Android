@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mimascota.model.OrdenHistorial
 import com.example.mimascota.model.Usuario
+import com.example.mimascota.model.UserWithOrders
 import com.example.mimascota.repository.AdminRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +23,9 @@ class AdminViewModel : ViewModel() {
     private val _orders = MutableStateFlow<List<OrdenHistorial>>(emptyList())
     val orders: StateFlow<List<OrdenHistorial>> = _orders.asStateFlow()
 
+    private val _usersWithOrders = MutableStateFlow<List<UserWithOrders>>(emptyList())
+    val usersWithOrders: StateFlow<List<UserWithOrders>> = _usersWithOrders.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -33,8 +37,32 @@ class AdminViewModel : ViewModel() {
     }
 
     fun refreshAll() {
-        fetchUsers()
-        fetchOrders()
+        viewModelScope.launch {
+            _isLoading.value = true
+            val usersResult = repo.getAllUsers()
+            val ordersResult = repo.getAllOrders()
+
+            if (usersResult is AdminRepository.AdminResult.Success && ordersResult is AdminRepository.AdminResult.Success) {
+                val users = usersResult.data
+                val orders = ordersResult.data
+                _users.value = users
+                _orders.value = orders
+
+                // Agrupar pedidos por usuario
+                val ordersByUser = orders.groupBy { it.usuarioId }
+                val combinedData = users.map {
+                    UserWithOrders(it, ordersByUser[it.usuarioId.toLong()] ?: emptyList())
+                }
+                _usersWithOrders.value = combinedData
+                _error.value = null
+            } else {
+                // Manejar errores
+                val errorMsg = (usersResult as? AdminRepository.AdminResult.Error)?.message ?: (ordersResult as? AdminRepository.AdminResult.Error)?.message ?: "Error desconocido"
+                _error.value = errorMsg
+                Log.e(TAG, "Error refreshing data: $errorMsg")
+            }
+            _isLoading.value = false
+        }
     }
 
     fun fetchUsers() {
@@ -77,7 +105,7 @@ class AdminViewModel : ViewModel() {
             when (val result = repo.deleteUser(userId)) {
                 is AdminRepository.AdminResult.Success -> {
                     onComplete(true, null)
-                    fetchUsers()
+                    refreshAll()
                 }
                 is AdminRepository.AdminResult.Error -> {
                     onComplete(false, result.message)
@@ -93,7 +121,7 @@ class AdminViewModel : ViewModel() {
             when (val result = repo.updateOrderStatus(orderId, status)) {
                 is AdminRepository.AdminResult.Success -> {
                     onComplete(true, null)
-                    fetchOrders()
+                    refreshAll()
                 }
                 is AdminRepository.AdminResult.Error -> {
                     onComplete(false, result.message)
@@ -104,4 +132,3 @@ class AdminViewModel : ViewModel() {
     }
 
 }
-
