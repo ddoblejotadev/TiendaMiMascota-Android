@@ -60,7 +60,7 @@ class OrdenRepository {
                     android.util.Log.i("OrdenRepository", "Endpoint específico no disponible (404). Intentando fallback /admin/ordenes.")
                     val adminResp = apiService.getAllOrders()
                     if (adminResp.isSuccessful) {
-                        val all = adminResp.body() ?: emptyList()
+                        val all = adminResp.body()?.ordenes ?: emptyList()
                         val filtered = all.filter { it.usuarioId == usuarioId }
                         android.util.Log.i("OrdenRepository", "Fallback: órdenes totales=${all.size}, filtradas=${filtered.size}")
                         return@withContext Result.success(filtered)

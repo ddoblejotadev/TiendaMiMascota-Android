@@ -24,9 +24,9 @@ class AdminRepository {
             try {
                 Log.d(TAG, "Fetching all users...")
                 val response = apiService.getAllUsers()
-                if (response.isSuccessful && response.body() != null) {
+                if (response.isSuccessful) {
                     Log.d(TAG, "Users fetched successfully.")
-                    AdminResult.Success(response.body()!!)
+                    AdminResult.Success(response.body() ?: emptyList())
                 } else {
                     Log.e(TAG, "Error fetching users: ${response.code()} - ${response.message()}")
                     AdminResult.Error("Error ${response.code()}: ${response.message()}")
@@ -45,7 +45,7 @@ class AdminRepository {
                 val response = apiService.getAllOrders()
                 if (response.isSuccessful && response.body() != null) {
                     Log.d(TAG, "Orders fetched successfully.")
-                    AdminResult.Success(response.body()!!)
+                    AdminResult.Success(response.body()!!.ordenes) // Corregido: acceder a la lista dentro del objeto de respuesta
                 } else {
                     Log.e(TAG, "Error fetching orders: ${response.code()} - ${response.message()}")
                     AdminResult.Error("Error ${response.code()}: ${response.message()}")

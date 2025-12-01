@@ -3,9 +3,10 @@ package com.example.mimascota.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mimascota.client.RetrofitClient
-import com.example.mimascota.model.OrdenHistorial
-import com.example.mimascota.model.Usuario
+import com.example.mimascota.model.Producto
+import com.example.mimascota.model.UserWithOrders
+import com.example.mimascota.repository.AdminRepository
+import com.example.mimascota.repository.ProductoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,79 +14,127 @@ import kotlinx.coroutines.launch
 
 class AdminViewModel : ViewModel() {
 
-    private val _users = MutableStateFlow<List<Usuario>>(emptyList())
-    val users: StateFlow<List<Usuario>> = _users.asStateFlow()
+    private val adminRepository = AdminRepository()
+    private val productoRepository = ProductoRepository() // Inyectar repositorio de productos
 
-    private val _orders = MutableStateFlow<List<OrdenHistorial>>(emptyList())
-    val orders: StateFlow<List<OrdenHistorial>> = _orders.asStateFlow()
+    // StateFlow para usuarios y órdenes
+    private val _usersWithOrders = MutableStateFlow<List<UserWithOrders>>(emptyList())
+    val usersWithOrders: StateFlow<List<UserWithOrders>> = _usersWithOrders.asStateFlow()
 
-    private val apiService = RetrofitClient.apiService
+    // StateFlow para productos
+    private val _productos = MutableStateFlow<List<Producto>>(emptyList())
+    val productos: StateFlow<List<Producto>> = _productos.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     init {
-        getAllUsers()
-        getAllOrders()
+        loadAdminData()
     }
 
-    fun getAllUsers() {
+    fun loadAdminData() {
         viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null // Limpiar errores previos
             try {
-                val response = apiService.getAllUsers()
-                if (response.isSuccessful) {
-                    _users.value = response.body() ?: emptyList()
-                    Log.d("AdminViewModel", "Usuarios cargados: ${_users.value.size}")
-                } else {
-                    Log.e("AdminViewModel", "Error al cargar usuarios: ${response.errorBody()?.string()}")
+                // Cargar usuarios y órdenes
+                val usersResult = adminRepository.getAllUsers()
+                val ordersResult = adminRepository.getAllOrders()
+
+                val users = when (usersResult) {
+                    is AdminRepository.AdminResult.Success -> usersResult.data
+                    is AdminRepository.AdminResult.Error -> {
+                        _error.value = usersResult.message
+                        Log.e("AdminViewModel", "Error al cargar usuarios: ${usersResult.message}")
+                        emptyList()
+                    }
                 }
+
+                val orders = when (ordersResult) {
+                    is AdminRepository.AdminResult.Success -> ordersResult.data
+                    is AdminRepository.AdminResult.Error -> {
+                        _error.value = ordersResult.message
+                        Log.e("AdminViewModel", "Error al cargar órdenes: ${ordersResult.message}")
+                        emptyList()
+                    }
+                }
+
+                val groupedData = users.map { user ->
+                    val userOrders = orders.filter { it.usuarioId == user.usuarioId.toLong() }
+                    UserWithOrders(user, userOrders)
+                }
+                _usersWithOrders.value = groupedData
+                Log.d("AdminViewModel", "Datos de admin cargados. Usuarios: ${users.size}, Órdenes: ${orders.size}")
+
+                // Cargar productos
+                loadProductos()
+
             } catch (e: Exception) {
-                Log.e("AdminViewModel", "Excepción al cargar usuarios: ${e.message}")
+                _error.value = "Excepción: ${e.message}"
+                Log.e("AdminViewModel", "Excepción al cargar datos de admin", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
-    fun deleteUser(userId: Int) {
+    // ========== PRODUCTOS CRUD ==========
+
+    private fun loadProductos() {
         viewModelScope.launch {
-            try {
-                val response = apiService.deleteUser(userId.toLong())
-                if (response.isSuccessful) {
-                    Log.d("AdminViewModel", "Usuario eliminado con éxito. Refrescando lista.")
-                    getAllUsers() // Refrescar la lista de usuarios
-                } else {
-                    Log.e("AdminViewModel", "Error al eliminar usuario: ${response.errorBody()?.string()}")
-                }
-            } catch (e: Exception) {
-                Log.e("AdminViewModel", "Excepción al eliminar usuario: ${e.message}")
+            when (val result = productoRepository.getAllProductos()) {
+                is ProductoRepository.ProductoResult.Success -> _productos.value = result.data
+                is ProductoRepository.ProductoResult.Error -> _error.value = result.message
+                else -> {}
             }
         }
     }
 
-    fun getAllOrders() {
+    fun createProducto(producto: Producto) {
         viewModelScope.launch {
-            try {
-                val response = apiService.getAllOrders()
-                if (response.isSuccessful) {
-                    _orders.value = response.body() ?: emptyList()
-                    Log.d("AdminViewModel", "Órdenes cargadas: ${_orders.value.size}")
-                } else {
-                    Log.e("AdminViewModel", "Error al cargar órdenes: ${response.errorBody()?.string()}")
-                }
-            } catch (e: Exception) {
-                Log.e("AdminViewModel", "Excepción al cargar órdenes: ${e.message}")
+            when (val result = productoRepository.createProducto(producto)) {
+                is ProductoRepository.ProductoResult.Success -> loadProductos() // Recargar lista
+                is ProductoRepository.ProductoResult.Error -> _error.value = result.message
+                else -> {}
             }
         }
     }
+
+    fun updateProducto(id: Int, producto: Producto) {
+        viewModelScope.launch {
+            when (val result = productoRepository.updateProducto(id, producto)) {
+                is ProductoRepository.ProductoResult.Success -> loadProductos() // Recargar lista
+                is ProductoRepository.ProductoResult.Error -> _error.value = result.message
+                else -> {}
+            }
+        }
+    }
+
+    fun deleteProducto(id: Int) {
+        viewModelScope.launch {
+            when (val result = productoRepository.deleteProducto(id)) {
+                is ProductoRepository.ProductoResult.Success -> loadProductos() // Recargar lista
+                is ProductoRepository.ProductoResult.Error -> _error.value = result.message
+                else -> {}
+            }
+        }
+    }
+
+    // ========== ÓRDENES ==========
 
     fun updateOrderStatus(orderId: Long, status: String) {
         viewModelScope.launch {
-            try {
-                val response = apiService.updateOrderStatus(orderId, mapOf("estado" to status))
-                if (response.isSuccessful) {
-                    Log.d("AdminViewModel", "Estado de la orden actualizado. Refrescando lista.")
-                    getAllOrders() // Refrescar la lista de órdenes
-                } else {
-                    Log.e("AdminViewModel", "Error al actualizar estado de la orden: ${response.errorBody()?.string()}")
+            when (val result = adminRepository.updateOrderStatus(orderId, status)) {
+                is AdminRepository.AdminResult.Success -> {
+                    Log.d("AdminViewModel", "Estado de la orden actualizado. Refrescando datos.")
+                    loadAdminData() // Recargar datos para reflejar el cambio
                 }
-            } catch (e: Exception) {
-                Log.e("AdminViewModel", "Excepción al actualizar estado de la orden: ${e.message}")
+                is AdminRepository.AdminResult.Error -> {
+                    _error.value = result.message
+                }
             }
         }
     }

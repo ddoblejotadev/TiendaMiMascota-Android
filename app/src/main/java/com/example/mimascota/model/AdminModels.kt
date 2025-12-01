@@ -1,9 +1,7 @@
 package com.example.mimascota.model
 
 /**
- * Modelo para el panel de administrador que agrupa a un usuario con sus órdenes.
+ * Data class que agrupa un usuario con su lista de órdenes.
+ * Utilizado en el panel de administración para mostrar los pedidos por usuario.
  */
-data class UserWithOrders(
-    val user: Usuario,
-    val orders: List<OrdenHistorial>
-)
+data class UserWithOrders(val user: Usuario, val orders: List<OrdenHistorial>)
