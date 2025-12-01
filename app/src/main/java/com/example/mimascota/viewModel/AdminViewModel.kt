@@ -59,25 +59,6 @@ class AdminViewModel : ViewModel() {
                     }
                 }
 
-                // ===== INICIO: LOG DE DIAGNÓSTICO =====
-                if (users.isNotEmpty() && orders.isNotEmpty()) {
-                    Log.d("AdminViewModel", "\n\n--- INICIO DIAGNÓSTICO DE IDs ---")
-                    Log.d("AdminViewModel", "Ejemplo de User ID: ${users.first().usuarioId} (Tipo: ${users.first().usuarioId::class.simpleName})")
-                    Log.d("AdminViewModel", "Ejemplo de Order User ID: ${orders.first().usuarioId} (Tipo: ${orders.first().usuarioId?.let { it::class.simpleName } ?: "NULL"})")
-
-                    val firstUser = users.first()
-                    val matchingOrders = orders.filter { it.usuarioId == firstUser.usuarioId.toLong() }
-                    Log.d("AdminViewModel", "Buscando pedidos para el usuario #${firstUser.usuarioId}...")
-                    Log.d("AdminViewModel", "Se encontraron ${matchingOrders.size} pedidos para este usuario.")
-
-                    if (matchingOrders.isEmpty()) {
-                        Log.w("AdminViewModel", "ADVERTENCIA: No se encontraron pedidos para el primer usuario, aunque existen pedidos en la lista.")
-                        Log.w("AdminViewModel", "IDs de todos los pedidos: ${orders.map { it.usuarioId }}")
-                    }
-                    Log.d("AdminViewModel", "--- FIN DIAGNÓSTICO DE IDs ---\n\n")
-                }
-                // ===== FIN: LOG DE DIAGNÓSTICO =====
-
                 val groupedData = users.map { user ->
                     val userOrders = orders.filter { it.usuarioId == user.usuarioId.toLong() }
                     UserWithOrders(user, userOrders)
@@ -112,7 +93,7 @@ class AdminViewModel : ViewModel() {
     fun createProducto(producto: Producto) {
         viewModelScope.launch {
             when (val result = productoRepository.createProducto(producto)) {
-                is ProductoRepository.ProductoResult.Success -> loadProductos()
+                is ProductoRepository.ProductoResult.Success -> loadProductos() 
                 is ProductoRepository.ProductoResult.Error -> _error.value = result.message
                 else -> {}
             }
@@ -150,6 +131,23 @@ class AdminViewModel : ViewModel() {
                 }
                 is AdminRepository.AdminResult.Error -> {
                     _error.value = result.message
+                }
+            }
+        }
+    }
+
+    // ========== USUARIOS ==========
+
+    fun deleteUser(userId: Long) {
+        viewModelScope.launch {
+            when (val result = adminRepository.deleteUser(userId)) {
+                is AdminRepository.AdminResult.Success -> {
+                    Log.d("AdminViewModel", "Usuario eliminado. Refrescando datos.")
+                    loadAdminData() // Recargar la lista de usuarios
+                }
+                is AdminRepository.AdminResult.Error -> {
+                    _error.value = result.message
+                    Log.e("AdminViewModel", "Error al eliminar usuario: ${result.message}")
                 }
             }
         }

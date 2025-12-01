@@ -4,17 +4,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.mimascota.model.UserWithOrders
+import com.example.mimascota.model.Usuario
 import com.example.mimascota.viewModel.AdminViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,16 +19,13 @@ import com.example.mimascota.viewModel.AdminViewModel
 fun AdminUsersScreen(navController: NavController, adminViewModel: AdminViewModel) {
     val usersWithOrders by adminViewModel.usersWithOrders.collectAsState()
     val isLoading by adminViewModel.isLoading.collectAsState()
+    var userToDelete by remember { mutableStateOf<Usuario?>(null) }
 
     Scaffold(
         topBar = {
+            // Eliminado el botón de retroceso inútil
             TopAppBar(
-                title = { Text("Gestionar Usuarios") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                    }
-                }
+                title = { Text("Gestionar Usuarios") }
             )
         }
     ) { paddingValues ->
@@ -45,7 +39,7 @@ fun AdminUsersScreen(navController: NavController, adminViewModel: AdminViewMode
                     .fillMaxSize()
                     .padding(paddingValues),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(usersWithOrders) { userWithOrders ->
                     val user = userWithOrders.user
@@ -56,7 +50,7 @@ fun AdminUsersScreen(navController: NavController, adminViewModel: AdminViewMode
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -66,13 +60,34 @@ fun AdminUsersScreen(navController: NavController, adminViewModel: AdminViewMode
                                 Text(user.email, style = MaterialTheme.typography.bodyMedium)
                                 Text("Rol: ${user.rol ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
                             }
-                            // IconButton(onClick = { adminViewModel.deleteUser(user.usuarioId) }) {
-                            //     Icon(Icons.Default.Delete, contentDescription = "Eliminar Usuario", tint = MaterialTheme.colorScheme.error)
-                            // }
+                            // Botón para iniciar el diálogo de eliminación
+                            IconButton(onClick = { userToDelete = user }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Eliminar Usuario", tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 }
             }
+        }
+
+        // Diálogo de confirmación para eliminar usuario
+        userToDelete?.let { user ->
+            AlertDialog(
+                onDismissRequest = { userToDelete = null },
+                title = { Text("Confirmar Eliminación") },
+                text = { Text("¿Estás seguro de que quieres eliminar al usuario '${user.nombre}' (ID: ${user.usuarioId})? Esta acción no se puede deshacer.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            adminViewModel.deleteUser(user.usuarioId.toLong())
+                            userToDelete = null // Cerrar el diálogo
+                        }
+                    ) { Text("Eliminar") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { userToDelete = null }) { Text("Cancelar") }
+                }
+            )
         }
     }
 }
