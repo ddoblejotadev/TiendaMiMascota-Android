@@ -26,6 +26,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.mimascota.viewModel.AdminViewModel
 import com.example.mimascota.viewModel.AuthViewModel
 import com.example.mimascota.viewModel.CatalogoViewModel
 
@@ -37,7 +38,7 @@ sealed class AdminScreen(val route: String, val label: String, val icon: ImageVe
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BackOfficeScreen(navController: NavController, catalogoViewModel: CatalogoViewModel, authViewModel: AuthViewModel = viewModel()) {
+fun BackOfficeScreen(navController: NavController, catalogoViewModel: CatalogoViewModel, authViewModel: AuthViewModel = viewModel(), adminViewModel: AdminViewModel = viewModel()) {
     val adminNavController = rememberNavController()
     val items = listOf(
         AdminScreen.Products,
@@ -89,9 +90,9 @@ fun BackOfficeScreen(navController: NavController, catalogoViewModel: CatalogoVi
             startDestination = AdminScreen.Products.route,
             Modifier.padding(innerPadding)
         ) {
-            composable(AdminScreen.Products.route) { AdminProductsScreen(navController = navController, catalogoViewModel = catalogoViewModel) }
+            composable(AdminScreen.Products.route) { AdminProductsScreen(navController = adminNavController, catalogoViewModel = catalogoViewModel) }
             composable(AdminScreen.Orders.route) { AdminOrdersScreen() }
-            composable(AdminScreen.Users.route) { AdminUsersScreen() }
+            composable(AdminScreen.Users.route) { AdminUsersScreen(navController = adminNavController, adminViewModel = adminViewModel) }
         }
     }
 }

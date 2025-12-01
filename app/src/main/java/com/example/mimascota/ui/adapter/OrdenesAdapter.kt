@@ -31,26 +31,26 @@ class OrdenesAdapter(
 
     inner class OrdenViewHolder(private val binding: ItemOrdenBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(orden: OrdenHistorial) {
-            binding.tvNumeroOrden.text = "Orden #${orden.numeroOrden}"
-            binding.tvEstadoOrden.text = orden.estado
+            binding.tvNumeroOrden.text = "Orden #${orden.numeroOrden ?: "N/A"}"
+            binding.tvEstadoOrden.text = orden.estado ?: "Desconocido"
 
             try {
-                val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.getDefault())
                 parser.timeZone = TimeZone.getTimeZone("UTC")
-                val date = parser.parse(orden.fecha)
+                val date = orden.fecha?.let { parser.parse(it) }
                 val formatter = SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault())
-                binding.tvFechaOrden.text = formatter.format(date)
+                binding.tvFechaOrden.text = if (date != null) formatter.format(date) else "Fecha no disponible"
             } catch (e: Exception) {
-                binding.tvFechaOrden.text = orden.fecha.split("T").firstOrNull() ?: orden.fecha
+                binding.tvFechaOrden.text = (orden.fecha?.split("T")?.firstOrNull() ?: orden.fecha) ?: "Fecha no disponible"
             }
 
-            binding.tvTotalOrden.text = String.format(Locale.getDefault(), "$%,.0f", orden.total)
+            binding.tvTotalOrden.text = String.format(Locale.getDefault(), "$%,.0f", orden.total ?: 0.0)
 
             // Limpiar vistas anteriores
             binding.productosContainer.removeAllViews()
 
             // Añadir vistas de detalle de productos
-            orden.productos.forEach { item ->
+            orden.productos?.forEach { item ->
                 val inflater = LayoutInflater.from(binding.root.context)
                 val detalleView = inflater.inflate(R.layout.item_detalle_orden, binding.productosContainer, false)
 
@@ -59,9 +59,9 @@ class OrdenesAdapter(
                 val tvCantidad = detalleView.findViewById<TextView>(R.id.tvCantidad)
                 val tvPrecioUnitario = detalleView.findViewById<TextView>(R.id.tvPrecioUnitario)
 
-                tvProductoNombre.text = item.nombre
-                tvCantidad.text = "Cantidad: ${item.cantidad}"
-                tvPrecioUnitario.text = String.format(Locale.getDefault(), "$%,.0f", item.precioUnitario)
+                tvProductoNombre.text = item.nombre ?: "Producto sin nombre"
+                tvCantidad.text = "Cantidad: ${item.cantidad ?: 0}"
+                tvPrecioUnitario.text = String.format(Locale.getDefault(), "$%,.0f", item.precioUnitario ?: 0.0)
                 ivProductoImagen.load(item.imagen) {
                     placeholder(android.R.drawable.ic_menu_gallery)
                     error(android.R.drawable.ic_menu_close_clear_cancel)

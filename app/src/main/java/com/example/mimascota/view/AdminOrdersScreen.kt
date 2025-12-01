@@ -1,86 +1,38 @@
 package com.example.mimascota.view
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.mimascota.R
 import com.example.mimascota.model.OrdenHistorial
-import com.example.mimascota.model.UserWithOrders
 import com.example.mimascota.viewModel.AdminViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
 fun AdminOrdersScreen(adminViewModel: AdminViewModel = viewModel()) {
-    val usersWithOrders by adminViewModel.usersWithOrders.collectAsState()
-    val isLoading by adminViewModel.isLoading.collectAsState()
-    val errorMsg by adminViewModel.error.collectAsState()
-    val context = LocalContext.current
+    val orders by adminViewModel.orders.collectAsState()
 
-    LaunchedEffect(errorMsg) {
-        if (!errorMsg.isNullOrBlank()) {
-            Toast.makeText(context, context.getString(R.string.admin_error, errorMsg), Toast.LENGTH_LONG).show()
-        }
-    }
-
-    if (isLoading && usersWithOrders.isEmpty()) {
+    if (orders.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            Text("No hay pedidos para mostrar.")
         }
     } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(usersWithOrders) { userWithOrders ->
-                UserOrdersItem(userWithOrders, adminViewModel)
-            }
-        }
-    }
-}
-
-@Composable
-fun UserOrdersItem(userWithOrders: UserWithOrders, adminViewModel: AdminViewModel) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { expanded = !expanded },
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(userWithOrders.user.nombre, style = MaterialTheme.typography.titleLarge)
-                    Text(userWithOrders.user.email, style = MaterialTheme.typography.bodyMedium)
-                }
-                Icon(
-                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Colapsar" else "Expandir"
-                )
-            }
-
-            AnimatedVisibility(visible = expanded) {
-                Column(modifier = Modifier.padding(top = 16.dp)) {
-                    userWithOrders.orders.forEach { order ->
-                        OrderListItemAdmin(order, adminViewModel)
-                        Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    }
-                }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(orders) { order ->
+                OrderListItemAdmin(order, adminViewModel)
             }
         }
     }
@@ -93,27 +45,36 @@ fun OrderListItemAdmin(orden: OrdenHistorial, adminViewModel: AdminViewModel) {
     var selectedStatus by remember { mutableStateOf("") }
 
     val formattedDate = try {
-        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.getDefault())
         val date = parser.parse(orden.fecha)
-        SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault()).format(date)
+        SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault()).format(date!!)
     } catch (e: Exception) {
         orden.fecha
     }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Orden #${orden.numeroOrden}", fontWeight = FontWeight.Bold)
-        Text("Fecha: $formattedDate")
-        Text("Estado: ${orden.estado}")
-        Text("Total: $${String.format("%.2f", orden.total)}")
-        
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-            val estados = listOf("procesando", "enviado", "entregado", "cancelado")
-            estados.forEach { estado ->
-                Button(onClick = { 
-                    selectedStatus = estado
-                    showDialog = true 
-                }) {
-                    Text(estado.replaceFirstChar { it.uppercase() })
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Orden #${orden.id}", fontWeight = FontWeight.Bold)
+            Text("Fecha: $formattedDate")
+            Text("Estado: ${orden.estado}", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
+            Text("Total: $${String.format("%.2f", orden.total)}")
+            Text("Usuario ID: ${orden.usuarioId}")
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Actualizar Estado:", style = MaterialTheme.typography.titleMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                val estados = listOf("procesando", "enviado", "entregado", "cancelado")
+                estados.forEach { estado ->
+                    Button(onClick = {
+                        selectedStatus = estado
+                        showDialog = true
+                    }) {
+                        Text(estado.replaceFirstChar { it.uppercase() })
+                    }
                 }
             }
         }
@@ -122,22 +83,16 @@ fun OrderListItemAdmin(orden: OrdenHistorial, adminViewModel: AdminViewModel) {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text(stringResource(id = R.string.confirm_update_order_title)) },
-            text = { Text(stringResource(id = R.string.confirm_update_order_message, selectedStatus)) },
+            title = { Text("Confirmar Actualización") },
+            text = { Text("¿Estás seguro de que quieres cambiar el estado a '$selectedStatus'?") },
             confirmButton = {
                 TextButton(onClick = {
-                    adminViewModel.updateOrderStatus(orden.id, selectedStatus) { success, message ->
-                        if (success) {
-                            Toast.makeText(context, context.getString(R.string.estado_actualizado), Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "Error: $message", Toast.LENGTH_LONG).show()
-                        }
-                    }
+                    adminViewModel.updateOrderStatus(orden.id, selectedStatus)
                     showDialog = false
-                }) { Text(stringResource(id = R.string.confirm_button)) }
+                }) { Text("Confirmar") }
             },
             dismissButton = {
-                TextButton(onClick = { showDialog = false }) { Text(stringResource(id = R.string.cancel_button)) }
+                TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
             }
         )
     }
