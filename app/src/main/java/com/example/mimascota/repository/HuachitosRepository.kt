@@ -8,18 +8,16 @@ class HuachitosRepository {
 
     suspend fun getAnimales(
         comunaId: Int,
+        // Los parámetros tipo y estado no se usan actualmente, pero se mantienen por si se añaden en el futuro
         tipo: String? = null,
         estado: String? = null
     ): Result<List<Animal>> {
         return try {
-            val response = when {
-                tipo != null && estado != null -> apiService.getAnimalesPorComunaTipoYEstado(comunaId, tipo, estado)
-                tipo != null -> apiService.getAnimalesPorComunaYTipo(comunaId, tipo)
-                estado != null -> apiService.getAnimalesPorComunaYEstado(comunaId, estado)
-                else -> apiService.getAnimalesPorComuna(comunaId)
-            }
+            // Asegúrate de que los endpoints comentados existan en tu ApiService si los necesitas.
+            val response = apiService.getAnimales(comunaId)
 
             if (response.isSuccessful && response.body() != null) {
+                // La respuesta de la lista de animales está en el campo "data"
                 Result.success(response.body()!!.data)
             } else {
                 Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
@@ -31,9 +29,10 @@ class HuachitosRepository {
 
     suspend fun getAnimalById(animalId: Int): Result<Animal> {
         return try {
-            val response = apiService.getAnimalById(animalId)
+            val response = apiService.getAnimal(animalId)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                // La respuesta del detalle del animal también está en un campo "data"
+                Result.success(response.body()!!.data)
             } else {
                 Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
             }

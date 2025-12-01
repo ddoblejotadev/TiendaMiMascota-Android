@@ -1,0 +1,1 @@
+// Archivo vacío para eliminar la redeclaración. El modelo correcto está en HuachitosModels.kt

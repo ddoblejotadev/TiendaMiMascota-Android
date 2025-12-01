@@ -154,9 +154,9 @@ fun AdopcionAnimalCard(animal: Animal, onClick: (Int) -> Unit) {
                 contentScale = ContentScale.Crop
             )
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(animal.nombre, style = MaterialTheme.typography.titleLarge)
-                Text("${animal.tipo} - ${animal.edad}", style = MaterialTheme.typography.bodyMedium)
-                Text("${animal.comuna}, ${animal.region}", style = MaterialTheme.typography.bodySmall)
+                Text(animal.nombre ?: "Sin nombre", style = MaterialTheme.typography.titleLarge)
+                Text("${animal.tipo ?: "N/A"} - ${animal.edad ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                Text("${animal.comuna ?: "N/A"}, ${animal.region ?: "N/A"}", style = MaterialTheme.typography.bodySmall)
             }
         }
     }
