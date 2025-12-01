@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -31,13 +32,24 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
     var password by remember { mutableStateOf("") }
     val loginStateValue = viewModel.loginState.value
 
+    var emailTouched by remember { mutableStateOf(false) }
+    var passwordTouched by remember { mutableStateOf(false) }
+
+    // Corregido: La validación ahora solo comprueba que no esté vacío
+    val isEmailValid = email.isNotBlank()
+    val isPasswordValid = password.isNotBlank()
+    val isFormValid = isEmailValid && isPasswordValid
+
+    val emailError = emailTouched && !isEmailValid
+    val passwordError = passwordTouched && !isPasswordValid
+
     LaunchedEffect(loginStateValue) {
         if (loginStateValue is LoginState.Success) {
             val userRole = loginStateValue.userRole?.trim()
             Log.d("LoginScreen", "Login successful. User role from state: '$userRole'")
 
             if (userRole.equals("admin", ignoreCase = true)) {
-                navController.navigate("backoffice") {
+                navController.navigate("backOffice") {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
             } else {
@@ -124,16 +136,20 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
 
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
+                        onValueChange = { email = it; emailTouched = true },
+                        label = { Text("Email o Usuario") }, // Etiqueta más genérica
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Email,
-                                contentDescription = "Email"
+                                contentDescription = "Email o Usuario"
                             )
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { if (it.isFocused) emailTouched = true },
                         singleLine = true,
+                        isError = emailError,
+                        supportingText = { if (emailError) Text("El campo no puede estar vacío") }, // Mensaje de error genérico
                         shape = RoundedCornerShape(12.dp)
                     )
 
@@ -141,7 +157,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = { password = it; passwordTouched = true },
                         label = { Text("Contraseña") },
                         leadingIcon = {
                             Icon(
@@ -150,26 +166,27 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
                             )
                         },
                         visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { if (it.isFocused) passwordTouched = true },
                         singleLine = true,
+                        isError = passwordError,
+                        supportingText = { if (passwordError) Text("La contraseña no puede estar vacía") },
                         shape = RoundedCornerShape(12.dp)
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
-                        onClick = {
-                            if (email.isNotBlank() && password.isNotBlank()) {
-                                viewModel.loginUsuario(email, password)
-                            }
-                        },
+                        onClick = { viewModel.loginUsuario(email, password) },
+                        enabled = isFormValid && loginStateValue !is LoginState.Loading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         if (loginStateValue is LoginState.Loading) {
-                            CircularProgressIndicator(color = Color.White)
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                         } else {
                             Text(
                                 text = "Entrar",
@@ -182,7 +199,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
                     if (loginStateValue is LoginState.Error) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = (loginStateValue as LoginState.Error).message,
+                            text = loginStateValue.message,
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center

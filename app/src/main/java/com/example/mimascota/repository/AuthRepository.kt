@@ -2,19 +2,34 @@ package com.example.mimascota.repository
 
 import android.util.Log
 import com.example.mimascota.client.RetrofitClient
-import com.example.mimascota.model.AuthResponse
-import com.example.mimascota.model.LoginRequest
-import com.example.mimascota.model.RegistroRequest
-import com.example.mimascota.model.Usuario
-import com.example.mimascota.util.TokenManager
+import com.example.mimascota.model.* // Asegúrate de que ErrorResponse esté en este paquete
+import com.example.mimascota.util.TokenManager // Importación añadida
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.Response
 
 /**
  * AuthRepository: Repository para autenticación
  */
 class AuthRepository {
     private val apiService = RetrofitClient.apiService
+
+    /**
+     * Parsea una respuesta de error de la API para extraer un mensaje legible.
+     */
+    private fun parseError(response: Response<*>): String {
+        return try {
+            val errorBody = response.errorBody()?.string() ?: "Error desconocido"
+            val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+            errorResponse.mensaje ?: "Error ${response.code()}: ${response.message()}"
+        } catch (e: JsonSyntaxException) {
+            "Error inesperado al procesar la respuesta del servidor."
+        } catch (e: Exception) {
+            "Error de red o de servidor. Por favor, inténtalo más tarde."
+        }
+    }
 
     /**
      * Login con email y password
@@ -29,12 +44,7 @@ class AuthRepository {
                     val authResponse = response.body()!!
                     TokenManager.saveToken(authResponse.token)
 
-                    // Patch a prueba de fallos para el admin
-                    val finalRol = if (authResponse.email.trim().equals("admin", ignoreCase = true)) {
-                        "admin"
-                    } else {
-                        authResponse.rol
-                    }
+                    val finalRol = if (authResponse.email.trim().equals("admin", ignoreCase = true)) "admin" else authResponse.rol
 
                     val usuario = Usuario(
                         usuarioId = authResponse.usuarioId,
@@ -49,13 +59,12 @@ class AuthRepository {
                     TokenManager.saveUsuario(usuario)
                     Log.d("AuthRepository", "Login exitoso. Usuario guardado: $usuario")
 
-                    Result.success(authResponse.copy(rol = finalRol)) // Devolver la respuesta con el rol corregido
+                    Result.success(authResponse.copy(rol = finalRol))
                 } else {
-                    val errorBody = response.errorBody()?.string() ?: ""
-                    Result.failure(Exception("Error ${response.code()}: $errorBody"))
+                    Result.failure(Exception(parseError(response)))
                 }
             } catch (ex: Exception) {
-                Result.failure(Exception("Error de conexión: ${ex.message}"))
+                Result.failure(Exception("No se pudo conectar al servidor. Revisa tu conexión a internet."))
             }
         }
     }
@@ -87,10 +96,10 @@ class AuthRepository {
 
                     Result.success(authResponse)
                 } else {
-                    Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                    Result.failure(Exception(parseError(response)))
                 }
             } catch (ex: Exception) {
-                Result.failure(Exception("Error de conexión: ${ex.message}"))
+                Result.failure(Exception("No se pudo conectar al servidor. Revisa tu conexión a internet."))
             }
         }
     }
@@ -106,11 +115,11 @@ class AuthRepository {
                     Result.success(response.body()!!)
                 } else {
                     TokenManager.clearUserData()
-                    Result.failure(Exception("Token inválido"))
+                    Result.failure(Exception("Tu sesión ha expirado. Por favor, inicia sesión de nuevo."))
                 }
             } catch (ex: Exception) {
                 TokenManager.clearUserData()
-                Result.failure(Exception("Error de conexión: ${ex.message}"))
+                Result.failure(Exception("Error de conexión. No se pudo verificar la sesión."))
             }
         }
     }
@@ -142,10 +151,10 @@ class AuthRepository {
                     Log.d("AuthRepository", "Usuario guardado desde obtenerUsuario: $usuario")
                     Result.success(usuario)
                 } else {
-                    Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                    Result.failure(Exception(parseError(response)))
                 }
             } catch (ex: Exception) {
-                Result.failure(Exception("Error de conexión: ${ex.message}"))
+                Result.failure(Exception("Error de conexión. No se pudo obtener la información del usuario."))
             }
         }
     }
@@ -162,11 +171,16 @@ class AuthRepository {
                     TokenManager.saveUsuario(updated)
                     Result.success(updated)
                 } else {
-                    Result.failure(Exception("Error ${response.code()}: ${response.errorBody()?.string()}"))
+                    Result.failure(Exception(parseError(response)))
                 }
             } catch (ex: Exception) {
-                Result.failure(Exception("Error de conexión: ${ex.message}"))
+                Result.failure(Exception("Error de conexión. No se pudo actualizar el perfil."))
             }
         }
     }
 }
+
+/**
+ * Modelo simple para decodificar respuestas de error de la API.
+ */
+data class ErrorResponse(val mensaje: String?)
