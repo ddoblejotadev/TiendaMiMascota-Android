@@ -3,11 +3,19 @@ package com.example.mimascota.model
 import com.google.gson.annotations.SerializedName
 
 /**
- * Modelo para la respuesta de la lista de animales, que viene paginada.
+ * Contenedor para la respuesta de la API que incluye la lista de animales.
  */
 data class AnimalesResponse(
     @SerializedName("data")
     val data: List<Animal>
+)
+
+/**
+ * Contenedor para la respuesta de la API que incluye el detalle de un solo animal.
+ */
+data class AnimalDetailResponse(
+    @SerializedName("data")
+    val data: Animal
 )
 
 /**
@@ -18,8 +26,7 @@ data class ImagenAnimal(
 )
 
 /**
- * Modelo para un solo animal, usando @SerializedName para mapear los nombres del JSON.
- * Todos los campos son opcionales para evitar crashes si la API no los envía.
+ * Modelo de datos para un Animal. Todos los campos son opcionales para evitar crashes.
  */
 data class Animal(
     val id: Int,
@@ -41,10 +48,10 @@ data class Animal(
     val esterilizado: Int?, // 1 para sí, 0 para no
     val vacunas: Int?, // 1 para sí, 0 para no
     
-    // Campo de imagen principal (de la lista)
+    // Imagen principal que viene en la lista
     val imagen: String?,
     
-    // Campo de imágenes (del detalle)
+    // Galería de imágenes que viene en el detalle
     val imagenes: List<ImagenAnimal>?,
     
     val equipo: String?,
