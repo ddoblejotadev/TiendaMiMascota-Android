@@ -20,26 +20,32 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.mimascota.R
-import com.example.mimascota.viewModel.CatalogoViewModel
+import com.example.mimascota.viewModel.AdminViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdminProductsScreen(navController: NavController, catalogoViewModel: CatalogoViewModel) {
-    val productos by catalogoViewModel.productos.collectAsState()
+fun AdminProductsScreen(navController: NavController, adminViewModel: AdminViewModel) {
+    // Usar el ViewModel de Admin y observar la lista de productos
+    val productos by adminViewModel.productos.collectAsState()
+    val isLoading by adminViewModel.isLoading.collectAsState()
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO: Navigate to create product screen */ },
+                onClick = { navController.navigate("admin_product_create") }, // Navegar a la pantalla de creación
                 modifier = Modifier.padding(16.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Añadir Producto")
             }
         }
     ) { paddingValues ->
-        if (productos.isEmpty()) {
+        if (isLoading && productos.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                Text("No hay productos en el catálogo.")
+                CircularProgressIndicator()
+            }
+        } else if (productos.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                Text("No hay productos para administrar.")
             }
         } else {
             LazyColumn(
@@ -80,10 +86,12 @@ fun AdminProductsScreen(navController: NavController, catalogoViewModel: Catalog
                             }
 
                             Column {
-                                IconButton(onClick = { /* TODO: navController.navigate("admin_product_edit/${producto.producto_id}") */ }) {
+                                // Botón Editar: navega a la pantalla de edición
+                                IconButton(onClick = { navController.navigate("admin_product_edit/${producto.producto_id}") }) {
                                     Icon(Icons.Default.Edit, contentDescription = "Editar Producto", tint = MaterialTheme.colorScheme.secondary)
                                 }
-                                IconButton(onClick = { catalogoViewModel.deleteProducto(producto.producto_id) }) {
+                                // Botón Eliminar: llama a la función del AdminViewModel
+                                IconButton(onClick = { adminViewModel.deleteProducto(producto.producto_id) }) {
                                     Icon(Icons.Default.Delete, contentDescription = "Eliminar Producto", tint = MaterialTheme.colorScheme.error)
                                 }
                             }

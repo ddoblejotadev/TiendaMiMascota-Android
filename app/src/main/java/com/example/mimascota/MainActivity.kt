@@ -18,6 +18,7 @@ import androidx.navigation.navArgument
 import androidx.compose.ui.platform.LocalContext
 import com.example.mimascota.view.*
 import com.example.mimascota.view.AboutUsScreen
+import com.example.mimascota.viewModel.AdminViewModel
 import com.example.mimascota.viewModel.AuthViewModel
 import com.example.mimascota.viewModel.CartViewModel
 import com.example.mimascota.viewModel.CatalogoViewModel
@@ -44,6 +45,7 @@ class MainActivity : ComponentActivity() {
             val authViewModel: AuthViewModel = viewModel()
             val catalogoViewModel: CatalogoViewModel = viewModel()
             val cartViewModel: CartViewModel = viewModel()
+            val adminViewModel: AdminViewModel = viewModel()
 
             NavHost(navController, startDestination = "register") {
                 composable("register") { RegisterScreen(navController, authViewModel) }
@@ -67,7 +69,9 @@ class MainActivity : ComponentActivity() {
                 
                 adoptionNavGraph(navController)
                 
-                composable("backOffice") { BackOfficeScreen(navController, catalogoViewModel, authViewModel) }
+                // Corregido: Pasar los ViewModels correctos a BackOfficeScreen
+                composable("backOffice") { BackOfficeScreen(navController, authViewModel, adminViewModel) }
+                
                 composable(
                     route = "agregarProducto?id={id}",
                     arguments = listOf(navArgument("id") { type = NavType.IntType; defaultValue = -1 })
