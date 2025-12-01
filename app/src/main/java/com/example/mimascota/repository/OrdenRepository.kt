@@ -55,23 +55,24 @@ class OrdenRepository {
                     android.util.Log.w("OrdenRepository", "Error llamando ordenes/{id}: ${ex.message}")
                 }
 
-                // 3) Fallback: intentar endpoint admin/ordenes y filtrar por usuarioId
-                try {
-                    android.util.Log.i("OrdenRepository", "Endpoint específico no disponible (404). Intentando fallback /admin/ordenes.")
-                    val adminResp = apiService.getAllOrders()
-                    if (adminResp.isSuccessful) {
-                        val all = adminResp.body()?.ordenes ?: emptyList()
-                        val filtered = all.filter { it.usuarioId == usuarioId }
-                        android.util.Log.i("OrdenRepository", "Fallback: órdenes totales=${all.size}, filtradas=${filtered.size}")
-                        return@withContext Result.success(filtered)
-                    } else {
-                        android.util.Log.w("OrdenRepository", "Fallback admin/ordenes devolvió code=${adminResp.code()}")
-                        return@withContext Result.success(emptyList())
-                    }
-                } catch (ex: Exception) {
-                    android.util.Log.w("OrdenRepository", "Error en fallback admin/ordenes: ${ex.message}")
-                    return@withContext Result.success(emptyList())
-                }
+                // 3) Fallback: Comentado temporalmente para depuración
+                // try {
+                //     android.util.Log.i("OrdenRepository", "Endpoint específico no disponible (404). Intentando fallback /admin/ordenes.")
+                //     val adminResp = apiService.getAllOrders()
+                //     if (adminResp.isSuccessful) {
+                //         val all = adminResp.body()?.ordenes ?: emptyList()
+                //         val filtered = all.filter { it.usuarioId == usuarioId }
+                //         android.util.Log.i("OrdenRepository", "Fallback: órdenes totales=${all.size}, filtradas=${filtered.size}")
+                //         return@withContext Result.success(filtered)
+                //     } else {
+                //         android.util.Log.w("OrdenRepository", "Fallback admin/ordenes devolvió code=${adminResp.code()}")
+                //         return@withContext Result.success(emptyList())
+                //     }
+                // } catch (ex: Exception) {
+                //     android.util.Log.w("OrdenRepository", "Error en fallback admin/ordenes: ${ex.message}")
+                //     return@withContext Result.success(emptyList())
+                // }
+                return@withContext Result.success(emptyList()) // Devolver lista vacía mientras el fallback está desactivado
 
             } catch (e: Exception) {
                 Result.failure(Exception("Error de conexión: ${e.message}"))

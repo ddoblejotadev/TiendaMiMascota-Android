@@ -1,29 +1,39 @@
 package com.example.mimascota.view
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mimascota.model.OrdenHistorial
+import com.example.mimascota.model.UserWithOrders
 import com.example.mimascota.viewModel.AdminViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+// Estados posibles para una orden
+private val ORDER_STATUSES = listOf("PENDIENTE", "EN PROCESO", "ENVIADO", "ENTREGADO", "CANCELADO")
+
 @Composable
 fun AdminOrdersScreen(adminViewModel: AdminViewModel = viewModel()) {
     val usersWithOrders by adminViewModel.usersWithOrders.collectAsState()
-    val orders = usersWithOrders.flatMap { it.orders }
     val isLoading by adminViewModel.isLoading.collectAsState()
     val error by adminViewModel.error.collectAsState()
 
+    val usersWhoHaveOrdered = usersWithOrders.filter { it.orders.isNotEmpty() }
+
     when {
-        isLoading && orders.isEmpty() -> {
+        isLoading && usersWhoHaveOrdered.isEmpty() -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -33,19 +43,19 @@ fun AdminOrdersScreen(adminViewModel: AdminViewModel = viewModel()) {
                 Text("Error: $error")
             }
         }
-        orders.isEmpty() -> {
+        usersWhoHaveOrdered.isEmpty() -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No hay pedidos para mostrar.")
+                Text("No hay pedidos de ningún usuario.")
             }
         }
         else -> {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(orders) { order ->
-                    OrderListItemAdmin(orden = order, adminViewModel = adminViewModel)
+                items(usersWhoHaveOrdered) { userWithOrders ->
+                    UserOrdersSection(userWithOrders = userWithOrders, adminViewModel = adminViewModel)
                 }
             }
         }
@@ -53,71 +63,98 @@ fun AdminOrdersScreen(adminViewModel: AdminViewModel = viewModel()) {
 }
 
 @Composable
-fun OrderListItemAdmin(orden: OrdenHistorial, adminViewModel: AdminViewModel) {
-    var showDialog by remember { mutableStateOf(false) }
-    var selectedStatus by remember { mutableStateOf("") }
+fun UserOrdersSection(userWithOrders: UserWithOrders, adminViewModel: AdminViewModel) {
+    var isExpanded by remember { mutableStateOf(false) }
 
-    val formattedDate = try {
-        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.getDefault())
-        val date = orden.fecha?.let { parser.parse(it) }
-        if (date != null) {
-            SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault()).format(date)
-        } else {
-            "Fecha no disponible"
-        }
-    } catch (e: Exception) {
-        orden.fecha ?: "Fecha no disponible"
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Orden #${orden.id}", fontWeight = FontWeight.Bold)
-            orden.usuarioId?.let { Text("Usuario ID: $it") }
-            Text("Fecha: $formattedDate")
-            Text("Estado: ${orden.estado ?: "N/A"}", style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold))
-            Text("Total: $${String.format("%.2f", orden.total ?: 0.0)}")
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("Actualizar Estado:", style = MaterialTheme.typography.labelMedium)
+    Card(elevation = CardDefaults.cardElevation(2.dp)) {
+        Column {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val estados = listOf("procesando", "enviado", "entregado", "cancelado")
-                estados.forEach { estado ->
-                    Button(
-                        onClick = {
-                            selectedStatus = estado
-                            showDialog = true
-                        },
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 4.dp)
-                    ) {
-                        Text(estado.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelSmall)
+                Column {
+                    Text(userWithOrders.user.nombre, fontWeight = FontWeight.Bold)
+                    Text(userWithOrders.user.email, style = MaterialTheme.typography.bodySmall)
+                }
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Desplegar",
+                    modifier = Modifier.rotate(if (isExpanded) 180f else 0f)
+                )
+            }
+
+            AnimatedVisibility(visible = isExpanded) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    userWithOrders.orders.forEach { order ->
+                        Divider()
+                        AdminOrderCard(orden = order, onStatusChange = {
+                            adminViewModel.updateOrderStatus(order.id, it)
+                        })
                     }
                 }
             }
         }
     }
+}
 
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Confirmar Actualización") },
-            text = { Text("¿Estás seguro de que quieres cambiar el estado de la orden #${orden.id} a '$selectedStatus'?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    orden.id.let { adminViewModel.updateOrderStatus(it, selectedStatus) }
-                    showDialog = false
-                }) { Text("Confirmar") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) { Text("Cancelar") }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdminOrderCard(orden: OrdenHistorial, onStatusChange: (String) -> Unit) {
+    var isStatusMenuExpanded by remember { mutableStateOf(false) }
+
+    val formattedDate = remember(orden.fecha) {
+        try {
+            val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+            val date = orden.fecha?.let { parser.parse(it) }
+            date?.let { SimpleDateFormat("dd MMM, yyyy", Locale.getDefault()).format(it) } ?: "Fecha inválida"
+        } catch (e: Exception) {
+            orden.fecha ?: "Fecha desconocida"
+        }
+    }
+
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text("Orden #${orden.id}", fontWeight = FontWeight.SemiBold)
+        Text("Fecha: $formattedDate")
+        Text("Total: $${String.format("%.2f", orden.total ?: 0.0)}")
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ExposedDropdownMenuBox(
+            expanded = isStatusMenuExpanded,
+            onExpandedChange = { isStatusMenuExpanded = !isStatusMenuExpanded },
+        ) {
+            OutlinedTextField(
+                value = orden.estado ?: "SIN ESTADO",
+                onValueChange = {}, // No editable directamente
+                readOnly = true,
+                label = { Text("Estado del Pedido") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isStatusMenuExpanded) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor()
+            )
+
+            ExposedDropdownMenu(
+                expanded = isStatusMenuExpanded,
+                onDismissRequest = { isStatusMenuExpanded = false },
+            ) {
+                ORDER_STATUSES.forEach { status ->
+                    DropdownMenuItem(
+                        text = { Text(status) },
+                        onClick = {
+                            onStatusChange(status)
+                            isStatusMenuExpanded = false
+                        }
+                    )
+                }
             }
-        )
+        }
     }
 }

@@ -44,8 +44,9 @@ class AdminRepository {
                 Log.d(TAG, "Fetching all orders...")
                 val response = apiService.getAllOrders()
                 if (response.isSuccessful && response.body() != null) {
-                    Log.d(TAG, "Orders fetched successfully.")
-                    AdminResult.Success(response.body()!!.ordenes) // Corregido: acceder a la lista dentro del objeto de respuesta
+                    Log.d(TAG, "Orders fetched successfully from paginated response.")
+                    // Corregido: Extraer la lista del campo "content" del objeto de paginación
+                    AdminResult.Success(response.body()!!.content)
                 } else {
                     Log.e(TAG, "Error fetching orders: ${response.code()} - ${response.message()}")
                     AdminResult.Error("Error ${response.code()}: ${response.message()}")

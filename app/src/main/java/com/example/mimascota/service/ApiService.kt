@@ -117,7 +117,7 @@ interface ApiService {
     // ============= ADMIN ÓRDENES (opcional) =============
 
     @GET("ordenes")
-    suspend fun getAllOrders(): Response<OrderListResponse> // Revertir a OrderListResponse
+    suspend fun getAllOrders(): Response<OrderListResponse> // Restaurado
 
     @PUT("ordenes/{id}")
     suspend fun updateOrderStatus(@Path("id") id: Long, @Body body: Map<String, String>): Response<OrdenHistorial>

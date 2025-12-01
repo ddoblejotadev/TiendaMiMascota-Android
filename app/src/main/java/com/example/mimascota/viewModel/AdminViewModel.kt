@@ -41,7 +41,6 @@ class AdminViewModel : ViewModel() {
                 val usersResult = adminRepository.getAllUsers()
                 val ordersResult = adminRepository.getAllOrders()
 
-                // Corregido: Añadir salvaguarda para datos nulos
                 val users = when (usersResult) {
                     is AdminRepository.AdminResult.Success -> usersResult.data ?: emptyList()
                     is AdminRepository.AdminResult.Error -> {
@@ -51,7 +50,6 @@ class AdminViewModel : ViewModel() {
                     }
                 }
 
-                // Corregido: Añadir salvaguarda para datos nulos
                 val orders = when (ordersResult) {
                     is AdminRepository.AdminResult.Success -> ordersResult.data ?: emptyList()
                     is AdminRepository.AdminResult.Error -> {
@@ -61,13 +59,32 @@ class AdminViewModel : ViewModel() {
                     }
                 }
 
+                // ===== INICIO: LOG DE DIAGNÓSTICO =====
+                if (users.isNotEmpty() && orders.isNotEmpty()) {
+                    Log.d("AdminViewModel", "\n\n--- INICIO DIAGNÓSTICO DE IDs ---")
+                    Log.d("AdminViewModel", "Ejemplo de User ID: ${users.first().usuarioId} (Tipo: ${users.first().usuarioId::class.simpleName})")
+                    Log.d("AdminViewModel", "Ejemplo de Order User ID: ${orders.first().usuarioId} (Tipo: ${orders.first().usuarioId?.let { it::class.simpleName } ?: "NULL"})")
+
+                    val firstUser = users.first()
+                    val matchingOrders = orders.filter { it.usuarioId == firstUser.usuarioId.toLong() }
+                    Log.d("AdminViewModel", "Buscando pedidos para el usuario #${firstUser.usuarioId}...")
+                    Log.d("AdminViewModel", "Se encontraron ${matchingOrders.size} pedidos para este usuario.")
+
+                    if (matchingOrders.isEmpty()) {
+                        Log.w("AdminViewModel", "ADVERTENCIA: No se encontraron pedidos para el primer usuario, aunque existen pedidos en la lista.")
+                        Log.w("AdminViewModel", "IDs de todos los pedidos: ${orders.map { it.usuarioId }}")
+                    }
+                    Log.d("AdminViewModel", "--- FIN DIAGNÓSTICO DE IDs ---\n\n")
+                }
+                // ===== FIN: LOG DE DIAGNÓSTICO =====
+
                 val groupedData = users.map { user ->
                     val userOrders = orders.filter { it.usuarioId == user.usuarioId.toLong() }
                     UserWithOrders(user, userOrders)
                 }
 
                 _usersWithOrders.value = groupedData
-                Log.d("AdminViewModel", "Datos de admin cargados. Usuarios: ${users.size}, Órdenes: ${orders.size}")
+                Log.d("AdminViewModel", "Datos de admin cargados. Usuarios: ${users.size}, Órdenes: ${orders.size}, Grupos con pedidos: ${groupedData.count { it.orders.isNotEmpty() }}")
 
                 loadProductos()
 
@@ -95,7 +112,7 @@ class AdminViewModel : ViewModel() {
     fun createProducto(producto: Producto) {
         viewModelScope.launch {
             when (val result = productoRepository.createProducto(producto)) {
-                is ProductoRepository.ProductoResult.Success -> loadProductos() 
+                is ProductoRepository.ProductoResult.Success -> loadProductos()
                 is ProductoRepository.ProductoResult.Error -> _error.value = result.message
                 else -> {}
             }
