@@ -121,7 +121,7 @@ class CheckoutActivity : AppCompatActivity() {
                 binding.progressBar.visibility = View.GONE
                 val intent = Intent(this, com.example.mimascota.ui.activity.OrdenExitosaActivity::class.java).apply {
                     putExtra("NUMERO_ORDEN", ordenResponse.numeroOrden)
-                    putExtra("TOTAL", ordenResponse.total.toInt())
+                    putExtra("TOTAL", ordenResponse.total?.toInt() ?: 0)
                     putExtra("ORDEN_ID", ordenResponse.id.toInt())
                 }
                 startActivity(intent)
