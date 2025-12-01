@@ -48,16 +48,16 @@ fun AnimalDetailScreen(navController: NavController, animalId: Int, huachitosVie
             ) {
                 AsyncImage(
                     model = animalData.imagen,
-                    contentDescription = animalData.nombre,
+                    contentDescription = animalData.nombre ?: "",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(250.dp),
                     contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(animalData.nombre, style = MaterialTheme.typography.headlineLarge)
-                Text("${animalData.tipo} - ${animalData.edad} - ${animalData.genero}", style = MaterialTheme.typography.titleMedium)
-                Text("Encontrado en ${animalData.comuna}, ${animalData.region}", style = MaterialTheme.typography.bodyMedium)
+                Text(animalData.nombre ?: "Sin nombre", style = MaterialTheme.typography.headlineLarge)
+                Text("${animalData.tipo ?: ""} - ${animalData.edad ?: ""} - ${animalData.genero ?: ""}", style = MaterialTheme.typography.titleMedium)
+                Text("Encontrado en ${animalData.comuna ?: ""}, ${animalData.region ?: ""}", style = MaterialTheme.typography.bodyMedium)
 
                 Spacer(modifier = Modifier.height(16.dp))
                 HtmlText(html = animalData.descFisica, title = "Descripción Física")
@@ -80,7 +80,7 @@ fun HtmlText(html: String?, title: String) {
                     settings.javaScriptEnabled = true
                 }
             }, update = {
-                val htmlData = "<html><head><style>body{padding: 8px; font-family: sans-serif; color: #444;}</style></head><body>$html</body></html>"
+                val htmlData = "<html><head><style>body{padding: 8px; font-family: sans-serif; color: #444;}</style></head><body>${html ?: ""}</body></html>"
                 it.loadData(htmlData, "text/html", "UTF-8")
             })
         }
