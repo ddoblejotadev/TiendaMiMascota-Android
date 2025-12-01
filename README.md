@@ -10,7 +10,6 @@ Aplicación móvil Android de e-commerce para una tienda de mascotas, con un pan
 
 - [Juan Llontop](https://github.com/ddoblejotadev)
 - [Yasser Illanes](https://github.com/yasser-duoc)
-- **Asistente de IA**: Gemini
 
 ## ⚡ Funcionalidades
 
