@@ -6,7 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -69,7 +71,6 @@ class MainActivity : ComponentActivity() {
                 
                 adoptionNavGraph(navController)
                 
-                // Corregido: Pasar los ViewModels correctos a BackOfficeScreen
                 composable("backOffice") { BackOfficeScreen(navController, authViewModel, adminViewModel) }
                 
                 composable(
@@ -115,13 +116,19 @@ class MainActivity : ComponentActivity() {
 
 fun NavGraphBuilder.adoptionNavGraph(navController: NavHostController) {
     navigation(startDestination = "adopcion_list", route = "huachitos") {
-        composable("adopcion_list") {
-            val huachitosViewModel: HuachitosViewModel = viewModel()
+        composable("adopcion_list") { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("huachitos")
+            }
+            val huachitosViewModel: HuachitosViewModel = viewModel(parentEntry)
             AdopcionScreen(navController, huachitosViewModel)
         }
         composable("animalDetail/{animalId}") { backStackEntry ->
             val animalId = backStackEntry.arguments?.getString("animalId")?.toIntOrNull() ?: -1
-            val huachitosViewModel: HuachitosViewModel = viewModel(navController.getBackStackEntry("huachitos"))
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("huachitos")
+            }
+            val huachitosViewModel: HuachitosViewModel = viewModel(parentEntry)
             AnimalDetailScreen(navController, animalId, huachitosViewModel)
         }
     }
