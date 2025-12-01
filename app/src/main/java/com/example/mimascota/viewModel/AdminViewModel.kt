@@ -15,13 +15,11 @@ import kotlinx.coroutines.launch
 class AdminViewModel : ViewModel() {
 
     private val adminRepository = AdminRepository()
-    private val productoRepository = ProductoRepository() // Inyectar repositorio de productos
+    private val productoRepository = ProductoRepository()
 
-    // StateFlow para usuarios y órdenes
     private val _usersWithOrders = MutableStateFlow<List<UserWithOrders>>(emptyList())
     val usersWithOrders: StateFlow<List<UserWithOrders>> = _usersWithOrders.asStateFlow()
 
-    // StateFlow para productos
     private val _productos = MutableStateFlow<List<Producto>>(emptyList())
     val productos: StateFlow<List<Producto>> = _productos.asStateFlow()
 
@@ -38,14 +36,14 @@ class AdminViewModel : ViewModel() {
     fun loadAdminData() {
         viewModelScope.launch {
             _isLoading.value = true
-            _error.value = null // Limpiar errores previos
+            _error.value = null
             try {
-                // Cargar usuarios y órdenes
                 val usersResult = adminRepository.getAllUsers()
                 val ordersResult = adminRepository.getAllOrders()
 
+                // Corregido: Añadir salvaguarda para datos nulos
                 val users = when (usersResult) {
-                    is AdminRepository.AdminResult.Success -> usersResult.data
+                    is AdminRepository.AdminResult.Success -> usersResult.data ?: emptyList()
                     is AdminRepository.AdminResult.Error -> {
                         _error.value = usersResult.message
                         Log.e("AdminViewModel", "Error al cargar usuarios: ${usersResult.message}")
@@ -53,8 +51,9 @@ class AdminViewModel : ViewModel() {
                     }
                 }
 
+                // Corregido: Añadir salvaguarda para datos nulos
                 val orders = when (ordersResult) {
-                    is AdminRepository.AdminResult.Success -> ordersResult.data
+                    is AdminRepository.AdminResult.Success -> ordersResult.data ?: emptyList()
                     is AdminRepository.AdminResult.Error -> {
                         _error.value = ordersResult.message
                         Log.e("AdminViewModel", "Error al cargar órdenes: ${ordersResult.message}")
@@ -66,10 +65,10 @@ class AdminViewModel : ViewModel() {
                     val userOrders = orders.filter { it.usuarioId == user.usuarioId.toLong() }
                     UserWithOrders(user, userOrders)
                 }
+
                 _usersWithOrders.value = groupedData
                 Log.d("AdminViewModel", "Datos de admin cargados. Usuarios: ${users.size}, Órdenes: ${orders.size}")
 
-                // Cargar productos
                 loadProductos()
 
             } catch (e: Exception) {
@@ -96,7 +95,7 @@ class AdminViewModel : ViewModel() {
     fun createProducto(producto: Producto) {
         viewModelScope.launch {
             when (val result = productoRepository.createProducto(producto)) {
-                is ProductoRepository.ProductoResult.Success -> loadProductos() // Recargar lista
+                is ProductoRepository.ProductoResult.Success -> loadProductos() 
                 is ProductoRepository.ProductoResult.Error -> _error.value = result.message
                 else -> {}
             }
@@ -106,7 +105,7 @@ class AdminViewModel : ViewModel() {
     fun updateProducto(id: Int, producto: Producto) {
         viewModelScope.launch {
             when (val result = productoRepository.updateProducto(id, producto)) {
-                is ProductoRepository.ProductoResult.Success -> loadProductos() // Recargar lista
+                is ProductoRepository.ProductoResult.Success -> loadProductos()
                 is ProductoRepository.ProductoResult.Error -> _error.value = result.message
                 else -> {}
             }
@@ -116,7 +115,7 @@ class AdminViewModel : ViewModel() {
     fun deleteProducto(id: Int) {
         viewModelScope.launch {
             when (val result = productoRepository.deleteProducto(id)) {
-                is ProductoRepository.ProductoResult.Success -> loadProductos() // Recargar lista
+                is ProductoRepository.ProductoResult.Success -> loadProductos()
                 is ProductoRepository.ProductoResult.Error -> _error.value = result.message
                 else -> {}
             }
@@ -130,7 +129,7 @@ class AdminViewModel : ViewModel() {
             when (val result = adminRepository.updateOrderStatus(orderId, status)) {
                 is AdminRepository.AdminResult.Success -> {
                     Log.d("AdminViewModel", "Estado de la orden actualizado. Refrescando datos.")
-                    loadAdminData() // Recargar datos para reflejar el cambio
+                    loadAdminData()
                 }
                 is AdminRepository.AdminResult.Error -> {
                     _error.value = result.message

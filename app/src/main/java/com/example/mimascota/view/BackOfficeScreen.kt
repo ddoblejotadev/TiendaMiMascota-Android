@@ -103,9 +103,9 @@ fun BackOfficeScreen(navController: NavController, authViewModel: AuthViewModel,
             composable(AdminScreen.Orders.route) { AdminOrdersScreen() }
             composable(AdminScreen.Users.route) { AdminUsersScreen(navController = adminNavController, adminViewModel = adminViewModel) }
 
-            // Definir rutas para crear y editar productos
+            // Rutas para crear y editar productos (descomentadas)
             composable(AdminScreen.ProductCreate.route) {
-                // AdminProductCreateScreen(navController = adminNavController, adminViewModel = adminViewModel)
+                AdminProductCreateScreen(navController = adminNavController, adminViewModel = adminViewModel)
             }
             composable(
                 route = AdminScreen.ProductEdit.route,
@@ -113,7 +113,7 @@ fun BackOfficeScreen(navController: NavController, authViewModel: AuthViewModel,
             ) { backStackEntry ->
                 val productId = backStackEntry.arguments?.getInt("productId")
                 if (productId != null) {
-                    // AdminProductEditScreen(navController = adminNavController, adminViewModel = adminViewModel, productId = productId)
+                    AdminProductEditScreen(navController = adminNavController, adminViewModel = adminViewModel, productId = productId)
                 }
             }
         }
