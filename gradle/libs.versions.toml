@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.1"
+agp = "8.12.2"
 # Actualizar Kotlin a 2.1.x para alinear con las dependencias que requieren metadata 2.1
 kotlin = "2.1.20"
 # Mantener KSP comentado para evitar intentar resolver el plugin si no se usa
@@ -43,7 +43,6 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 # Alias para el compilador de Room (usado por KSP o KAPT)
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomRuntime" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 [plugins]
