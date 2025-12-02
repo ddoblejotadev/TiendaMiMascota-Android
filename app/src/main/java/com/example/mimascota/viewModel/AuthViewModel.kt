@@ -95,7 +95,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 refrescarUsuarioDesdeToken()
                 loginState.value = LoginState.Success(TokenManager.getUserRole())
             } else {
-                loginState.value = LoginState.Error(result.exceptionOrNull()?.message ?: "Credenciales inválidas")
+                loginState.value = LoginState.Error("Credenciales inválidas")
             }
         }
     }

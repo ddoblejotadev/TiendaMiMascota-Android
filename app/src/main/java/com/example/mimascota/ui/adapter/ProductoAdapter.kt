@@ -15,7 +15,8 @@ import com.example.mimascota.R
 import com.example.mimascota.databinding.ItemProductoBinding
 import com.example.mimascota.model.Producto
 import com.example.mimascota.util.AppConfig // Importar AppConfig
-import java.util.Locale
+import com.example.mimascota.util.addIVA
+import com.example.mimascota.util.formatCurrencyCLP
 
 class ProductoAdapter(
     private val onItemClick: (Producto) -> Unit,
@@ -38,13 +39,17 @@ class ProductoAdapter(
     inner class ProductoViewHolder(private val binding: ItemProductoBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(producto: Producto) {
             binding.tvProductoNombre.text = producto.producto_nombre
-            binding.tvProductoPrecio.text = String.format(Locale.getDefault(), "$%.2f", producto.price)
+
+            val precioConIva = addIVA(producto.price)
+            binding.tvProductoPrecio.text = formatCurrencyCLP(precioConIva)
+
             binding.tvProductoCategoria.text = producto.category
 
             val precioAnterior = producto.precioAnterior
             if (precioAnterior != null && precioAnterior > producto.price) {
                 binding.tvProductoStock.visibility = View.VISIBLE
-                binding.tvProductoStock.text = String.format(Locale.getDefault(), "$%.2f", precioAnterior)
+                val precioAnteriorConIva = addIVA(precioAnterior)
+                binding.tvProductoStock.text = formatCurrencyCLP(precioAnteriorConIva)
                 binding.tvProductoStock.paintFlags = binding.tvProductoStock.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
             } else {
                 binding.tvProductoStock.visibility = View.GONE
