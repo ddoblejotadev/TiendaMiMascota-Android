@@ -1,5 +1,6 @@
 package com.example.mimascota.view
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -57,7 +58,9 @@ fun AdminProductsScreen(navController: NavController, adminViewModel: AdminViewM
             ) {
                 items(productos) { producto ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { navController.navigate("admin_product_detail/${producto.producto_id}") },
                         elevation = CardDefaults.cardElevation(4.dp)
                     ) {
                         Row(

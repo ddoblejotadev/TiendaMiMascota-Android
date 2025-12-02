@@ -23,6 +23,9 @@ class AdminViewModel : ViewModel() {
     private val _productos = MutableStateFlow<List<Producto>>(emptyList())
     val productos: StateFlow<List<Producto>> = _productos.asStateFlow()
 
+    private val _selectedProduct = MutableStateFlow<Producto?>(null)
+    val selectedProduct: StateFlow<Producto?> = _selectedProduct.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -90,10 +93,30 @@ class AdminViewModel : ViewModel() {
         }
     }
 
+    fun getProductoById(id: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+            try {
+                val result = productoRepository.getProductoById(id.toInt())
+                if (result is ProductoRepository.ProductoResult.Success) {
+                    _selectedProduct.value = result.data
+                } else if (result is ProductoRepository.ProductoResult.Error) {
+                    _error.value = result.message
+                }
+            } catch (e: Exception) {
+                _error.value = "Excepción: ${e.message}"
+                Log.e("AdminViewModel", "Excepción al obtener el producto", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun createProducto(producto: Producto) {
         viewModelScope.launch {
             when (val result = productoRepository.createProducto(producto)) {
-                is ProductoRepository.ProductoResult.Success -> loadProductos() 
+                is ProductoRepository.ProductoResult.Success -> loadProductos()
                 is ProductoRepository.ProductoResult.Error -> _error.value = result.message
                 else -> {}
             }
