@@ -203,7 +203,7 @@ class ProfileEditActivity : ComponentActivity() {
                                 try {
                                     val current = TokenManager.getUsuario()
                                     if (current == null) {
-                                        Toast.makeText(context, "Usuario no encontrado", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Credenciales inválidas", Toast.LENGTH_SHORT).show()
                                         return@launch
                                     }
 
