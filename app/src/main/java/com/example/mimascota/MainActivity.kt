@@ -5,7 +5,15 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -16,6 +24,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.compose.ui.platform.LocalContext
+import com.example.mimascota.model.Producto
 import com.example.mimascota.view.*
 import com.example.mimascota.view.AboutUsScreen
 import com.example.mimascota.viewModel.AdminViewModel
@@ -56,8 +65,33 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("Catalogo") { CatalogoScreen(navController, catalogoViewModel, cartViewModel) }
                 composable("Detalle/{id}") { backStack ->
-                    val id = backStack.arguments?.getString("id")?.toIntOrNull() ?: -1
-                    DetalleProductoScreen(navController, id, catalogoViewModel, cartViewModel)
+                    val id = backStack.arguments?.getString("id")?.toIntOrNull()
+                    if (id != null) {
+                        // Lanzar el efecto para cargar el producto basado en el id
+                        LaunchedEffect(id) {
+                            catalogoViewModel.getProductoById(id)
+                        }
+
+                        // Recolectar el producto seleccionado desde el ViewModel
+                        val producto by catalogoViewModel.selectedProduct.collectAsState()
+
+                        // Mostrar la pantalla de detalle solo si el producto no es nulo y el ID coincide
+                        if (producto != null && producto?.producto_id == id) {
+                            DetalleProductoScreen(
+                                navController = navController,
+                                producto = producto!!,
+                                onAddToCart = { prod, _ -> cartViewModel.agregarAlCarrito(prod) }
+                            )
+                        } else {
+                            // Opcional: Mostrar un indicador de carga mientras el producto se carga
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
                 }
                 composable("Carrito") { CarritoScreen(navController, cartViewModel) }
                 composable("compraExitosa") { CompraExitosaScreenWrapper(navController, cartViewModel, authViewModel) }
@@ -66,12 +100,12 @@ class MainActivity : ComponentActivity() {
                     CompraRechazadaScreenWrapper(navController, tipoError, cartViewModel, authViewModel)
                 }
                 composable("Acerca") { AboutUsScreen(navController) }
-                
+
                 adoptionNavGraph(navController)
-                
+
                 // Corregido: Pasar los ViewModels correctos a BackOfficeScreen
                 composable("backOffice") { BackOfficeScreen(navController, authViewModel, adminViewModel) }
-                
+
                 composable(
                     route = "agregarProducto?id={id}",
                     arguments = listOf(navArgument("id") { type = NavType.IntType; defaultValue = -1 })
