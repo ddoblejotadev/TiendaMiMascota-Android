@@ -123,7 +123,7 @@ fun BackOfficeScreen(navController: NavController, authViewModel: AuthViewModel,
             ) { backStackEntry ->
                 val productId = backStackEntry.arguments?.getInt("productId")
                 if (productId != null) {
-                    AdminProductDetailScreen(viewModel = adminViewModel, productId = productId)
+                    AdminProductDetailScreen(viewModel = adminViewModel, productId = productId, navController = adminNavController)
                 }
             }
         }
