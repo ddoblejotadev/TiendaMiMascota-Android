@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -56,8 +59,24 @@ class MainActivity : ComponentActivity() {
                 }
                 composable("Catalogo") { CatalogoScreen(navController, catalogoViewModel, cartViewModel) }
                 composable("Detalle/{id}") { backStack ->
-                    val id = backStack.arguments?.getString("id")?.toIntOrNull() ?: -1
-                    DetalleProductoScreen(navController, id, catalogoViewModel, cartViewModel)
+                    val id = backStack.arguments?.getString("id")?.toIntOrNull()
+                    if (id != null) {
+                        LaunchedEffect(id) {
+                            catalogoViewModel.getProductoById(id)
+                        }
+                        val producto by catalogoViewModel.selectedProduct.collectAsState()
+                        producto?.let { prod ->
+                            DetalleProductoScreen(
+                                navController = navController,
+                                producto = prod,
+                                onAddToCart = { p, cantidad ->
+                                    repeat(cantidad) {
+                                        cartViewModel.agregarAlCarrito(p)
+                                    }
+                                }
+                            )
+                        }
+                    }
                 }
                 composable("Carrito") { CarritoScreen(navController, cartViewModel) }
                 composable("compraExitosa") { CompraExitosaScreenWrapper(navController, cartViewModel, authViewModel) }
@@ -66,6 +85,7 @@ class MainActivity : ComponentActivity() {
                     CompraRechazadaScreenWrapper(navController, tipoError, cartViewModel, authViewModel)
                 }
                 composable("Acerca") { AboutUsScreen(navController) }
+                composable("Recomendaciones") { RecomendacionesScreen(navController, catalogoViewModel, cartViewModel) }
                 
                 adoptionNavGraph(navController)
                 
