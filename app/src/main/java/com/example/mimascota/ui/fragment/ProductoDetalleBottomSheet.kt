@@ -1,5 +1,6 @@
 package com.example.mimascota.ui.fragment
 
+import android.graphics.Paint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +11,8 @@ import com.example.mimascota.R
 import com.example.mimascota.databinding.BottomSheetProductoDetalleBinding
 import com.example.mimascota.model.Producto
 import com.example.mimascota.util.AppConfig
+import com.example.mimascota.util.addIVA
+import com.example.mimascota.util.formatCurrencyCLP
 import com.example.mimascota.viewModel.SharedViewModel
 import com.example.mimascota.viewModel.SharedViewModelFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -43,7 +46,16 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
     private fun bindProducto(producto: Producto) {
         binding.tvNombre.text = producto.producto_nombre
         binding.tvDescripcion.text = producto.description
-        binding.tvPrecio.text = String.format("$%.2f", producto.price)
+        
+        val precioConIva = addIVA(producto.price)
+        binding.tvPrecio.text = formatCurrencyCLP(precioConIva)
+
+        producto.precioAnterior?.let {
+            val precioAnteriorConIva = addIVA(it)
+            binding.tvPrecioAnterior.text = formatCurrencyCLP(precioAnteriorConIva)
+            binding.tvPrecioAnterior.paintFlags = binding.tvPrecioAnterior.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+            binding.tvPrecioAnterior.visibility = View.VISIBLE
+        }
 
         val fullUrl = AppConfig.toAbsoluteImageUrl(producto.imageUrl)
         if (!fullUrl.isNullOrEmpty()) {
@@ -57,16 +69,19 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
 
         var cantidad = 1
         binding.tvCantidad.text = cantidad.toString()
+        actualizarSubtotal(producto, cantidad)
 
         binding.btnAumentar.setOnClickListener {
             cantidad++
             binding.tvCantidad.text = cantidad.toString()
+            actualizarSubtotal(producto, cantidad)
         }
 
         binding.btnDisminuir.setOnClickListener {
             if (cantidad > 1) {
                 cantidad--
                 binding.tvCantidad.text = cantidad.toString()
+                actualizarSubtotal(producto, cantidad)
             }
         }
 
@@ -78,6 +93,11 @@ class ProductoDetalleBottomSheet : BottomSheetDialogFragment() {
         binding.btnCerrar.setOnClickListener {
             dismiss()
         }
+    }
+
+    private fun actualizarSubtotal(producto: Producto, cantidad: Int) {
+        val subtotal = addIVA(producto.price) * cantidad
+        binding.tvSubtotal.text = "Subtotal: ${formatCurrencyCLP(subtotal)}"
     }
 
     override fun onDestroyView() {

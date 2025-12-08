@@ -21,6 +21,9 @@ class CatalogoViewModel : ViewModel() {
     private val _productos = MutableStateFlow<List<Producto>>(emptyList())
     val productos: StateFlow<List<Producto>> = _productos.asStateFlow()
 
+    private val _selectedProduct = MutableStateFlow<Producto?>(null)
+    val selectedProduct: StateFlow<Producto?> = _selectedProduct.asStateFlow()
+
     init {
         cargarProductos()
     }
@@ -43,15 +46,15 @@ class CatalogoViewModel : ViewModel() {
         }
     }
 
-    fun getProductoById(id: Int): StateFlow<Producto?> {
-        val productoFlow = MutableStateFlow<Producto?>(null)
+    fun getProductoById(id: Int) {
         viewModelScope.launch {
             val result = repository.getProductoById(id)
             if (result is ProductoRepository.ProductoResult.Success) {
-                productoFlow.value = result.data
+                _selectedProduct.value = result.data
+            } else {
+                _selectedProduct.value = null // Limpiar si hay error
             }
         }
-        return productoFlow.asStateFlow()
     }
 
     fun createProducto(producto: Producto) {

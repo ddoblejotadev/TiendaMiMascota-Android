@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -40,6 +39,9 @@ sealed class AdminScreen(val route: String, val label: String? = null, val icon:
     object ProductCreate : AdminScreen("admin_product_create")
     object ProductEdit : AdminScreen("admin_product_edit/{productId}") {
         fun createRoute(productId: Int) = "admin_product_edit/$productId"
+    }
+    object ProductDetail : AdminScreen("admin_product_detail/{productId}") {
+        fun createRoute(productId: Int) = "admin_product_detail/$productId"
     }
 }
 
@@ -103,7 +105,6 @@ fun BackOfficeScreen(navController: NavController, authViewModel: AuthViewModel,
             composable(AdminScreen.Orders.route) { AdminOrdersScreen() }
             composable(AdminScreen.Users.route) { AdminUsersScreen(navController = adminNavController, adminViewModel = adminViewModel) }
 
-            // Rutas para crear y editar productos (descomentadas)
             composable(AdminScreen.ProductCreate.route) {
                 AdminProductCreateScreen(navController = adminNavController, adminViewModel = adminViewModel)
             }
@@ -114,6 +115,15 @@ fun BackOfficeScreen(navController: NavController, authViewModel: AuthViewModel,
                 val productId = backStackEntry.arguments?.getInt("productId")
                 if (productId != null) {
                     AdminProductEditScreen(navController = adminNavController, adminViewModel = adminViewModel, productId = productId)
+                }
+            }
+            composable(
+                route = AdminScreen.ProductDetail.route,
+                arguments = listOf(navArgument("productId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val productId = backStackEntry.arguments?.getInt("productId")
+                if (productId != null) {
+                    AdminProductDetailScreen(viewModel = adminViewModel, productId = productId, navController = adminNavController)
                 }
             }
         }
