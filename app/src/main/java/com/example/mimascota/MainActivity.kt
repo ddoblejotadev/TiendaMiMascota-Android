@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity() {
                     CompraRechazadaScreenWrapper(navController, tipoError, cartViewModel, authViewModel)
                 }
                 composable("Acerca") { AboutUsScreen(navController) }
-                
+                composable("Recomendaciones") { RecomendacionesScreen(navController, catalogoViewModel, cartViewModel) }
                 adoptionNavGraph(navController)
                 
                 // Corregido: Pasar los ViewModels correctos a BackOfficeScreen

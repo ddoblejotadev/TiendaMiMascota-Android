@@ -66,6 +66,11 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = com.example.mimascota.R.string.volver_label))
                     }
+                },
+                actions = {
+                    TextButton(onClick = { navController.navigate("Recomendaciones") }) {
+                        Text("Recomendaciones")
+                    }
                 }
             )
         },
