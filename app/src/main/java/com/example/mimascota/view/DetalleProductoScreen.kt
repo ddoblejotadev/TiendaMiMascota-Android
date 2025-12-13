@@ -23,30 +23,49 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.mimascota.model.Producto
 import com.example.mimascota.util.CurrencyUtils
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleProductoScreen(
     navController: NavController,
     producto: Producto,
-    onAddToCart: (Producto, Int) -> Unit
+    onAddToCart: (Producto, Int) -> Unit,
+    from: String? = null
 ) {
     var cantidadInput by remember { mutableStateOf("1") }
     val stockDisponible = producto.stock ?: 0
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(producto.name) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
+        },
+        bottomBar = {
+            if (from == "Recomendaciones") {
+                BottomAppBar {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        Button(onClick = { navController.navigate("Carrito") }) {
+                            Text("Ir al carrito")
+                        }
+                        Button(onClick = { navController.popBackStack() }) {
+                            Text("Seguir comprando")
+                        }
+                    }
+                }
+            }
         }
     ) { innerPadding ->
         Column(
@@ -56,40 +75,23 @@ fun DetalleProductoScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Imagen del producto
             ProductImage(
                 imageUrl = producto.imageUrl,
                 contentDescription = null,
-                modifier = Modifier
-                    .height(200.dp)
-                    .fillMaxWidth(),
-                contentScale = ContentScale.Fit // Change to fit the image inside the bounds
+                modifier = Modifier.height(200.dp).fillMaxWidth(),
+                contentScale = ContentScale.Fit
             )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Precio del producto
+            Spacer(Modifier.height(16.dp))
             Text(text = CurrencyUtils.formatAsCLP(producto.price), style = MaterialTheme.typography.headlineMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Stock del producto
+            Spacer(Modifier.height(8.dp))
             Text(text = "Stock: $stockDisponible", style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // --- Sección de Etiquetas de Recomendación ---
+            Spacer(Modifier.height(16.dp))
             Text(text = "Explorar productos similares", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            val scrollState = rememberScrollState()
-            Row(modifier = Modifier.horizontalScroll(scrollState)) {
-
-                // Chip para la categoría del producto
+            Spacer(Modifier.height(8.dp))
+            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 producto.category.takeIf { it.isNotBlank() }?.let {
-                    ChipInfo(
-                        icon = Icons.Default.Category, 
-                        text = it, 
-                        onClick = { navController.navigate("Catalogo?categoria=$it") }
-                    )
+                    ChipInfo(icon = Icons.Default.Category, text = it, onClick = { navController.navigate("Catalogo?categoria=$it") })
                 }
-                
                 producto.tipoMascota?.takeIf { it.isNotBlank() }?.let {
                     ChipInfo(icon = Icons.Default.Pets, text = it, onClick = { /* No action for now */ })
                 }
@@ -103,19 +105,15 @@ fun DetalleProductoScreen(
                     ChipInfo(icon = Icons.Default.MonitorWeight, text = "${it}kg", onClick = { /* No action for now */ })
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Descripción del producto
+            Spacer(Modifier.height(16.dp))
             producto.description?.let {
                 if(it.isNotBlank()){
                     Text(text = "Descripción", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(Modifier.height(4.dp))
                     Text(text = it, style = MaterialTheme.typography.bodyLarge)
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Selector de cantidad
+            Spacer(Modifier.height(16.dp))
             if (stockDisponible > 0) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -123,65 +121,42 @@ fun DetalleProductoScreen(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     val cantidad = cantidadInput.toIntOrNull() ?: 0
-                    Button(
-                        onClick = {
-                            if (cantidad > 1) {
-                                cantidadInput = (cantidad - 1).toString()
-                            }
-                        },
-                        enabled = cantidad > 1
-                    ) {
-                        Text("-")
-                    }
-
+                    Button(onClick = { if (cantidad > 1) cantidadInput = (cantidad - 1).toString() }, enabled = cantidad > 1) { Text("-") }
                     OutlinedTextField(
                         value = cantidadInput,
                         onValueChange = { newValue ->
                             val filtered = newValue.filter { it.isDigit() }
-                            if (filtered.isEmpty()) {
-                                cantidadInput = ""
-                            } else {
-                                val num = filtered.toLongOrNull()
-                                if (num != null) {
-                                    if (num > stockDisponible) {
-                                        cantidadInput = stockDisponible.toString()
-                                    } else {
-                                        cantidadInput = filtered
+                            cantidadInput = when {
+                                filtered.isEmpty() -> ""
+                                else -> {
+                                    val num = filtered.toLongOrNull()
+                                    when {
+                                        num != null && num > stockDisponible -> stockDisponible.toString()
+                                        num == null -> stockDisponible.toString()
+                                        else -> filtered
                                     }
-                                } else { // number too big
-                                    cantidadInput = stockDisponible.toString()
                                 }
                             }
                         },
-                        modifier = Modifier
-                            .width(100.dp)
-                            .padding(horizontal = 16.dp),
+                        modifier = Modifier.width(100.dp).padding(horizontal = 16.dp),
                         textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
                     )
-
-                    Button(
-                        onClick = {
-                             if (cantidad < stockDisponible) {
-                                cantidadInput = (cantidad + 1).toString()
-                            }
-                        },
-                        enabled = cantidad < stockDisponible
-                    ) {
-                        Text("+")
-                    }
+                    Button(onClick = { if (cantidad < stockDisponible) cantidadInput = (cantidad + 1).toString() }, enabled = cantidad < stockDisponible) { Text("+") }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Botón agregar al carrito
+            Spacer(Modifier.height(16.dp))
             Button(
                 onClick = {
                     val finalCantidad = cantidadInput.toIntOrNull() ?: 0
                     if (finalCantidad > 0) {
                         onAddToCart(producto, finalCantidad)
+                        scope.launch {
+                            snackbarHostState.showSnackbar("¡Producto(s) añadido(s) al carrito!")
+                        }
+                    }
+                    if (from != "Recomendaciones") {
                         navController.popBackStack()
                     }
                 },
@@ -196,21 +171,11 @@ fun DetalleProductoScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChipInfo(
-    icon: ImageVector, 
-    text: String, 
-    onClick: () -> Unit
-) {
+private fun ChipInfo(icon: ImageVector, text: String, onClick: () -> Unit) {
     SuggestionChip(
         modifier = Modifier.padding(end = 8.dp),
         onClick = onClick,
-        icon = {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(SuggestionChipDefaults.IconSize)
-            )
-        },
+        icon = { Icon(icon, contentDescription = null, modifier = Modifier.size(SuggestionChipDefaults.IconSize)) },
         label = { Text(text) }
     )
 }

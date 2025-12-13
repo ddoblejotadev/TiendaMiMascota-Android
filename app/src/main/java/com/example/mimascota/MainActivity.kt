@@ -27,6 +27,7 @@ import com.example.mimascota.viewModel.CartViewModel
 import com.example.mimascota.viewModel.CatalogoViewModel
 import com.example.mimascota.util.ConnectionTester
 import com.example.mimascota.viewModel.HuachitosViewModel
+import com.example.mimascota.viewModel.RecomendacionesViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,6 +50,7 @@ class MainActivity : ComponentActivity() {
             val catalogoViewModel: CatalogoViewModel = viewModel()
             val cartViewModel: CartViewModel = viewModel()
             val adminViewModel: AdminViewModel = viewModel()
+            val recomendacionesViewModel: RecomendacionesViewModel = viewModel()
 
             NavHost(navController, startDestination = "register") {
                 composable("register") { RegisterScreen(navController, authViewModel) }
@@ -67,8 +69,15 @@ class MainActivity : ComponentActivity() {
                     val categoria = backStackEntry.arguments?.getString("categoria")
                     CatalogoScreen(navController, catalogoViewModel, cartViewModel, categoria)
                 }
-                composable("Detalle/{id}") { backStack ->
-                    val id = backStack.arguments?.getString("id")?.toIntOrNull()
+                composable(
+                    route = "Detalle/{id}?from={from}",
+                    arguments = listOf(
+                        navArgument("id") { type = NavType.IntType },
+                        navArgument("from") { type = NavType.StringType; nullable = true }
+                    )
+                ) { backStack ->
+                    val id = backStack.arguments?.getInt("id")
+                    val from = backStack.arguments?.getString("from")
                     if (id != null) {
                         LaunchedEffect(id) {
                             catalogoViewModel.getProductoById(id)
@@ -82,7 +91,8 @@ class MainActivity : ComponentActivity() {
                                     repeat(cantidad) {
                                         cartViewModel.agregarAlCarrito(p)
                                     }
-                                }
+                                },
+                                from = from
                             )
                         }
                     }
@@ -94,11 +104,10 @@ class MainActivity : ComponentActivity() {
                     CompraRechazadaScreenWrapper(navController, tipoError, cartViewModel, authViewModel)
                 }
                 composable("Acerca") { AboutUsScreen(navController) }
-                composable("Recomendaciones") { RecomendacionesScreen(navController, catalogoViewModel, cartViewModel) }
+                composable("Recomendaciones") { RecomendacionesScreen(navController, recomendacionesViewModel, cartViewModel) }
                 
                 adoptionNavGraph(navController)
                 
-                // Corregido: Pasar los ViewModels correctos a BackOfficeScreen
                 composable("backOffice") { BackOfficeScreen(navController, authViewModel, adminViewModel) }
                 
                 composable(
