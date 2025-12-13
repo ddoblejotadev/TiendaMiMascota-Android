@@ -204,6 +204,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
+                android:textSize="16sp"
                 android:text="Ver Mis Pedidos" />
 
             <com.google.android.material.button.MaterialButton
@@ -213,6 +214,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:padding="12dp"
+                android:textSize="16sp"
                 android:text="Seguir Comprando" />
         </LinearLayout>
 
