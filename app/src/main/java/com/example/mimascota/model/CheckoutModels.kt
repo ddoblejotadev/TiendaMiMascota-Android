@@ -78,6 +78,7 @@ data class OrdenHistorial(
     val usuarioId: Long?,
     @SerializedName("datosEnvio")
     val datosEnvio: DatosEnvioResponse?,
+    @SerializedName("items")
     val productos: List<ProductoOrden>?
 )
 
@@ -97,10 +98,12 @@ data class DatosEnvioResponse(
 data class ProductoOrden(
     @SerializedName("productoId")
     val productoId: Int,
+    @SerializedName("productoNombre")
     val nombre: String?,
     val cantidad: Int?,
     @SerializedName("precioUnitario")
     val precioUnitario: Double?,
+    @SerializedName("productoImagen")
     val imagen: String?
 )
 
