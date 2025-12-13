@@ -3,6 +3,7 @@ package com.example.mimascota.view
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -28,7 +31,7 @@ fun DetalleProductoScreen(
     producto: Producto,
     onAddToCart: (Producto, Int) -> Unit
 ) {
-    var cantidad by remember { mutableStateOf(1) }
+    var cantidadInput by remember { mutableStateOf("1") }
     val stockDisponible = producto.stock ?: 0
 
     Scaffold(
@@ -60,7 +63,7 @@ fun DetalleProductoScreen(
                 modifier = Modifier
                     .height(200.dp)
                     .fillMaxWidth(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Fit // Change to fit the image inside the bounds
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -101,19 +104,61 @@ fun DetalleProductoScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Selector de cantidad
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Button(onClick = { if (cantidad > 1) cantidad-- }) {
-                    Text("-")
-                }
-                Text(
-                    text = "$cantidad",
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                Button(onClick = { if (cantidad < stockDisponible) cantidad++ }) {
-                    Text("+")
+            if (stockDisponible > 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    val cantidad = cantidadInput.toIntOrNull() ?: 0
+                    Button(
+                        onClick = {
+                            if (cantidad > 1) {
+                                cantidadInput = (cantidad - 1).toString()
+                            }
+                        },
+                        enabled = cantidad > 1
+                    ) {
+                        Text("-")
+                    }
+
+                    OutlinedTextField(
+                        value = cantidadInput,
+                        onValueChange = { newValue ->
+                            val filtered = newValue.filter { it.isDigit() }
+                            if (filtered.isEmpty()) {
+                                cantidadInput = ""
+                            } else {
+                                val num = filtered.toLongOrNull()
+                                if (num != null) {
+                                    if (num > stockDisponible) {
+                                        cantidadInput = stockDisponible.toString()
+                                    } else {
+                                        cantidadInput = filtered
+                                    }
+                                } else { // number too big
+                                    cantidadInput = stockDisponible.toString()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .width(100.dp)
+                            .padding(horizontal = 16.dp),
+                        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true
+                    )
+
+                    Button(
+                        onClick = {
+                             if (cantidad < stockDisponible) {
+                                cantidadInput = (cantidad + 1).toString()
+                            }
+                        },
+                        enabled = cantidad < stockDisponible
+                    ) {
+                        Text("+")
+                    }
                 }
             }
 
@@ -122,11 +167,14 @@ fun DetalleProductoScreen(
             // Botón agregar al carrito
             Button(
                 onClick = {
-                    onAddToCart(producto, cantidad)
-                    navController.popBackStack()
+                    val finalCantidad = cantidadInput.toIntOrNull() ?: 0
+                    if (finalCantidad > 0) {
+                        onAddToCart(producto, finalCantidad)
+                        navController.popBackStack()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = stockDisponible > 0
+                enabled = stockDisponible > 0 && (cantidadInput.toIntOrNull() ?: 0) > 0
             ) {
                 Text(if (stockDisponible > 0) "Agregar al carrito" else "Sin Stock")
             }
