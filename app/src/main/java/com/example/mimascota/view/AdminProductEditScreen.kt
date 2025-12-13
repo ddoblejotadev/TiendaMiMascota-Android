@@ -51,6 +51,10 @@ fun AdminProductEditScreen(navController: NavController, adminViewModel: AdminVi
     var imageUrlInput by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var cameraImageUri by remember { mutableStateOf<Uri?>(null) }
+    var tipoMascota by remember { mutableStateOf("") }
+    var raza by remember { mutableStateOf("") }
+    var edad by remember { mutableStateOf("") }
+    var pesoMascota by remember { mutableStateOf("") }
     
     LaunchedEffect(key1 = productId) {
         adminViewModel.getProductoById(productId.toString())
@@ -102,6 +106,10 @@ fun AdminProductEditScreen(navController: NavController, adminViewModel: AdminVi
             descripcion = p.description ?: ""
             precio = p.price.toString()
             stock = p.stock?.toString() ?: "0"
+            tipoMascota = p.tipoMascota ?: ""
+            raza = p.raza ?: ""
+            edad = p.edad ?: ""
+            pesoMascota = p.pesoMascota?.toString() ?: ""
             
             val url = p.imageUrl
             if (url != null && url.startsWith("http")) {
@@ -190,6 +198,14 @@ fun AdminProductEditScreen(navController: NavController, adminViewModel: AdminVi
                 OutlinedTextField(value = precio, onValueChange = { precio = it }, label = { Text("Precio") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = stock, onValueChange = { stock = it }, label = { Text("Stock") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
 
+                // Campos para recomendaciones
+                Text("Campos para Recomendaciones", style = MaterialTheme.typography.titleMedium)
+                OutlinedTextField(value = tipoMascota, onValueChange = { tipoMascota = it }, label = { Text("Tipo de Mascota (ej. Perro, Gato)") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = raza, onValueChange = { raza = it }, label = { Text("Raza (ej. Pastor Alemán)") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = edad, onValueChange = { edad = it }, label = { Text("Edad (ej. 3 años)") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = pesoMascota, onValueChange = { pesoMascota = it }, label = { Text("Peso en Kg (ej. 4)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
@@ -226,7 +242,11 @@ fun AdminProductEditScreen(navController: NavController, adminViewModel: AdminVi
                                 tipoHigiene = originalProduct.tipoHigiene,
                                 fragancia = originalProduct.fragancia,
                                 tipo = originalProduct.tipo,
-                                tipoAccesorio = originalProduct.tipoAccesorio
+                                tipoAccesorio = originalProduct.tipoAccesorio,
+                                tipoMascota = tipoMascota.takeIf { it.isNotBlank() },
+                                raza = raza.takeIf { it.isNotBlank() },
+                                edad = edad.takeIf { it.isNotBlank() },
+                                pesoMascota = pesoMascota.toDoubleOrNull()
                             )
                             adminViewModel.updateProducto(productId, productoActualizado)
                             navController.popBackStack()

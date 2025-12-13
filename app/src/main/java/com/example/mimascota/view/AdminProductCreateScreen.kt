@@ -46,6 +46,10 @@ fun AdminProductCreateScreen(navController: NavController, adminViewModel: Admin
     var stock by remember { mutableStateOf("") }
     var imageUrlInput by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var tipoMascota by remember { mutableStateOf("") }
+    var raza by remember { mutableStateOf("") }
+    var edad by remember { mutableStateOf("") }
+    var pesoMascota by remember { mutableStateOf("") }
 
     val context = LocalContext.current
     var showImageSourceDialog by remember { mutableStateOf(false) }
@@ -155,6 +159,13 @@ fun AdminProductCreateScreen(navController: NavController, adminViewModel: Admin
             OutlinedTextField(value = precio, onValueChange = { precio = it }, label = { Text("Precio") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = stock, onValueChange = { stock = it }, label = { Text("Stock") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
 
+            // Campos para recomendaciones
+            Text("Campos para Recomendaciones", style = MaterialTheme.typography.titleMedium)
+            OutlinedTextField(value = tipoMascota, onValueChange = { tipoMascota = it }, label = { Text("Tipo de Mascota (ej. Perro, Gato)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = raza, onValueChange = { raza = it }, label = { Text("Raza (ej. Pastor Alemán)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = edad, onValueChange = { edad = it }, label = { Text("Edad (ej. 3 años)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = pesoMascota, onValueChange = { pesoMascota = it }, label = { Text("Peso en Kg (ej. 4)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
@@ -179,7 +190,11 @@ fun AdminProductCreateScreen(navController: NavController, adminViewModel: Admin
                         price = precio.toDoubleOrNull() ?: 0.0,
                         stock = stock.toIntOrNull() ?: 0,
                         imageUrl = finalImageUrl,
-                        category = "General"
+                        category = "General",
+                        tipoMascota = tipoMascota.takeIf { it.isNotBlank() },
+                        raza = raza.takeIf { it.isNotBlank() },
+                        edad = edad.takeIf { it.isNotBlank() },
+                        pesoMascota = pesoMascota.toDoubleOrNull()
                     )
                     adminViewModel.createProducto(nuevoProducto)
                     navController.popBackStack()
