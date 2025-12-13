@@ -51,19 +51,39 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                     }
                 }
             )
-        },
-        bottomBar = {
-            BottomAppBar {
+        }
+    ) { padding ->
+        Column(modifier = Modifier
+            .padding(padding)
+            .fillMaxSize()) {
+            if (items.isEmpty()){
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+                    Text(text = "El carrito esta vacio")
+                }
+            } else {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(items) { item ->
+                        CartItemView(item = item, viewModel = viewModel)
+                    }
+                }
+            }
+
+            // Bottom section
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shadowElevation = 8.dp
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
                         Text("Subtotal: ${CurrencyUtils.formatAsCLP(subtotal)}", style = MaterialTheme.typography.bodyMedium)
                         Text("IVA (19%): ${CurrencyUtils.formatAsCLP(iva)}", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text("Total: ${CurrencyUtils.formatAsCLP(total)}", style = MaterialTheme.typography.titleLarge)
                     }
                     Button(onClick = {
@@ -83,16 +103,12 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                             val intent = Intent(context, CheckoutActivity::class.java)
                             context.startActivity(intent)
                         }
-                    }) {
+                    },
+                        enabled = items.isNotEmpty()
+                    ) {
                         Text(stringResource(id = com.example.mimascota.R.string.action_cart))
                     }
                 }
-            }
-        }
-    ) { padding ->
-        LazyColumn(modifier = Modifier.padding(padding)) {
-            items(items) { item ->
-                CartItemView(item = item, viewModel = viewModel)
             }
         }
     }
