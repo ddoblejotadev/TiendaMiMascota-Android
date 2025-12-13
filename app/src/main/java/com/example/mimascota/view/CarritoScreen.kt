@@ -38,7 +38,6 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
     val total by viewModel.total.collectAsState()
     val context = LocalContext.current
 
-    // Calcular IVA y Subtotal
     val iva = CurrencyUtils.getIVAFromTotalPrice(total)
     val subtotal = total - iva
 
@@ -69,7 +68,6 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                 }
             }
 
-            // Bottom section
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shadowElevation = 8.dp
@@ -107,7 +105,7 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                     },
                         enabled = items.isNotEmpty()
                     ) {
-                        Text("Pagar") // Changed button text
+                        Text("Pagar")
                     }
                 }
             }
@@ -117,31 +115,27 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
 
 @Composable
 fun CartItemView(item: CartItem, viewModel: CartViewModel) {
-    // This state holds the text in the TextField. It's initialized with the item's quantity.
-    // The `key` ensures that if the underlying `item.cantidad` changes (e.g., from the ViewModel),
-    // the `textQuantity` state is reset to the new value.
     var textQuantity by remember(item.cantidad) { mutableStateOf(item.cantidad.toString()) }
     val context = LocalContext.current
 
-    // This effect handles the logic of updating the ViewModel.
-    // It runs whenever `textQuantity` changes, after a small delay (debouncing).
     LaunchedEffect(textQuantity) {
-        // Wait for 500ms after the user stops typing
-        delay(500)
+        delay(600)
+
         val newQuantity = textQuantity.toIntOrNull()
+
         if (newQuantity != null && newQuantity != item.cantidad) {
             val stock = item.producto.stock ?: Int.MAX_VALUE
             val validatedQuantity = newQuantity.coerceIn(0, stock)
             viewModel.actualizarCantidad(item.producto, validatedQuantity)
-        } else if (textQuantity.isEmpty() && item.cantidad != 0) {
-            viewModel.actualizarCantidad(item.producto, 0)
         }
     }
 
-
-    Row(modifier = Modifier
-        .padding(8.dp)
-        .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         val imageUrl = AppConfig.toAbsoluteImageUrl(item.producto.imageUrl)
         AsyncImage(
             model = imageUrl,
@@ -166,7 +160,6 @@ fun CartItemView(item: CartItem, viewModel: CartViewModel) {
         }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 8.dp)) {
             IconButton(onClick = {
-                // Let the ViewModel handle the logic
                 viewModel.actualizarCantidad(item.producto, (item.cantidad - 1).coerceAtLeast(0))
             }) {
                 Icon(Icons.Filled.Remove, contentDescription = "Quitar")
@@ -175,15 +168,13 @@ fun CartItemView(item: CartItem, viewModel: CartViewModel) {
             OutlinedTextField(
                 value = textQuantity,
                 onValueChange = { newText ->
-                    // Allow only digits
-                    val filteredText = newText.filter { it.isDigit() }
-                    val newQuantity = filteredText.toIntOrNull()
+                    val filteredText = newText.filter { it.isDigit() }.take(7)
+                    val newQuantityValue = filteredText.toIntOrNull()
                     val stock = item.producto.stock ?: Int.MAX_VALUE
 
-                    // If the new quantity exceeds stock, show a toast and cap it. Otherwise, update the text.
-                    if (newQuantity != null && newQuantity > stock) {
+                    if (newQuantityValue != null && newQuantityValue > stock) {
                         textQuantity = stock.toString()
-                        Toast.makeText(context, "Stock máximo disponible: $stock", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Stock máximo: $stock", Toast.LENGTH_SHORT).show()
                     } else {
                         textQuantity = filteredText
                     }
@@ -198,6 +189,8 @@ fun CartItemView(item: CartItem, viewModel: CartViewModel) {
                 val stock = item.producto.stock ?: Int.MAX_VALUE
                 if (item.cantidad < stock) {
                     viewModel.actualizarCantidad(item.producto, item.cantidad + 1)
+                } else {
+                    Toast.makeText(context, "No hay más stock disponible", Toast.LENGTH_SHORT).show()
                 }
             }) {
                 Icon(Icons.Filled.Add, contentDescription = "Añadir")
