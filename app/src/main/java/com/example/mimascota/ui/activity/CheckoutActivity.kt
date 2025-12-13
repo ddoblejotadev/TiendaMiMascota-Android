@@ -72,7 +72,7 @@ class CheckoutActivity : AppCompatActivity() {
                 email = email,
                 telefono = telefono,
                 direccion = direccion,
-                ciudad = comuna, // Usamos comuna como ciudad
+                ciudad = comuna,
                 region = region,
                 codigoPostal = codigoPostal
             )
@@ -83,13 +83,13 @@ class CheckoutActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val itemsTotal = items.sumOf { it.producto.price * it.cantidad }
-            val shipping = calculateShipping(itemsTotal)
-            val finalTotal = itemsTotal + shipping
+            val totalConIva = items.sumOf { it.producto.price * it.cantidad }
+            val shipping = calculateShipping(totalConIva)
+            val finalTotal = totalConIva + shipping
 
             binding.progressBar.visibility = View.VISIBLE
 
-            checkoutViewModel.crearOrden(items, datosEnvio, itemsTotal, finalTotal)
+            checkoutViewModel.crearOrden(items, datosEnvio, totalConIva, finalTotal)
         }
 
         val savedUser = TokenManager.getUsuario()
@@ -122,7 +122,7 @@ class CheckoutActivity : AppCompatActivity() {
             val comunas = regionComunaMap[selectedRegion] ?: emptyList()
             val comunaAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, comunas)
             binding.actvComuna.setAdapter(comunaAdapter)
-            binding.actvComuna.setText("", false) // Clear selection
+            binding.actvComuna.setText("", false)
         }
     }
 
@@ -139,8 +139,8 @@ class CheckoutActivity : AppCompatActivity() {
             }
 
             if (intent.hasExtra("cart_total")) {
-                val itemsTotal = intent.getDoubleExtra("cart_total", 0.0)
-                calculateAndShowTotals(itemsTotal)
+                val totalConIva = intent.getDoubleExtra("cart_total", 0.0)
+                calculateAndShowTotals(totalConIva)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -166,10 +166,21 @@ class CheckoutActivity : AppCompatActivity() {
         checkoutViewModel.ordenCreada.observe(this) { ordenResponse ->
             binding.progressBar.visibility = View.GONE
             ordenResponse?.let {
+                val totalConIva = checkoutAdapter.currentList.sumOf { i -> i.producto.price * i.cantidad }
+                val subtotal = CurrencyUtils.getBasePrice(totalConIva)
+                val iva = totalConIva - subtotal
+                val shipping = calculateShipping(totalConIva)
+
                 val intent = Intent(this, OrdenExitosaActivity::class.java).apply {
                     putExtra("NUMERO_ORDEN", it.numeroOrden)
-                    putExtra("TOTAL", it.total?.toInt() ?: 0)
                     putExtra("ORDEN_ID", it.id.toInt())
+                    putExtra("SUBTOTAL", subtotal)
+                    putExtra("IVA", iva)
+                    putExtra("SHIPPING", shipping)
+                    putExtra("TOTAL", it.total ?: 0.0)
+                    val gson = Gson()
+                    val itemsJson = gson.toJson(checkoutAdapter.currentList)
+                    putExtra("CART_ITEMS_JSON", itemsJson)
                 }
                 startActivity(intent)
                 finish()
@@ -195,15 +206,15 @@ class CheckoutActivity : AppCompatActivity() {
     }
 
     private fun calculateAndShowTotals(cartItems: List<CartItem>) {
-        val itemsTotal = cartItems.sumOf { it.producto.price * it.cantidad }
-        calculateAndShowTotals(itemsTotal)
+        val totalConIva = cartItems.sumOf { it.producto.price * it.cantidad }
+        calculateAndShowTotals(totalConIva)
     }
 
-    private fun calculateAndShowTotals(itemsTotal: Double) {
-        val iva = CurrencyUtils.getIVAFromTotalPrice(itemsTotal)
-        val subtotal = itemsTotal - iva
-        val shipping = calculateShipping(itemsTotal)
-        val finalTotal = itemsTotal + shipping
+    private fun calculateAndShowTotals(totalConIva: Double) {
+        val subtotal = CurrencyUtils.getBasePrice(totalConIva)
+        val iva = totalConIva - subtotal
+        val shipping = calculateShipping(totalConIva)
+        val finalTotal = totalConIva + shipping
 
         binding.tvSubtotal.text = formatClp(subtotal)
         binding.tvIva.text = formatClp(iva)
@@ -211,8 +222,8 @@ class CheckoutActivity : AppCompatActivity() {
         binding.tvTotal.text = formatClp(finalTotal)
     }
 
-    private fun calculateShipping(subtotal: Double): Double {
-        return if (subtotal < FREE_SHIPPING_THRESHOLD) SHIPPING_FEE else 0.0
+    private fun calculateShipping(totalConIva: Double): Double {
+        return if (totalConIva < FREE_SHIPPING_THRESHOLD) SHIPPING_FEE else 0.0
     }
 
     private fun formatClp(amount: Double): String {

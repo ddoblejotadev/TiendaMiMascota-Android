@@ -35,11 +35,13 @@ import kotlinx.coroutines.delay
 @Composable
 fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
     val items by viewModel.items.collectAsState()
-    val total by viewModel.total.collectAsState()
+    // `total` del viewModel es el precio CON IVA
+    val totalConIva by viewModel.total.collectAsState()
     val context = LocalContext.current
 
-    val iva = CurrencyUtils.getIVAFromTotalPrice(total)
-    val subtotal = total - iva
+    // Calcular Subtotal (base) e IVA a partir del total
+    val iva = CurrencyUtils.getIVAFromTotalPrice(totalConIva)
+    val subtotal = totalConIva - iva
 
     Scaffold(
         topBar = {
@@ -83,7 +85,8 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                         Text("Subtotal: ${CurrencyUtils.formatAsCLP(subtotal)}", style = MaterialTheme.typography.bodyMedium)
                         Text("IVA (19%): ${CurrencyUtils.formatAsCLP(iva)}", style = MaterialTheme.typography.bodyMedium)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Total: ${CurrencyUtils.formatAsCLP(total)}", style = MaterialTheme.typography.titleLarge)
+                        // El total que se muestra al usuario es el que incluye el IVA
+                        Text("Total: ${CurrencyUtils.formatAsCLP(totalConIva)}", style = MaterialTheme.typography.titleLarge)
                     }
                     Button(onClick = {
                         if (items.isEmpty()) {
@@ -93,9 +96,10 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                         try {
                             val gson = Gson()
                             val itemsJson = gson.toJson(items)
+                            // Pasamos el total con IVA al checkout
                             val intent = Intent(context, CheckoutActivity::class.java).apply {
                                 putExtra("cart_items_json", itemsJson)
-                                putExtra("cart_total", total)
+                                putExtra("cart_total", totalConIva)
                             }
                             context.startActivity(intent)
                         } catch (e: Exception) {
