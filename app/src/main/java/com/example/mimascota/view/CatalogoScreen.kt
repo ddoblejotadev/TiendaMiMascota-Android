@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.mimascota.model.Producto
 import com.example.mimascota.util.AppConfig
+import com.example.mimascota.util.CurrencyUtils
 import com.example.mimascota.viewModel.CartViewModel
 import com.example.mimascota.viewModel.CatalogoViewModel
 import android.widget.Toast
@@ -176,7 +177,7 @@ fun ProductoCard(producto: Producto, onProductoClick: () -> Unit, onAddToCart: (
             }
 
             // Precio (producto.price ya es Double)
-            Text(String.format(Locale.getDefault(), "$%.2f", producto.price), style = MaterialTheme.typography.bodyMedium)
+            Text(CurrencyUtils.formatAsCLP(producto.price), style = MaterialTheme.typography.bodyMedium)
 
             // Mostrar cantidad en carrito si existe
             if (cartQuantity > 0) {

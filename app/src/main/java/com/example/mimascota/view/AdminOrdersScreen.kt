@@ -25,6 +25,7 @@ import com.example.mimascota.model.DatosEnvioResponse
 import com.example.mimascota.model.OrdenHistorial
 import com.example.mimascota.model.ProductoOrden
 import com.example.mimascota.model.UserWithOrders
+import com.example.mimascota.util.CurrencyUtils
 import com.example.mimascota.viewModel.AdminViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -176,7 +177,7 @@ private fun OrderDetails(orden: OrdenHistorial, onStatusChange: (Long, String) -
     }
 
     Text("Orden #${orden.id} - $formattedDate", style = MaterialTheme.typography.titleMedium)
-    Text("Total: $${String.format("%.2f", orden.total ?: 0.0)}", style = MaterialTheme.typography.bodyLarge)
+    Text("Total: ${CurrencyUtils.formatAsCLP(orden.total)}", style = MaterialTheme.typography.bodyLarge)
     Spacer(modifier = Modifier.height(8.dp))
 
     ExposedDropdownMenuBox(
@@ -237,13 +238,13 @@ private fun ProductOrderItem(item: ProductoOrden) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                "Cant: ${item.cantidad ?: 0} x $${String.format("%.2f", item.precioUnitario ?: 0.0)}",
+                "Cant: ${item.cantidad ?: 0} x ${CurrencyUtils.formatAsCLP(item.precioUnitario)}",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            "$${String.format("%.2f", subtotal)}",
+            CurrencyUtils.formatAsCLP(subtotal),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold
         )

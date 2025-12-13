@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
 import com.example.mimascota.ui.activity.CheckoutActivity
+import com.example.mimascota.util.CurrencyUtils
 import com.google.gson.Gson
 import java.util.Locale
 import androidx.compose.ui.res.stringResource
@@ -33,10 +34,12 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
     val items by viewModel.items.collectAsState()
-
     val total by viewModel.total.collectAsState()
-
     val context = LocalContext.current
+
+    // Calcular IVA y Subtotal
+    val iva = CurrencyUtils.getIVAFromTotalPrice(total)
+    val subtotal = total - iva
 
     Scaffold(
         topBar = {
@@ -54,18 +57,20 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(String.format(Locale.getDefault(), "%s", String.format(Locale.getDefault(), "Total: $%.2f", total)), style = MaterialTheme.typography.titleLarge)
+                    Column {
+                        Text("Subtotal: ${CurrencyUtils.formatAsCLP(subtotal)}", style = MaterialTheme.typography.bodyMedium)
+                        Text("IVA (19%): ${CurrencyUtils.formatAsCLP(iva)}", style = MaterialTheme.typography.bodyMedium)
+                        Text("Total: ${CurrencyUtils.formatAsCLP(total)}", style = MaterialTheme.typography.titleLarge)
+                    }
                     Button(onClick = {
-                        // Evitar checkout con carrito vacío
                         if (items.isEmpty()) {
                             Toast.makeText(context, "El carrito está vacío", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
-                        // Iniciar CheckoutActivity con extras del carrito (JSON) y total
                         try {
                             val gson = Gson()
                             val itemsJson = gson.toJson(items)
@@ -75,7 +80,6 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                             }
                             context.startActivity(intent)
                         } catch (e: Exception) {
-                            // Si falla la serialización, abrir igualmente CheckoutActivity sin extras
                             val intent = Intent(context, CheckoutActivity::class.java)
                             context.startActivity(intent)
                         }
@@ -99,7 +103,6 @@ fun CartItemView(item: CartItem, viewModel: CartViewModel) {
     Row(modifier = Modifier
         .padding(8.dp)
         .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        // Imagen del producto
         val imageUrl = AppConfig.toAbsoluteImageUrl(item.producto.imageUrl)
         AsyncImage(
             model = imageUrl,
@@ -112,9 +115,7 @@ fun CartItemView(item: CartItem, viewModel: CartViewModel) {
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(item.producto.producto_nombre, style = MaterialTheme.typography.titleMedium)
-            // `price` en el modelo es no-nullable Double, por eso usamos directamente
-            Text(String.format(Locale.getDefault(), "$%.2f", item.producto.price), style = MaterialTheme.typography.bodySmall)
-            // Mostrar stock si disponible
+            Text(CurrencyUtils.formatAsCLP(item.producto.price), style = MaterialTheme.typography.bodySmall)
             val stock = item.producto.stock
             if (stock == null) {
                 Text(stringResource(id = com.example.mimascota.R.string.no_products), style = MaterialTheme.typography.bodySmall)
@@ -137,7 +138,6 @@ fun CartItemView(item: CartItem, viewModel: CartViewModel) {
             }
             Text(item.cantidad.toString())
             IconButton(onClick = {
-                // Evitar aumentar más que el stock
                 val stockVal = item.producto.stock ?: Int.MAX_VALUE
                 if (item.cantidad < stockVal) {
                     viewModel.actualizarCantidad(item.producto, item.cantidad + 1)

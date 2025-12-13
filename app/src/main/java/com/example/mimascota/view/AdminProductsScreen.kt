@@ -24,6 +24,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import com.example.mimascota.R
+import com.example.mimascota.util.CurrencyUtils
 import com.example.mimascota.viewModel.AdminViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,7 +93,7 @@ fun AdminProductsScreen(navController: NavController, adminViewModel: AdminViewM
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(producto.producto_nombre, style = MaterialTheme.typography.titleMedium)
-                                Text("Precio: $${producto.price}", style = MaterialTheme.typography.bodyMedium)
+                                Text("Precio: ${CurrencyUtils.formatAsCLP(producto.price)}", style = MaterialTheme.typography.bodyMedium)
                                 Text("Stock: ${producto.stock ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
                             }
 

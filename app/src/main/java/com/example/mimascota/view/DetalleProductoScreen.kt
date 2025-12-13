@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.mimascota.model.Producto
+import com.example.mimascota.util.CurrencyUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +60,7 @@ fun DetalleProductoScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Precio del producto
-            Text(text = "Precio: $${producto.price}", fontSize = 20.sp)
+            Text(text = "Precio: ${CurrencyUtils.formatAsCLP(producto.price)}", fontSize = 20.sp)
             Spacer(modifier = Modifier.height(8.dp))
 
             // Stock del producto
