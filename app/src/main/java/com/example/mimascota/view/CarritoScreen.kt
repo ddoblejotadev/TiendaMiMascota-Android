@@ -5,30 +5,31 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.mimascota.model.CartItem
-import com.example.mimascota.viewModel.CartViewModel
 import coil.compose.AsyncImage
-import com.example.mimascota.util.AppConfig
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.platform.LocalContext
+import com.example.mimascota.model.CartItem
 import com.example.mimascota.ui.activity.CheckoutActivity
+import com.example.mimascota.util.AppConfig
 import com.example.mimascota.util.CurrencyUtils
+import com.example.mimascota.viewModel.CartViewModel
 import com.google.gson.Gson
-import java.util.Locale
-import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +63,7 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                 }
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(items) { item ->
+                    items(items, key = { it.producto.producto_id }) { item ->
                         CartItemView(item = item, viewModel = viewModel)
                     }
                 }
@@ -106,7 +107,7 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                     },
                         enabled = items.isNotEmpty()
                     ) {
-                        Text(stringResource(id = com.example.mimascota.R.string.action_cart))
+                        Text("Pagar") // Changed button text
                     }
                 }
             }
@@ -116,6 +117,28 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
 
 @Composable
 fun CartItemView(item: CartItem, viewModel: CartViewModel) {
+    // This state holds the text in the TextField. It's initialized with the item's quantity.
+    // The `key` ensures that if the underlying `item.cantidad` changes (e.g., from the ViewModel),
+    // the `textQuantity` state is reset to the new value.
+    var textQuantity by remember(item.cantidad) { mutableStateOf(item.cantidad.toString()) }
+    val context = LocalContext.current
+
+    // This effect handles the logic of updating the ViewModel.
+    // It runs whenever `textQuantity` changes, after a small delay (debouncing).
+    LaunchedEffect(textQuantity) {
+        // Wait for 500ms after the user stops typing
+        delay(500)
+        val newQuantity = textQuantity.toIntOrNull()
+        if (newQuantity != null && newQuantity != item.cantidad) {
+            val stock = item.producto.stock ?: Int.MAX_VALUE
+            val validatedQuantity = newQuantity.coerceIn(0, stock)
+            viewModel.actualizarCantidad(item.producto, validatedQuantity)
+        } else if (textQuantity.isEmpty() && item.cantidad != 0) {
+            viewModel.actualizarCantidad(item.producto, 0)
+        }
+    }
+
+
     Row(modifier = Modifier
         .padding(8.dp)
         .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -141,21 +164,39 @@ fun CartItemView(item: CartItem, viewModel: CartViewModel) {
                 Text(String.format(stringResource(id = com.example.mimascota.R.string.stock_disponible), stock), style = MaterialTheme.typography.bodySmall)
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 8.dp)) {
             IconButton(onClick = {
-                val nueva = item.cantidad - 1
-                if (nueva <= 0) {
-                    viewModel.actualizarCantidad(item.producto, 0)
-                } else {
-                    viewModel.actualizarCantidad(item.producto, nueva)
-                }
+                // Let the ViewModel handle the logic
+                viewModel.actualizarCantidad(item.producto, (item.cantidad - 1).coerceAtLeast(0))
             }) {
                 Icon(Icons.Filled.Remove, contentDescription = "Quitar")
             }
-            Text(item.cantidad.toString())
+
+            OutlinedTextField(
+                value = textQuantity,
+                onValueChange = { newText ->
+                    // Allow only digits
+                    val filteredText = newText.filter { it.isDigit() }
+                    val newQuantity = filteredText.toIntOrNull()
+                    val stock = item.producto.stock ?: Int.MAX_VALUE
+
+                    // If the new quantity exceeds stock, show a toast and cap it. Otherwise, update the text.
+                    if (newQuantity != null && newQuantity > stock) {
+                        textQuantity = stock.toString()
+                        Toast.makeText(context, "Stock máximo disponible: $stock", Toast.LENGTH_SHORT).show()
+                    } else {
+                        textQuantity = filteredText
+                    }
+                },
+                modifier = Modifier.width(70.dp),
+                textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
+            )
+
             IconButton(onClick = {
-                val stockVal = item.producto.stock ?: Int.MAX_VALUE
-                if (item.cantidad < stockVal) {
+                val stock = item.producto.stock ?: Int.MAX_VALUE
+                if (item.cantidad < stock) {
                     viewModel.actualizarCantidad(item.producto, item.cantidad + 1)
                 }
             }) {
