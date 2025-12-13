@@ -16,10 +16,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.example.mimascota.model.Producto
 import com.example.mimascota.util.AppConfig
 import com.example.mimascota.viewModel.CartViewModel
@@ -158,15 +156,13 @@ fun ProductoCard(producto: Producto, onProductoClick: () -> Unit, onAddToCart: (
         Column(modifier = Modifier.padding(8.dp).scale(scale)) {
             // Imagen del producto usando Coil Compose
             val imageUrl = AppConfig.toAbsoluteImageUrl(producto.imageUrl)
-            AsyncImage(
-                model = imageUrl,
+            ProductImage(
+                imageUrl = imageUrl,
                 contentDescription = producto.producto_nombre,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp),
-                contentScale = ContentScale.Crop,
-                placeholder = painterResource(id = com.example.mimascota.R.drawable.placeholder_product),
-                error = painterResource(id = com.example.mimascota.R.drawable.placeholder_product)
+                contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(producto.producto_nombre, style = MaterialTheme.typography.titleMedium)

@@ -64,7 +64,7 @@ object AppConfig {
      * ¿Logs detallados activados?
      */
     val isLoggingEnabled: Boolean
-        get() = BuildConfig.DEBUG && !USE_PRODUCTION
+        get() = true // FORZADO PARA DEBUG
 
     /**
      * Info de configuración actual

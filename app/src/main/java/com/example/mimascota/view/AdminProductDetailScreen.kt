@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.mimascota.viewModel.AdminViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,8 +55,8 @@ fun AdminProductDetailScreen(navController: NavController, viewModel: AdminViewM
                 .padding(16.dp)
         ) {
             product?.let { p ->
-                AsyncImage(
-                    model = p.imageUrl,
+                ProductImage(
+                    imageUrl = p.imageUrl,
                     contentDescription = null,
                     modifier = Modifier
                         .height(200.dp)

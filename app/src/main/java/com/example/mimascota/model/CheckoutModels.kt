@@ -10,7 +10,7 @@ data class ProductoRequest(
     val price: Double,
     val stock: Int,
     val category: String,
-    val imageUrl: String,
+    val imageUrl: String?,
     val destacado: Boolean,
     val valoracion: Double,
     val precioAnterior: Int

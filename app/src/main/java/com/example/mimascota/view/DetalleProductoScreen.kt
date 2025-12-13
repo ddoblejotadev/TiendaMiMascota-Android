@@ -13,7 +13,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.mimascota.model.Producto
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,8 +48,8 @@ fun DetalleProductoScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // Imagen del producto
-            AsyncImage(
-                model = producto.imageUrl,
+            ProductImage(
+                imageUrl = producto.imageUrl,
                 contentDescription = null,
                 modifier = Modifier
                     .height(200.dp)
