@@ -54,7 +54,14 @@ class AdminViewModel : ViewModel() {
                 }
 
                 val orders = when (ordersResult) {
-                    is AdminRepository.AdminResult.Success -> ordersResult.data ?: emptyList()
+                    is AdminRepository.AdminResult.Success -> {
+                        val receivedOrders = ordersResult.data ?: emptyList()
+                        // Diagnostic Log
+                        receivedOrders.firstOrNull()?.productos?.firstOrNull()?.let { firstProduct ->
+                            Log.d("AdminViewModel_DIAGNOSTIC", "Primer producto recibido: nombre='${firstProduct.nombre}', imagen='${firstProduct.imagen}'")
+                        }
+                        receivedOrders
+                    }
                     is AdminRepository.AdminResult.Error -> {
                         _error.value = ordersResult.message
                         Log.e("AdminViewModel", "Error al cargar órdenes: ${ordersResult.message}")

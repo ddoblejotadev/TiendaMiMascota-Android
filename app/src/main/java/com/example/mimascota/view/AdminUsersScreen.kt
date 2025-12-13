@@ -10,20 +10,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mimascota.model.Usuario
 import com.example.mimascota.viewModel.AdminViewModel
+import com.example.mimascota.viewModel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdminUsersScreen(navController: NavController, adminViewModel: AdminViewModel) {
+fun AdminUsersScreen(navController: NavController, adminViewModel: AdminViewModel, authViewModel: AuthViewModel = viewModel()) {
     val usersWithOrders by adminViewModel.usersWithOrders.collectAsState()
     val isLoading by adminViewModel.isLoading.collectAsState()
     var userToDelete by remember { mutableStateOf<Usuario?>(null) }
 
+    // Obtener el ID del administrador actual
+    val adminId by authViewModel.usuarioActualId
+
     Scaffold(
         topBar = {
-            // Eliminado el botón de retroceso inútil
             TopAppBar(
                 title = { Text("Gestionar Usuarios") }
             )
@@ -60,9 +64,12 @@ fun AdminUsersScreen(navController: NavController, adminViewModel: AdminViewMode
                                 Text(user.email, style = MaterialTheme.typography.bodyMedium)
                                 Text("Rol: ${user.rol ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
                             }
-                            // Botón para iniciar el diálogo de eliminación
-                            IconButton(onClick = { userToDelete = user }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Eliminar Usuario", tint = MaterialTheme.colorScheme.error)
+
+                            // Solo mostrar el botón de eliminar si el usuario no es el admin actual
+                            if (user.usuarioId != adminId) {
+                                IconButton(onClick = { userToDelete = user }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Eliminar Usuario", tint = MaterialTheme.colorScheme.error)
+                                }
                             }
                         }
                     }

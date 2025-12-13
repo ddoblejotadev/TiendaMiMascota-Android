@@ -62,7 +62,20 @@ open class Producto(
     open val tipo: String? = null,
 
     @SerializedName("tipoAccesorio")
-    open val tipoAccesorio: String? = null
+    open val tipoAccesorio: String? = null,
+
+    // Campos para recomendaciones
+    @SerializedName("tipoMascota")
+    open val tipoMascota: String? = null,
+
+    @SerializedName("raza")
+    open val raza: String? = null,
+
+    @SerializedName("edad")
+    open val edad: String? = null,
+
+    @SerializedName("pesoMascota")
+    open val pesoMascota: Double? = null
 ) {
     // Propiedades de conveniencia para mantener compatibilidad
     val id: Int get() = producto_id

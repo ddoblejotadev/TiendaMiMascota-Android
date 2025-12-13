@@ -7,8 +7,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.mimascota.databinding.ItemCheckoutProductoBinding
 import com.example.mimascota.model.CartItem
-import com.example.mimascota.util.addIVA
-import com.example.mimascota.util.formatCurrencyCLP
+import com.example.mimascota.util.CurrencyUtils
 
 class CheckoutProductoAdapter : ListAdapter<CartItem, CheckoutProductoAdapter.CheckoutViewHolder>(CartItemDiffCallback()) {
 
@@ -23,10 +22,11 @@ class CheckoutProductoAdapter : ListAdapter<CartItem, CheckoutProductoAdapter.Ch
 
     inner class CheckoutViewHolder(private val binding: ItemCheckoutProductoBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(cartItem: CartItem) {
-            binding.tvNombreProducto.text = cartItem.producto.name
+            binding.tvNombreProducto.text = cartItem.producto.producto_nombre
             binding.tvCantidad.text = "${cartItem.cantidad}x"
-            val subtotal = addIVA(cartItem.producto.price) * cartItem.cantidad
-            binding.tvSubtotal.text = formatCurrencyCLP(subtotal)
+            // El precio del producto ya incluye IVA, lo multiplicamos por la cantidad
+            val totalProducto = cartItem.producto.price * cartItem.cantidad
+            binding.tvSubtotal.text = CurrencyUtils.formatAsCLP(totalProducto)
         }
     }
 

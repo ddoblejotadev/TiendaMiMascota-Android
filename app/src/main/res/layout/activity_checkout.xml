@@ -128,40 +128,41 @@
                             android:inputType="textPostalAddress"
                             android:maxLines="2" />
                     </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Ciudad -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilCiudad"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Ciudad"
-                        android:layout_marginTop="12dp"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etCiudad"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:maxLines="1" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <!-- Región -->
+                    
+                    <!-- Región Dropdown -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilRegion"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Región"
                         android:layout_marginTop="12dp"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        android:hint="Región">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etRegion"
+                        <AutoCompleteTextView
+                            android:id="@+id/actvRegion"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:maxLines="1" />
+                            android:inputType="none"
+                            tools:ignore="LabelFor" />
                     </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Comuna Dropdown -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilComuna"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Comuna">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/actvComuna"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            tools:ignore="LabelFor" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
 
                     <!-- Código Postal (opcional) -->
                     <com.google.android.material.textfield.TextInputLayout
@@ -271,7 +272,32 @@
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="@color/text_primary" />
+                        </LinearLayout>
 
+                        <!-- IVA (19%) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="IVA (19%)"
+                                android:textSize="16sp"
+                                android:textColor="@color/text_primary" />
+
+                            <TextView
+                                android:id="@+id/tvIva"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="$0"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/text_primary" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -297,7 +323,6 @@
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="@color/text_primary" />
-
                         </LinearLayout>
 
                         <View
@@ -332,9 +357,7 @@
                                 android:textColor="@color/primary"
                                 tools:text="$51.980" />
                         </LinearLayout>
-
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
