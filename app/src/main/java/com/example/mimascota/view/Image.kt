@@ -10,8 +10,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.mimascota.R
 
 @Composable
@@ -21,7 +23,7 @@ fun ProductImage(
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop
 ) {
-    key(imageUrl) {
+    key(imageUrl) { // Force recomposition when the URL changes
         when {
             imageUrl.isNullOrBlank() -> {
                 Image(
@@ -62,13 +64,22 @@ fun ProductImage(
                 }
             }
             else -> {
+                val imageRequest = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .placeholder(R.drawable.logo1)
+                    .error(R.drawable.logo1)
+                    // Explicitly set a memory cache key to prevent showing the old image.
+                    .memoryCacheKey(imageUrl)
+                    // Disable hardware bitmaps which can cause issues with transitions.
+                    .allowHardware(false)
+                    .build()
+
                 AsyncImage(
-                    model = imageUrl,
+                    model = imageRequest,
                     contentDescription = contentDescription,
                     modifier = modifier,
-                    contentScale = contentScale,
-                    placeholder = painterResource(R.drawable.logo1),
-                    error = painterResource(R.drawable.logo1)
+                    contentScale = contentScale
                 )
             }
         }
