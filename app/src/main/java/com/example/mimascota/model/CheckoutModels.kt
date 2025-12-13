@@ -73,12 +73,11 @@ data class OrdenHistorial(
     val subtotal: Double?,
     @SerializedName("esInvitado")
     val esInvitado: Boolean?,
-    // Corregido: El backend usa camelCase para este campo en las órdenes
     @SerializedName("usuarioId") 
     val usuarioId: Long?,
     @SerializedName("datosEnvio")
     val datosEnvio: DatosEnvioResponse?,
-    @SerializedName("items")
+    @SerializedName("productos")
     val productos: List<ProductoOrden>?
 )
 
@@ -98,12 +97,10 @@ data class DatosEnvioResponse(
 data class ProductoOrden(
     @SerializedName("productoId")
     val productoId: Int,
-    @SerializedName("productoNombre")
     val nombre: String?,
     val cantidad: Int?,
     @SerializedName("precioUnitario")
     val precioUnitario: Double?,
-    @SerializedName("productoImagen")
     val imagen: String?
 )
 

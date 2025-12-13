@@ -4,15 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:paddingVertical="8dp"
+    android:gravity="center_vertical">
 
     <ImageView
         android:id="@+id/ivProductoImagen"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:scaleType="centerCrop"
-        tools:src="@drawable/logo_app" />
+        tools:src="@drawable/placeholder_product" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -25,25 +25,25 @@
             android:id="@+id/tvProductoNombre"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
-            tools:text="Nombre del Producto" />
+            tools:text="Producto de Ejemplo" />
 
         <TextView
-            android:id="@+id/tvCantidad"
+            android:id="@+id/tvProductoCantidad"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/darker_gray"
-            tools:text="Cantidad: 1" />
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textColor="@color/text_secondary"
+            tools:text="Cantidad: 2" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tvPrecioUnitario"
+        android:id="@+id/tvProductoPrecio"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
         android:textStyle="bold"
-        android:textColor="@android:color/black"
-        tools:text="$5.990" />
+        tools:text="$9.990" />
 
 </LinearLayout>

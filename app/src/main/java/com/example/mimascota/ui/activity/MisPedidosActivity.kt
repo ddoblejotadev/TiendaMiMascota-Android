@@ -15,9 +15,6 @@ import com.example.mimascota.viewModel.MisPedidosViewModelFactory
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 
-/**
- * MisPedidosActivity: Pantalla para ver el historial de órdenes del usuario
- */
 class MisPedidosActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMisPedidosBinding
@@ -29,28 +26,19 @@ class MisPedidosActivity : AppCompatActivity() {
         binding = ActivityMisPedidosBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Usar factory por compatibilidad pero sin tokenManager obligatorio
         val factory = MisPedidosViewModelFactory(TokenManager)
         viewModel = ViewModelProvider(this, factory)[MisPedidosViewModel::class.java]
 
-        // Configurar RecyclerView
         setupRecyclerView()
-
-        // Configurar toolbar
         setupToolbar()
-
-        // Observar datos del ViewModel
         observeData()
 
-        // Cargar órdenes
         viewModel.cargarMisOrdenes()
 
-        // Añadir acción para sincronizar perfil desde la UI si está vacío
         binding.tvSinOrdenes.setOnClickListener {
             viewModel.cargarMisOrdenes()
         }
 
-        // Observadores adicionales
         viewModel.error.observe(this) { err ->
             err?.let {
                 if (it.contains("Usuario no autenticado") || it.contains("No se pudo recuperar perfil")) {
@@ -68,13 +56,8 @@ class MisPedidosActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Configurar RecyclerView
-     */
     private fun setupRecyclerView() {
-        adapter = OrdenesAdapter { orden ->
-            Toast.makeText(this, "Orden #${orden.numeroOrden}", Toast.LENGTH_SHORT).show()
-        }
+        adapter = OrdenesAdapter() // No click listener needed anymore
 
         binding.recyclerViewOrdenes.apply {
             layoutManager = LinearLayoutManager(this@MisPedidosActivity)
@@ -82,9 +65,6 @@ class MisPedidosActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Configurar toolbar
-     */
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -94,9 +74,6 @@ class MisPedidosActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Observar datos del ViewModel
-     */
     private fun observeData() {
         viewModel.misOrdenes.observe(this) { ordenes ->
             if (ordenes.isNullOrEmpty()) {

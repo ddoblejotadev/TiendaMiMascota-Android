@@ -1,23 +1,25 @@
 package com.example.mimascota.ui.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
-import com.example.mimascota.R
 import com.example.mimascota.databinding.ItemOrdenBinding
 import com.example.mimascota.model.OrdenHistorial
+import com.example.mimascota.model.ProductoHistorial
+import com.example.mimascota.util.CurrencyUtils
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
 class OrdenesAdapter(
-    private val onItemClicked: (OrdenHistorial) -> Unit
 ) : ListAdapter<OrdenHistorial, OrdenesAdapter.OrdenViewHolder>(DiffCallback()) {
+
+    private val expandedState = mutableMapOf<Long, Boolean>()
+    private val viewPool = RecyclerView.RecycledViewPool()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrdenViewHolder {
         val binding = ItemOrdenBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -26,11 +28,24 @@ class OrdenesAdapter(
 
     override fun onBindViewHolder(holder: OrdenViewHolder, position: Int) {
         val orden = getItem(position)
-        holder.bind(orden)
+        val isExpanded = expandedState[orden.id] ?: false
+        holder.bind(orden, isExpanded)
     }
 
     inner class OrdenViewHolder(private val binding: ItemOrdenBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(orden: OrdenHistorial) {
+        init {
+            binding.headerOrden.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val orden = getItem(position)
+                    val isExpanded = !(expandedState[orden.id] ?: false)
+                    expandedState[orden.id] = isExpanded
+                    notifyItemChanged(position)
+                }
+            }
+        }
+
+        fun bind(orden: OrdenHistorial, isExpanded: Boolean) {
             binding.tvNumeroOrden.text = "Orden #${orden.numeroOrden ?: "N/A"}"
             binding.tvEstadoOrden.text = orden.estado ?: "Desconocido"
 
@@ -44,34 +59,38 @@ class OrdenesAdapter(
                 binding.tvFechaOrden.text = (orden.fecha?.split("T")?.firstOrNull() ?: orden.fecha) ?: "Fecha no disponible"
             }
 
-            binding.tvTotalOrden.text = String.format(Locale.getDefault(), "$%,.0f", orden.total ?: 0.0)
+            binding.tvTotalOrden.text = CurrencyUtils.formatAsCLP(orden.total)
 
-            // Limpiar vistas anteriores
-            binding.productosContainer.removeAllViews()
+            // Visibilidad del detalle
+            binding.detalleOrdenContainer.visibility = if (isExpanded) View.VISIBLE else View.GONE
 
-            // Añadir vistas de detalle de productos
-            orden.productos?.forEach { item ->
-                val inflater = LayoutInflater.from(binding.root.context)
-                val detalleView = inflater.inflate(R.layout.item_detalle_orden, binding.productosContainer, false)
-
-                val ivProductoImagen = detalleView.findViewById<ImageView>(R.id.ivProductoImagen)
-                val tvProductoNombre = detalleView.findViewById<TextView>(R.id.tvProductoNombre)
-                val tvCantidad = detalleView.findViewById<TextView>(R.id.tvCantidad)
-                val tvPrecioUnitario = detalleView.findViewById<TextView>(R.id.tvPrecioUnitario)
-
-                tvProductoNombre.text = item.nombre ?: "Producto sin nombre"
-                tvCantidad.text = "Cantidad: ${item.cantidad ?: 0}"
-                tvPrecioUnitario.text = String.format(Locale.getDefault(), "$%,.0f", item.precioUnitario ?: 0.0)
-                ivProductoImagen.load(item.imagen) {
-                    placeholder(android.R.drawable.ic_menu_gallery)
-                    error(android.R.drawable.ic_menu_close_clear_cancel)
+            if (isExpanded) {
+                // Setup del RecyclerView de productos
+                val detalleAdapter = DetalleProductoAdapter()
+                binding.rvProductosDetalle.apply {
+                    layoutManager = LinearLayoutManager(binding.root.context)
+                    adapter = detalleAdapter
+                    setRecycledViewPool(viewPool)
                 }
+                val productosHistorial = orden.productos?.map { 
+                    ProductoHistorial(
+                        productoId = it.productoId.toString(),
+                        nombre = it.nombre ?: "",
+                        cantidad = it.cantidad ?: 0,
+                        precioUnitario = it.precioUnitario ?: 0.0,
+                        imagen = it.imagen ?: ""
+                    )
+                }
+                detalleAdapter.submitList(productosHistorial)
 
-                binding.productosContainer.addView(detalleView)
-            }
+                // Desglose de precios
+                val totalConIva = orden.total ?: 0.0
+                val subtotal = CurrencyUtils.getBasePrice(totalConIva)
+                val iva = totalConIva - subtotal
 
-            itemView.setOnClickListener {
-                onItemClicked(orden)
+                binding.tvDetalleSubtotal.text = CurrencyUtils.formatAsCLP(subtotal)
+                binding.tvDetalleIva.text = CurrencyUtils.formatAsCLP(iva)
+                binding.tvDetalleEnvio.text = ""
             }
         }
     }
