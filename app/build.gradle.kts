@@ -71,17 +71,13 @@ android {
 
 dependencies {
 
-    implementation("androidx.compose.material:material-icons-extended:1.5.0")
-
-    // Core / Activity
-    implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.activity:activity-compose:1.7.2")
-
-    // Compose
-    implementation("androidx.compose.ui:ui:1.5.0")
-    implementation("androidx.compose.material3:material3:1.3.0")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
+    // Compose - BOM se encarga de las versiones
     implementation(platform(libs.androidx.compose.bom))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.activity:activity-compose")
 
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.7.7")

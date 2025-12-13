@@ -103,14 +103,57 @@ fun AdminProductEditScreen(navController: NavController, adminViewModel: AdminVi
     LaunchedEffect(producto) {
         producto?.let { p ->
             nombre = p.producto_nombre
-            descripcion = p.description ?: ""
+            var currentDescription = p.description ?: ""
             precio = p.price.toString()
             stock = p.stock?.toString() ?: "0"
-            tipoMascota = p.tipoMascota ?: ""
-            raza = p.raza ?: ""
-            edad = p.edad ?: ""
-            pesoMascota = p.pesoMascota?.toString() ?: ""
-            
+
+            // --- Lógica de Migración y Limpieza de Datos ---
+            var finalTipoMascota = p.tipoMascota ?: ""
+            var finalRaza = p.raza ?: ""
+            var finalEdad = p.edad ?: ""
+            var finalPesoMascota = p.pesoMascota?.toString() ?: ""
+            var wasDataMigrated = false
+
+            // Si los campos nuevos están vacíos, intentar extraer de la descripción
+            if (finalTipoMascota.isBlank() && finalRaza.isBlank() && finalEdad.isBlank() && finalPesoMascota.isBlank()) {
+                val linesToKeep = mutableListOf<String>()
+                val recommendationKeys = setOf("tipo de mascota", "raza", "edad", "peso")
+
+                currentDescription.lines().forEach { line ->
+                    val parts = line.split(":", limit = 2)
+                    var isRecommendationLine = false
+                    if (parts.size == 2) {
+                        val key = parts[0].trim().lowercase()
+                        val value = parts[1].trim()
+                        if (key in recommendationKeys) {
+                            isRecommendationLine = true
+                            wasDataMigrated = true
+                            when (key) {
+                                "tipo de mascota" -> finalTipoMascota = value
+                                "raza" -> finalRaza = value
+                                "edad" -> finalEdad = value
+                                "peso" -> finalPesoMascota = value
+                            }
+                        }
+                    }
+                    if (!isRecommendationLine) {
+                        linesToKeep.add(line)
+                    }
+                }
+
+                // Si se migraron datos, actualizar la descripción
+                if (wasDataMigrated) {
+                    currentDescription = linesToKeep.joinToString(separator = "\n").trim()
+                }
+            }
+
+            descripcion = currentDescription
+            tipoMascota = finalTipoMascota
+            raza = finalRaza
+            edad = finalEdad
+            pesoMascota = finalPesoMascota
+            // --- Fin de la Migración ---
+
             val url = p.imageUrl
             if (url != null && url.startsWith("http")) {
                 imageUrlInput = url
