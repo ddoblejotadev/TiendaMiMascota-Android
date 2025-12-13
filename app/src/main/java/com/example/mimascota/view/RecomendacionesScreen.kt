@@ -136,20 +136,24 @@ fun RecomendacionesScreen(navController: NavController, catalogoViewModel: Catal
             }
             Spacer(modifier = Modifier.height(16.dp))
             if (submitted) {
-                LazyVerticalGrid(columns = GridCells.Fixed(2)) {
-                    items(filteredProducts) { producto ->
-                        val qtyInCart = cantidadesPorProducto[producto.producto_id] ?: 0
-                        ProductoCard(
-                            producto = producto,
-                            onProductoClick = {
-                                navController.navigate("Detalle/${producto.producto_id}")
-                            },
-                            onAddToCart = {
-                                Log.d("RecomendacionesScreen", "Agregar al carrito pedido para id=${producto.producto_id}")
-                                cartViewModel.agregarAlCarrito(producto)
-                            },
-                            cartQuantity = qtyInCart
-                        )
+                if (filteredProducts.isEmpty()) {
+                    Text("producto no encontrado")
+                } else {
+                    LazyVerticalGrid(columns = GridCells.Fixed(2)) {
+                        items(filteredProducts) { producto ->
+                            val qtyInCart = cantidadesPorProducto[producto.producto_id] ?: 0
+                            ProductoCard(
+                                producto = producto,
+                                onProductoClick = {
+                                    navController.navigate("Detalle/${producto.producto_id}")
+                                },
+                                onAddToCart = {
+                                    Log.d("RecomendacionesScreen", "Agregar al carrito pedido para id=${producto.producto_id}")
+                                    cartViewModel.agregarAlCarrito(producto)
+                                },
+                                cartQuantity = qtyInCart
+                            )
+                        }
                     }
                 }
             }
