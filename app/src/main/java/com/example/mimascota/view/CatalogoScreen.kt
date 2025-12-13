@@ -32,7 +32,12 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, cartViewModel: CartViewModel) {
+fun CatalogoScreen(
+    navController: NavController, 
+    viewModel: CatalogoViewModel, 
+    cartViewModel: CartViewModel, 
+    categoriaInicial: String?
+) {
     val productos by viewModel.productos.collectAsState()
 
     // Obtener items del carrito para badges y cantidades por producto
@@ -50,6 +55,12 @@ fun CatalogoScreen(navController: NavController, viewModel: CatalogoViewModel, c
     }
 
     var selectedCategoria by remember { mutableStateOf("Todas") }
+
+    LaunchedEffect(categoriaInicial) {
+        if (categoriaInicial != null) {
+            selectedCategoria = categoriaInicial
+        }
+    }
 
     // Filtrado local por categoría
     val productosMostrados = remember(productos, selectedCategoria) {

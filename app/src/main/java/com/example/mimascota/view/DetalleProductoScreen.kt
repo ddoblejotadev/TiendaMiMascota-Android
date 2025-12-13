@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +20,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.mimascota.model.Producto
 import com.example.mimascota.util.CurrencyUtils
@@ -76,19 +76,31 @@ fun DetalleProductoScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // --- Sección de Etiquetas de Recomendación ---
+            Text(text = "Explorar productos similares", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
             val scrollState = rememberScrollState()
             Row(modifier = Modifier.horizontalScroll(scrollState)) {
+
+                // Chip para la categoría del producto
+                producto.category.takeIf { it.isNotBlank() }?.let {
+                    ChipInfo(
+                        icon = Icons.Default.Category, 
+                        text = it, 
+                        onClick = { navController.navigate("Catalogo?categoria=$it") }
+                    )
+                }
+                
                 producto.tipoMascota?.takeIf { it.isNotBlank() }?.let {
-                    ChipInfo(icon = Icons.Default.Pets, text = it)
+                    ChipInfo(icon = Icons.Default.Pets, text = it, onClick = { /* No action for now */ })
                 }
                 producto.raza?.takeIf { it.isNotBlank() }?.let {
-                    ChipInfo(icon = Icons.Default.Pets, text = it) // Puedes usar otro ícono para raza
+                    ChipInfo(icon = Icons.Default.Pets, text = it, onClick = { /* No action for now */ })
                 }
                 producto.edad?.takeIf { it.isNotBlank() }?.let {
-                    ChipInfo(icon = Icons.Default.Cake, text = it)
+                    ChipInfo(icon = Icons.Default.Cake, text = it, onClick = { /* No action for now */ })
                 }
                 producto.pesoMascota?.let {
-                    ChipInfo(icon = Icons.Default.MonitorWeight, text = "${it}kg")
+                    ChipInfo(icon = Icons.Default.MonitorWeight, text = "${it}kg", onClick = { /* No action for now */ })
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -184,10 +196,14 @@ fun DetalleProductoScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChipInfo(icon: ImageVector, text: String) {
+private fun ChipInfo(
+    icon: ImageVector, 
+    text: String, 
+    onClick: () -> Unit
+) {
     SuggestionChip(
         modifier = Modifier.padding(end = 8.dp),
-        onClick = { /* No action */ },
+        onClick = onClick,
         icon = {
             Icon(
                 imageVector = icon,

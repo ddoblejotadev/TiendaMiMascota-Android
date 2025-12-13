@@ -57,7 +57,16 @@ class MainActivity : ComponentActivity() {
                     val name = backStack.arguments?.getString("name")
                     HomeScreen(navController, name, authViewModel)
                 }
-                composable("Catalogo") { CatalogoScreen(navController, catalogoViewModel, cartViewModel) }
+                composable(
+                    route = "Catalogo?categoria={categoria}",
+                    arguments = listOf(navArgument("categoria") { 
+                        type = NavType.StringType
+                        nullable = true
+                    })
+                ) { backStackEntry ->
+                    val categoria = backStackEntry.arguments?.getString("categoria")
+                    CatalogoScreen(navController, catalogoViewModel, cartViewModel, categoria)
+                }
                 composable("Detalle/{id}") { backStack ->
                     val id = backStack.arguments?.getString("id")?.toIntOrNull()
                     if (id != null) {
