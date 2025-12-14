@@ -1,15 +1,45 @@
+
 package com.example.mimascota.view
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mimascota.viewModel.CartViewModel
@@ -22,16 +52,17 @@ fun RecomendacionesScreen(
     recomendacionesViewModel: RecomendacionesViewModel = viewModel(),
     cartViewModel: CartViewModel = viewModel()
 ) {
-    val tiposAnimal by recomendacionesViewModel.tiposAnimal.collectAsState(initial = emptyList())
-    val categorias by recomendacionesViewModel.categorias.collectAsState(initial = emptyList())
+    val tiposAnimal by recomendacionesViewModel.tiposAnimal.collectAsStateWithLifecycle()
+    val categorias by recomendacionesViewModel.categorias.collectAsStateWithLifecycle()
 
-    val tipoAnimalSeleccionado by recomendacionesViewModel.tipoAnimalSeleccionado.collectAsState()
-    val categoriaSeleccionada by recomendacionesViewModel.categoriaSeleccionada.collectAsState()
-    val razaSeleccionada by recomendacionesViewModel.raza.collectAsState()
-    val edadSeleccionada by recomendacionesViewModel.edad.collectAsState()
+    val tipoAnimalSeleccionado by recomendacionesViewModel.tipoAnimalSeleccionado.collectAsStateWithLifecycle()
+    val categoriaSeleccionada by recomendacionesViewModel.categoriaSeleccionada.collectAsStateWithLifecycle()
+    val razaSeleccionada by recomendacionesViewModel.raza.collectAsStateWithLifecycle()
+    val edadSeleccionada by recomendacionesViewModel.edad.collectAsStateWithLifecycle()
 
-    val recomendaciones by recomendacionesViewModel.recomendaciones.collectAsState()
-    val cartItems by cartViewModel.items.collectAsState()
+    val recomendaciones by recomendacionesViewModel.recomendaciones.collectAsStateWithLifecycle()
+    val isSearching by recomendacionesViewModel.isSearching.collectAsStateWithLifecycle()
+    val cartItems by cartViewModel.items.collectAsStateWithLifecycle()
     val cantidadesPorProducto = remember(cartItems) { cartItems.associate { it.producto.producto_id to it.cantidad } }
     var submitted by remember { mutableStateOf(false) }
 
@@ -73,13 +104,17 @@ fun RecomendacionesScreen(
             Button(onClick = { 
                 submitted = true
                 recomendacionesViewModel.buscarRecomendaciones() 
-            }, modifier = Modifier.fillMaxWidth()) {
-                Text("Obtener Recomendaciones")
+            }, modifier = Modifier.fillMaxWidth(), enabled = !isSearching) {
+                if(isSearching) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Obtener Recomendaciones")
+                }
             }
             
             Spacer(Modifier.height(16.dp))
             
-            if (submitted) {
+            if (submitted && !isSearching) {
                 if (recomendaciones.isEmpty()) {
                     Text("No se encontraron productos con esos criterios.")
                 } else {
@@ -94,6 +129,10 @@ fun RecomendacionesScreen(
                             )
                         }
                     }
+                }
+            } else if (isSearching) {
+                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
             }
         }
