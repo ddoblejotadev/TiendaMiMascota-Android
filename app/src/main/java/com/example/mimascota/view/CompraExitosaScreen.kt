@@ -188,7 +188,11 @@ fun CompraExitosaScreen(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedButton(
-                    onClick = { navController.navigate("MisPedidos") },
+                    onClick = {
+                        navController.navigate("MisPedidos") {
+                            popUpTo(navController.graph.startDestinationId)
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
                     Text("Ver mis pedidos", style = MaterialTheme.typography.labelLarge)
