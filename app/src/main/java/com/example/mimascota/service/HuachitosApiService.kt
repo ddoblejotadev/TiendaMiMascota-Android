@@ -1,6 +1,6 @@
 package com.example.mimascota.service
 
-import com.example.mimascota.model.Animal
+import com.example.mimascota.model.AnimalDetailResponse
 import com.example.mimascota.model.HuachitosResponse
 import retrofit2.Response
 import retrofit2.http.GET
@@ -53,5 +53,5 @@ interface HuachitosApiService {
     @GET("animal/{id}")
     suspend fun getAnimalById(
         @Path("id") animalId: Int
-    ): Response<Animal> // Se espera un objeto Animal directamente
+    ): Response<AnimalDetailResponse>
 }

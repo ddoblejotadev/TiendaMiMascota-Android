@@ -15,26 +15,27 @@ data class HuachitosDetailResponse(
 // Modelo para un solo animal, usando @SerializedName para mapear los nombres del JSON
 data class Animal(
     val id: Int,
-    val nombre: String,
-    val tipo: String, // "Perro", "Gato", etc.
-    val edad: String,
-    val estado: String, // "adopcion", "encontrado", etc.
-    val genero: String, // "macho", "hembra"
-    
-    @SerializedName("desc_fisica")
-    val descFisica: String,
-    
-    @SerializedName("desc_personalidad")
-    val descPersonalidad: String,
-    
-    @SerializedName("desc_adicional")
-    val descAdicional: String,
-    
-    val esterilizado: Int, // 1 para sí, 0 para no
-    val vacunas: Int, // 1 para sí, 0 para no
-    val imagen: String, // URL de la imagen
-    val equipo: String,
-    val region: String,
-    val comuna: String,
-    val url: String
-)
+    val nombre: String?,
+    val tipo: String?,
+    val edad: String?,
+    val genero: String?,
+    val comuna: String?,
+    val region: String?,
+    @SerializedName("desc_fisica") val descFisica: String?,
+    @SerializedName("desc_personalidad") val descPersonalidad: String?,
+    @SerializedName("desc_adicional") val descAdicional: String?,
+    val url: String?,
+
+    // Campo para la respuesta de la lista (una sola imagen)
+    @SerializedName("imagen") private val imagenUrl: String?,
+
+    // Campo para la respuesta de detalles (lista de imágenes)
+    val imagenes: List<Imagen>?,
+) {
+    /**
+     * Propiedad computada para obtener la URL de la imagen principal,
+     * independientemente de si viene como una cadena o una lista.
+     */
+    val imagen: String
+        get() = imagenes?.firstOrNull()?.imagen ?: imagenUrl ?: ""
+}

@@ -1,7 +1,7 @@
 package com.example.mimascota.view
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.* // ktlint-disable no-wildcard-imports
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -147,16 +147,16 @@ fun AdopcionAnimalCard(animal: Animal, onClick: (Int) -> Unit) {
         Column {
             AsyncImage(
                 model = animal.imagen,
-                contentDescription = animal.nombre,
+                contentDescription = animal.nombre ?: "Animal en adopción",
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp),
                 contentScale = ContentScale.Crop
             )
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(animal.nombre, style = MaterialTheme.typography.titleLarge)
-                Text("${animal.tipo} - ${animal.edad}", style = MaterialTheme.typography.bodyMedium)
-                Text("${animal.comuna}, ${animal.region}", style = MaterialTheme.typography.bodySmall)
+                Text(animal.nombre ?: "Sin nombre", style = MaterialTheme.typography.titleLarge)
+                Text("${animal.tipo ?: ""} - ${animal.edad ?: ""}", style = MaterialTheme.typography.bodyMedium)
+                Text("${animal.comuna ?: ""}, ${animal.region ?: ""}", style = MaterialTheme.typography.bodySmall)
             }
         }
     }
