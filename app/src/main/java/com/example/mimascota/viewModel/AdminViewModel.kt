@@ -1,3 +1,4 @@
+
 package com.example.mimascota.viewModel
 
 import android.util.Log
@@ -41,52 +42,75 @@ class AdminViewModel : ViewModel() {
             _isLoading.value = true
             _error.value = null
             try {
-                val usersResult = adminRepository.getAllUsers()
-                val ordersResult = adminRepository.getAllOrders()
+                // 1. Fetch all products to create a lookup map
+                val allProducts = when (val result = productoRepository.getAllProductos()) {
+                    is ProductoRepository.ProductoResult.Success -> result.data
+                    is ProductoRepository.ProductoResult.Error -> {
+                        _error.value = result.message
+                        Log.e("AdminViewModel", "Error loading products: ${result.message}")
+                        emptyList()
+                    }
+                    else -> emptyList()
+                }
+                _productos.value = allProducts
+                val productsMap = allProducts.associateBy { it.producto_id }
 
-                val users = when (usersResult) {
+                // 2. Fetch all orders
+                val orders = when (val ordersResult = adminRepository.getAllOrders()) {
+                    is AdminRepository.AdminResult.Success -> ordersResult.data ?: emptyList()
+                    is AdminRepository.AdminResult.Error -> {
+                        _error.value = ordersResult.message
+                        Log.e("AdminViewModel", "Error loading orders: ${ordersResult.message}")
+                        emptyList()
+                    }
+                }
+
+                // 3. Enrich orders with product details (FIXED LOGIC)
+                val enrichedOrders = orders.map { order ->
+                    val enrichedProductos = order.productos?.map { productoDeOrden ->
+                        val fullProduct = productsMap[productoDeOrden.productoId]
+                        if (fullProduct == null) {
+                            Log.w("AdminViewModel", "Product ID ${productoDeOrden.productoId} in order #${order.id} not found in products map. It will be displayed with partial data.")
+                            productoDeOrden // Return original item if not found
+                        } else {
+                            // Return item with name and image from the full product details
+                            productoDeOrden.copy(
+                                nombre = fullProduct.producto_nombre,
+                                imagen = fullProduct.imageUrl
+                            )
+                        }
+                    }
+                    order.copy(productos = enrichedProductos)
+                }
+
+                // 4. Fetch users
+                val users = when (val usersResult = adminRepository.getAllUsers()) {
                     is AdminRepository.AdminResult.Success -> usersResult.data ?: emptyList()
                     is AdminRepository.AdminResult.Error -> {
                         _error.value = usersResult.message
-                        Log.e("AdminViewModel", "Error al cargar usuarios: ${usersResult.message}")
+                        Log.e("AdminViewModel", "Error loading users: ${usersResult.message}")
                         emptyList()
                     }
                 }
 
-                val orders = when (ordersResult) {
-                    is AdminRepository.AdminResult.Success -> {
-                        val receivedOrders = ordersResult.data ?: emptyList()
-                        // Diagnostic Log
-                        receivedOrders.firstOrNull()?.productos?.firstOrNull()?.let { firstProduct ->
-                            Log.d("AdminViewModel_DIAGNOSTIC", "Primer producto recibido: nombre='${firstProduct.nombre}', imagen='${firstProduct.imagen}'")
-                        }
-                        receivedOrders
-                    }
-                    is AdminRepository.AdminResult.Error -> {
-                        _error.value = ordersResult.message
-                        Log.e("AdminViewModel", "Error al cargar órdenes: ${ordersResult.message}")
-                        emptyList()
-                    }
-                }
-
+                // 5. Group enriched orders by user
                 val groupedData = users.map { user ->
-                    val userOrders = orders.filter { it.usuarioId == user.usuarioId.toLong() }
+                    val userOrders = enrichedOrders.filter { it.usuarioId == user.usuarioId.toLong() }
                     UserWithOrders(user, userOrders)
                 }
 
                 _usersWithOrders.value = groupedData
-                Log.d("AdminViewModel", "Datos de admin cargados. Usuarios: ${users.size}, Órdenes: ${orders.size}, Grupos con pedidos: ${groupedData.count { it.orders.isNotEmpty() }}")
-
-                loadProductos()
+                Log.d("AdminViewModel", "Admin data loaded and enriched. Users: ${users.size}, Orders: ${enrichedOrders.size}")
 
             } catch (e: Exception) {
                 _error.value = "Excepción: ${e.message}"
-                Log.e("AdminViewModel", "Excepción al cargar datos de admin", e)
+                Log.e("AdminViewModel", "Exception loading admin data", e)
             } finally {
                 _isLoading.value = false
             }
         }
     }
+
 
     // ========== PRODUCTOS CRUD ==========
 

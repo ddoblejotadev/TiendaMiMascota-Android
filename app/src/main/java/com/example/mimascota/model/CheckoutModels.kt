@@ -1,3 +1,4 @@
+
 package com.example.mimascota.model
 
 import com.google.gson.annotations.SerializedName
@@ -77,11 +78,11 @@ data class OrdenHistorial(
     val subtotal: Double?,
     @SerializedName("esInvitado")
     val esInvitado: Boolean?,
-    @SerializedName("usuarioId") 
+    @SerializedName("usuarioId")
     val usuarioId: Long?,
     @SerializedName("datosEnvio")
     val datosEnvio: DatosEnvioResponse?,
-    @SerializedName("productos")
+    @SerializedName("items") // Correctly maps JSON 'items' field to 'productos' property
     val productos: List<ProductoOrden>?
 )
 
@@ -101,10 +102,12 @@ data class DatosEnvioResponse(
 data class ProductoOrden(
     @SerializedName("productoId")
     val productoId: Int,
+    @SerializedName("productoNombre") // Maps JSON 'productoNombre' to 'nombre'
     val nombre: String?,
     val cantidad: Int?,
     @SerializedName("precioUnitario")
     val precioUnitario: Double?,
+    @SerializedName("productoImagen") // Maps JSON 'productoImagen' to 'imagen'
     val imagen: String?
 )
 

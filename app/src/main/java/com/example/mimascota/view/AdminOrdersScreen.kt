@@ -1,9 +1,21 @@
+
 package com.example.mimascota.view
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -12,12 +24,32 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -28,17 +60,20 @@ import com.example.mimascota.model.UserWithOrders
 import com.example.mimascota.util.CurrencyUtils
 import com.example.mimascota.viewModel.AdminViewModel
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
+import java.util.TimeZone
 
 // Estados posibles para una orden
 private val ORDER_STATUSES = listOf("PENDIENTE", "EN PROCESO", "ENVIADO", "ENTREGADO", "CANCELADO")
 
+// Main entry point
 @Composable
 fun AdminOrdersScreen(adminViewModel: AdminViewModel = viewModel()) {
     val usersWithOrders by adminViewModel.usersWithOrders.collectAsState()
     val isLoading by adminViewModel.isLoading.collectAsState()
     val error by adminViewModel.error.collectAsState()
 
+    // Filter out users who have no orders to display
     val usersWhoHaveOrdered = usersWithOrders.filter { it.orders.isNotEmpty() }
 
     when {
@@ -71,17 +106,18 @@ fun AdminOrdersScreen(adminViewModel: AdminViewModel = viewModel()) {
     }
 }
 
+// Composable for the User accordion
 @Composable
 fun UserOrdersAccordion(userWithOrders: UserWithOrders, adminViewModel: AdminViewModel) {
-    var isExpanded by remember { mutableStateOf(false) }
-    val rotationAngle by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f)
+    var isUserSectionExpanded by remember { mutableStateOf(false) }
+    val userRotationAngle by animateFloatAsState(targetValue = if (isUserSectionExpanded) 180f else 0f)
 
     Card(elevation = CardDefaults.cardElevation(2.dp)) {
         Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { isExpanded = !isExpanded }
+                    .clickable { isUserSectionExpanded = !isUserSectionExpanded }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -92,18 +128,23 @@ fun UserOrdersAccordion(userWithOrders: UserWithOrders, adminViewModel: AdminVie
                 }
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Desplegar",
-                    modifier = Modifier.rotate(rotationAngle)
+                    contentDescription = "Desplegar Usuario",
+                    modifier = Modifier.rotate(userRotationAngle)
                 )
             }
 
-            AnimatedVisibility(visible = isExpanded) {
+            AnimatedVisibility(visible = isUserSectionExpanded) {
                 Column(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     userWithOrders.orders.forEach { order ->
-                        AdminOrderCard(orden = order, onStatusChange = adminViewModel::updateOrderStatus)
+                        AdminOrderCard(
+                            orden = order,
+                            onStatusChange = { orderId, newStatus ->
+                                adminViewModel.updateOrderStatus(orderId, newStatus)
+                            }
+                        )
                         Divider()
                     }
                 }
@@ -112,167 +153,204 @@ fun UserOrdersAccordion(userWithOrders: UserWithOrders, adminViewModel: AdminVie
     }
 }
 
+// New, refactored AdminOrderCard that mimics "Mis Pedidos"
 @Composable
 fun AdminOrderCard(orden: OrdenHistorial, onStatusChange: (Long, String) -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            // --- Detalles del Pedido ---
-            OrderDetails(orden = orden, onStatusChange = onStatusChange)
+    var isOrderExpanded by remember { mutableStateOf(false) }
+    val orderRotationAngle by animateFloatAsState(targetValue = if (isOrderExpanded) 180f else 0f)
 
-            // --- Productos ---
-            orden.productos?.let {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text("Productos", style = MaterialTheme.typography.titleMedium)
-                it.forEach { item ->
-                    ProductOrderItem(item)
-                }
+    val formattedDate = remember(orden.fecha) { formatDate(orden.fecha) }
+
+    Column {
+        // Clickable header for each order
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { isOrderExpanded = !isOrderExpanded }
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text("Orden #${orden.numeroOrden ?: orden.id}", style = MaterialTheme.typography.titleMedium)
+                Text(formattedDate, style = MaterialTheme.typography.bodySmall)
+                Text(orden.estado ?: "Desconocido", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
             }
+             Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = "Desplegar Pedido",
+                modifier = Modifier.rotate(orderRotationAngle)
+            )
+        }
 
-            // --- Datos de Envío ---
-            orden.datosEnvio?.let {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text("Datos de Envío", style = MaterialTheme.typography.titleMedium)
-                ShippingDetails(it)
+        // Expanded view with all details
+        AnimatedVisibility(visible = isOrderExpanded) {
+            Column(Modifier.padding(top = 8.dp, bottom = 8.dp)) {
+                // Status Editor
+                OrderStatusEditor(
+                    currentStatus = orden.estado ?: "SIN ESTADO",
+                    onStatusChange = { newStatus -> onStatusChange(orden.id, newStatus) }
+                )
+                Spacer(Modifier.height(16.dp))
+
+                // Products List
+                orden.productos?.forEach { product ->
+                    ProductOrderItem(item = product)
+                    Spacer(Modifier.height(8.dp))
+                }
+                Spacer(Modifier.height(8.dp))
+
+                // Price Breakdown
+                val totalConIva = orden.total ?: 0.0
+                val subtotal = CurrencyUtils.getBasePrice(totalConIva)
+                val iva = totalConIva - subtotal
+
+                PriceDetailRow("Subtotal", CurrencyUtils.formatAsCLP(subtotal))
+                PriceDetailRow("IVA (19%)", CurrencyUtils.formatAsCLP(iva))
+                PriceDetailRow("Envío", "A convenir") // Placeholder
+                Divider(Modifier.padding(vertical = 8.dp))
+                PriceDetailRow("Total", CurrencyUtils.formatAsCLP(totalConIva), isTotal = true)
+
+                // Shipping Details
+                orden.datosEnvio?.let {
+                    Spacer(Modifier.height(16.dp))
+                    Text("Datos de Envío", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    ShippingDetails(datos = it)
+                }
             }
         }
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OrderDetails(orden: OrdenHistorial, onStatusChange: (Long, String) -> Unit) {
+private fun OrderStatusEditor(currentStatus: String, onStatusChange: (String) -> Unit) {
     var isStatusMenuExpanded by remember { mutableStateOf(false) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var selectedStatus by remember { mutableStateOf("") }
-
-    val formattedDate = remember(orden.fecha) {
-        try {
-            val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-            val date = orden.fecha?.let { parser.parse(it) }
-            date?.let { SimpleDateFormat("dd MMM, yyyy", Locale.getDefault()).format(it) } ?: "Fecha inválida"
-        } catch (e: Exception) {
-            orden.fecha ?: "Fecha desconocida"
-        }
-    }
 
     if (showConfirmationDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmationDialog = false },
             title = { Text("Confirmar Cambio de Estado") },
-            text = { Text("¿Estás seguro de que quieres cambiar el estado del pedido a '$selectedStatus'?") },
+            text = { Text("¿Estás seguro de que quieres cambiar el estado a '$selectedStatus'?") },
             confirmButton = {
                 Button(onClick = {
-                    onStatusChange(orden.id, selectedStatus)
+                    onStatusChange(selectedStatus)
                     showConfirmationDialog = false
                 }) { Text("Confirmar") }
             },
             dismissButton = {
-                Button(onClick = { showConfirmationDialog = false }) { Text("Cancelar") }
+                OutlinedButton(onClick = { showConfirmationDialog = false }) { Text("Cancelar") }
             }
         )
     }
-
-    Text("Orden #${orden.id} - $formattedDate", style = MaterialTheme.typography.titleMedium)
-    Text("Total: ${CurrencyUtils.formatAsCLP(orden.total)}", style = MaterialTheme.typography.bodyLarge)
-    Spacer(modifier = Modifier.height(8.dp))
 
     ExposedDropdownMenuBox(
         expanded = isStatusMenuExpanded,
         onExpandedChange = { isStatusMenuExpanded = !isStatusMenuExpanded },
     ) {
         OutlinedTextField(
-            value = orden.estado ?: "SIN ESTADO",
-            onValueChange = {}, // No editable
+            value = currentStatus,
+            onValueChange = {},
             readOnly = true,
-            label = { Text("Estado del Pedido") },
+            label = { Text("Actualizar Estado del Pedido") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isStatusMenuExpanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor()
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
         )
         ExposedDropdownMenu(expanded = isStatusMenuExpanded, onDismissRequest = { isStatusMenuExpanded = false }) {
             ORDER_STATUSES.forEach { status ->
-                DropdownMenuItem(
-                    text = { Text(status) },
-                    onClick = {
-                        selectedStatus = status
-                        showConfirmationDialog = true
-                        isStatusMenuExpanded = false
-                    }
-                )
+                if (status != currentStatus) {
+                    DropdownMenuItem(
+                        text = { Text(status) },
+                        onClick = {
+                            selectedStatus = status
+                            showConfirmationDialog = true
+                            isStatusMenuExpanded = false
+                        }
+                    )
+                }
             }
         }
     }
 }
 
+
 @Composable
 private fun ProductOrderItem(item: ProductoOrden) {
     val subtotal = (item.cantidad ?: 0) * (item.precioUnitario ?: 0.0)
-
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         ProductImage(
             imageUrl = item.imagen,
             contentDescription = item.nombre,
-            modifier = Modifier
-                .size(64.dp)
-                .clip(MaterialTheme.shapes.small)
+            modifier = Modifier.size(64.dp).clip(MaterialTheme.shapes.small)
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                item.nombre ?: "Nombre no disponible",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                "ID: ${item.productoId}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                "Cant: ${item.cantidad ?: 0} x ${CurrencyUtils.formatAsCLP(item.precioUnitario)}",
-                style = MaterialTheme.typography.bodyMedium
-            )
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(item.nombre ?: "Nombre no disponible", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            Text("Cant: ${item.cantidad ?: 0} x ${CurrencyUtils.formatAsCLP(item.precioUnitario)}", style = MaterialTheme.typography.bodyMedium)
         }
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            CurrencyUtils.formatAsCLP(subtotal),
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold
-        )
+        Text(CurrencyUtils.formatAsCLP(subtotal), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun PriceDetailRow(label: String, value: String, isTotal: Boolean = false) {
+    val fontWeight = if (isTotal) FontWeight.Bold else FontWeight.Normal
+    val style = if(isTotal) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontWeight = fontWeight, style = style)
+        Text(value, fontWeight = fontWeight, style = style)
     }
 }
 
 @Composable
 private fun ShippingDetails(datos: DatosEnvioResponse) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(datos.nombre ?: "N/A")
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(datos.email ?: "N/A")
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(datos.telefono ?: "N/A")
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Home, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("${datos.direccion}, ${datos.ciudad}, ${datos.region}")
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(start = 8.dp)) {
+        ShippingDetailItem(Icons.Default.Person, datos.nombre)
+        ShippingDetailItem(Icons.Default.Email, datos.email)
+        ShippingDetailItem(Icons.Default.Phone, datos.telefono)
+        ShippingDetailItem(Icons.Default.Home, "${datos.direccion}, ${datos.ciudad}, ${datos.region}")
+    }
+}
+
+@Composable
+private fun ShippingDetailItem(icon: ImageVector, text: String?) {
+     Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(8.dp))
+        Text(text ?: "N/A", style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+private fun formatDate(dateString: String?): String {
+    if (dateString.isNullOrBlank()) return "Fecha desconocida"
+    return try {
+        // Updated to handle format with microseconds
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.getDefault())
+        parser.timeZone = TimeZone.getTimeZone("UTC")
+        val date = parser.parse(dateString)
+        val formatter = SimpleDateFormat("dd MMMM, yyyy", Locale("es", "ES"))
+        formatter.format(date!!)
+    } catch (e: Exception) {
+        // Fallback for format without microseconds
+        try {
+            val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+            parser.timeZone = TimeZone.getTimeZone("UTC")
+            val date = parser.parse(dateString)
+            val formatter = SimpleDateFormat("dd MMMM, yyyy", Locale("es", "ES"))
+            formatter.format(date!!)
+        } catch (e2: Exception) {
+            dateString.split("T").firstOrNull() ?: "Fecha inválida"
         }
     }
 }
