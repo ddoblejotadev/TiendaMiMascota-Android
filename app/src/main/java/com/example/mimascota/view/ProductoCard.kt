@@ -1,10 +1,23 @@
+
 package com.example.mimascota.view
 
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
@@ -35,22 +48,13 @@ fun ProductoCard(producto: Producto, onProductoClick: () -> Unit, onAddToCart: (
         onClick = onProductoClick
     ) {
         Column(modifier = Modifier.padding(8.dp).scale(scale)) {
-            val imageUrl = producto.imageUrl
-            val finalImageUrl = remember(imageUrl) {
-                if (imageUrl != null && !imageUrl.startsWith("data:image") && !imageUrl.startsWith("http")) {
-                    "data:image/jpeg;base64,$imageUrl"
-                } else {
-                    imageUrl
-                }
-            }
-            
             ProductImage(
-                imageUrl = finalImageUrl,
+                imageUrl = producto.imageUrl,
                 contentDescription = producto.producto_nombre,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp),
-                contentScale = ContentScale.Crop
+                    .height(140.dp), // Set a fixed height for the image
+                contentScale = ContentScale.Crop // Crop the image to fill the bounds
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(producto.producto_nombre, style = MaterialTheme.typography.titleMedium)
