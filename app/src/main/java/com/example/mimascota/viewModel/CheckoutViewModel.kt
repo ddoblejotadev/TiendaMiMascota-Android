@@ -30,18 +30,28 @@ class CheckoutViewModel(private val tokenManager: TokenManager) : ViewModel() {
     private val _direccionError = MutableLiveData<String?>()
     val direccionError: LiveData<String?> = _direccionError
 
+    private val _regionError = MutableLiveData<String?>()
+    val regionError: LiveData<String?> = _regionError
+
+    private val _comunaError = MutableLiveData<String?>()
+    val comunaError: LiveData<String?> = _comunaError
+
     // LiveData para la validez del formulario
     private val _isFormValid = MutableLiveData<Boolean>()
     val isFormValid: LiveData<Boolean> = _isFormValid
 
-    fun validarFormulario(telefono: String, direccion: String) {
+    fun validarFormulario(telefono: String, direccion: String, region: String, comuna: String) {
         val isTelefonoValid = telefono.length == 9 && telefono.all { it.isDigit() }
         val isDireccionValid = direccion.isNotBlank()
+        val isRegionValid = region.isNotBlank()
+        val isComunaValid = comuna.isNotBlank()
 
         _telefonoError.value = if (isTelefonoValid) null else "El teléfono debe tener 9 dígitos."
         _direccionError.value = if (isDireccionValid) null else "La dirección es obligatoria."
+        _regionError.value = if (isRegionValid) null else "La región es obligatoria."
+        _comunaError.value = if (isComunaValid) null else "La comuna es obligatoria."
 
-        _isFormValid.value = isTelefonoValid && isDireccionValid
+        _isFormValid.value = isTelefonoValid && isDireccionValid && isRegionValid && isComunaValid
     }
 
     fun crearOrden(

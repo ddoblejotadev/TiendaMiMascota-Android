@@ -103,22 +103,45 @@ class CheckoutActivity : AppCompatActivity() {
         binding.etTelefono.addTextChangedListener {
             checkoutViewModel.validarFormulario(
                 telefono = it.toString(),
-                direccion = binding.etDireccion.text.toString()
+                direccion = binding.etDireccion.text.toString(),
+                region = binding.actvRegion.text.toString(),
+                comuna = binding.actvComuna.text.toString()
             )
         }
         binding.etDireccion.addTextChangedListener {
             checkoutViewModel.validarFormulario(
                 telefono = binding.etTelefono.text.toString(),
-                direccion = it.toString()
+                direccion = it.toString(),
+                region = binding.actvRegion.text.toString(),
+                comuna = binding.actvComuna.text.toString()
+            )
+        }
+        binding.actvRegion.addTextChangedListener {
+            checkoutViewModel.validarFormulario(
+                telefono = binding.etTelefono.text.toString(),
+                direccion = binding.etDireccion.text.toString(),
+                region = it.toString(),
+                comuna = binding.actvComuna.text.toString()
+            )
+        }
+        binding.actvComuna.addTextChangedListener {
+            checkoutViewModel.validarFormulario(
+                telefono = binding.etTelefono.text.toString(),
+                direccion = binding.etDireccion.text.toString(),
+                region = binding.actvRegion.text.toString(),
+                comuna = it.toString()
             )
         }
     }
 
+
     private fun setupDropdowns() {
         val regionComunaMap = mapOf(
-            "Región Metropolitana" to listOf("Santiago", "Puente Alto", "Maipú", "La Florida", "Las Condes"),
-            "Región de Valparaíso" to listOf("Valparaíso", "Viña del Mar", "Quilpué", "Concón", "Villa Alemana"),
-            "Región del Maule" to listOf("Talca", "Curicó", "Linares", "Constitución")
+            "Región Metropolitana" to listOf("Santiago", "Puente Alto", "Maipú", "La Florida", "Las Condes", "Providencia", "Ñuñoa"),
+            "Región de Valparaíso" to listOf("Valparaíso", "Viña del Mar", "Quilpué", "Concón", "Villa Alemana", "San Antonio", "Los Andes"),
+            "Región del Maule" to listOf("Talca", "Curicó", "Linares", "Constitución", "Molina", "San Javier"),
+            "Región del Biobío" to listOf("Concepción", "Talcahuano", "Chillán", "Los Ángeles", "Coronel", "Hualpén"),
+            "Región de La Araucanía" to listOf("Temuco", "Padre Las Casas", "Villarrica", "Angol", "Pucón")
         )
 
         val regiones = regionComunaMap.keys.toList()
@@ -205,6 +228,14 @@ class CheckoutActivity : AppCompatActivity() {
 
         checkoutViewModel.direccionError.observe(this) {
             binding.tilDireccion.error = it
+        }
+
+        checkoutViewModel.regionError.observe(this) {
+            binding.tilRegion.error = it
+        }
+
+        checkoutViewModel.comunaError.observe(this) {
+            binding.tilComuna.error = it
         }
 
         checkoutViewModel.isFormValid.observe(this) {
