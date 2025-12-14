@@ -23,6 +23,27 @@ class CheckoutViewModel(private val tokenManager: TokenManager) : ViewModel() {
     private val _navegarARechazo = MutableLiveData<Event<String>>()
     val navegarARechazo: LiveData<Event<String>> = _navegarARechazo
 
+    // LiveData para los errores de validación
+    private val _telefonoError = MutableLiveData<String?>()
+    val telefonoError: LiveData<String?> = _telefonoError
+
+    private val _direccionError = MutableLiveData<String?>()
+    val direccionError: LiveData<String?> = _direccionError
+
+    // LiveData para la validez del formulario
+    private val _isFormValid = MutableLiveData<Boolean>()
+    val isFormValid: LiveData<Boolean> = _isFormValid
+
+    fun validarFormulario(telefono: String, direccion: String) {
+        val isTelefonoValid = telefono.length == 9 && telefono.all { it.isDigit() }
+        val isDireccionValid = direccion.isNotBlank()
+
+        _telefonoError.value = if (isTelefonoValid) null else "El teléfono debe tener 9 dígitos."
+        _direccionError.value = if (isDireccionValid) null else "La dirección es obligatoria."
+
+        _isFormValid.value = isTelefonoValid && isDireccionValid
+    }
+
     fun crearOrden(
         cartItems: List<CartItem>,
         datosEnvio: DatosEnvio,

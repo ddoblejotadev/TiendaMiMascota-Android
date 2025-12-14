@@ -1,7 +1,10 @@
 package com.example.mimascota.view
 
+import android.app.Activity
 import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +30,7 @@ import com.example.mimascota.util.CurrencyUtils
 import com.example.mimascota.viewModel.CartViewModel
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
+import java.net.URLEncoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +41,34 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
 
     val iva = CurrencyUtils.getIVAFromTotalPrice(totalConIva)
     val subtotal = totalConIva - iva
+
+    val checkoutLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            if (data?.getBooleanExtra("compraExitosa", false) == true) {
+
+                val numeroOrden = data.getStringExtra("NUMERO_ORDEN")
+
+                val itemsBeforeClear = viewModel.items.value
+                viewModel.vaciarCarrito()
+
+                val route = if (numeroOrden != null) {
+                    val itemsJson = Gson().toJson(itemsBeforeClear)
+                    val encodedItemsJson = URLEncoder.encode(itemsJson, "UTF-8")
+                    "compraExitosa?numeroOrden=$numeroOrden&items=$encodedItemsJson"
+                } else {
+                    "compraExitosa"
+                }
+
+                navController.navigate(route) {
+                    popUpTo("Carrito") { inclusive = true }
+                }
+            }
+        }
+    }
+
 
     Scaffold(
         topBar = {
@@ -87,18 +119,13 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                             Toast.makeText(context, "El carrito está vacío", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
-                        try {
-                            val gson = Gson()
-                            val itemsJson = gson.toJson(items)
-                            val intent = Intent(context, CheckoutActivity::class.java).apply {
-                                putExtra("cart_items_json", itemsJson)
-                                putExtra("cart_total", totalConIva)
-                            }
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            val intent = Intent(context, CheckoutActivity::class.java)
-                            context.startActivity(intent)
+                        val gson = Gson()
+                        val itemsJson = gson.toJson(items)
+                        val intent = Intent(context, CheckoutActivity::class.java).apply {
+                            putExtra("cart_items_json", itemsJson)
+                            putExtra("cart_total", totalConIva)
                         }
+                        checkoutLauncher.launch(intent)
                     },
                         enabled = items.isNotEmpty()
                     ) {

@@ -1,5 +1,6 @@
 package com.example.mimascota.ui.activity
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
@@ -7,6 +8,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mimascota.databinding.ActivityCheckoutBinding
@@ -52,6 +54,7 @@ class CheckoutActivity : AppCompatActivity() {
         setupDropdowns()
         handleIntentExtras()
         setupObservers()
+        setupValidation()
 
         binding.btnRealizarPedido.setOnClickListener {
             val nombre = binding.etNombreCompleto.text?.toString()?.trim() ?: ""
@@ -61,11 +64,6 @@ class CheckoutActivity : AppCompatActivity() {
             val region = binding.actvRegion.text.toString().trim()
             val comuna = binding.actvComuna.text.toString().trim()
             val codigoPostal = binding.etCodigoPostal.text?.toString()?.trim() ?: ""
-
-            if (nombre.isEmpty() || email.isEmpty() || direccion.isEmpty() || region.isEmpty() || comuna.isEmpty()) {
-                Toast.makeText(this, "Por favor completa todos los datos de envío", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
-            }
 
             val datosEnvio = DatosEnvio(
                 nombreCompleto = nombre,
@@ -99,10 +97,20 @@ class CheckoutActivity : AppCompatActivity() {
             binding.etTelefono.setText(it.telefono ?: "")
             binding.etDireccion.setText(it.direccion ?: "")
         }
+    }
 
-        binding.etDireccion.setOnClickListener {
-            val intent = Intent(this, ProfileEditActivity::class.java)
-            startActivity(intent)
+    private fun setupValidation() {
+        binding.etTelefono.addTextChangedListener {
+            checkoutViewModel.validarFormulario(
+                telefono = it.toString(),
+                direccion = binding.etDireccion.text.toString()
+            )
+        }
+        binding.etDireccion.addTextChangedListener {
+            checkoutViewModel.validarFormulario(
+                telefono = binding.etTelefono.text.toString(),
+                direccion = it.toString()
+            )
         }
     }
 
@@ -166,23 +174,10 @@ class CheckoutActivity : AppCompatActivity() {
         checkoutViewModel.ordenCreada.observe(this) { ordenResponse ->
             binding.progressBar.visibility = View.GONE
             ordenResponse?.let {
-                val totalConIva = checkoutAdapter.currentList.sumOf { i -> i.producto.price * i.cantidad }
-                val subtotal = CurrencyUtils.getBasePrice(totalConIva)
-                val iva = totalConIva - subtotal
-                val shipping = calculateShipping(totalConIva)
-
-                val intent = Intent(this, OrdenExitosaActivity::class.java).apply {
-                    putExtra("NUMERO_ORDEN", it.numeroOrden)
-                    putExtra("ORDEN_ID", it.id.toInt())
-                    putExtra("SUBTOTAL", subtotal)
-                    putExtra("IVA", iva)
-                    putExtra("SHIPPING", shipping)
-                    putExtra("TOTAL", it.total ?: 0.0)
-                    val gson = Gson()
-                    val itemsJson = gson.toJson(checkoutAdapter.currentList)
-                    putExtra("CART_ITEMS_JSON", itemsJson)
-                }
-                startActivity(intent)
+                val resultIntent = Intent()
+                resultIntent.putExtra("compraExitosa", true)
+                resultIntent.putExtra("NUMERO_ORDEN", it.numeroOrden)
+                setResult(Activity.RESULT_OK, resultIntent)
                 finish()
             }
         }
@@ -202,6 +197,18 @@ class CheckoutActivity : AppCompatActivity() {
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
                 checkoutViewModel.limpiarError()
             }
+        }
+
+        checkoutViewModel.telefonoError.observe(this) {
+            binding.tilTelefono.error = it
+        }
+
+        checkoutViewModel.direccionError.observe(this) {
+            binding.tilDireccion.error = it
+        }
+
+        checkoutViewModel.isFormValid.observe(this) {
+            binding.btnRealizarPedido.isEnabled = it
         }
     }
 

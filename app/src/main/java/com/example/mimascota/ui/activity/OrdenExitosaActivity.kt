@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.mimascota.MainActivity
 import com.example.mimascota.databinding.ActivityOrdenExitosaBinding
 import com.example.mimascota.model.CartItem
 import com.example.mimascota.ui.adapter.CheckoutProductoAdapter
@@ -63,8 +64,11 @@ class OrdenExitosaActivity : AppCompatActivity() {
         }
 
         binding.btnVolverInicio.setOnClickListener {
-            val intent = Intent(this, com.example.mimascota.MainActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            val intent = Intent(this, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                putExtra("NAVIGATE_TO", "Catalogo")
+                putExtra("CLEAR_CART", true)
+            }
             startActivity(intent)
             finish()
         }
@@ -72,8 +76,11 @@ class OrdenExitosaActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        val intent = Intent(this, com.example.mimascota.MainActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        val intent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            putExtra("NAVIGATE_TO", "Catalogo")
+            putExtra("CLEAR_CART", true)
+        }
         startActivity(intent)
         super.onBackPressed()
         finish()

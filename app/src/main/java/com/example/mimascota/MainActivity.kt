@@ -1,5 +1,6 @@
 package com.example.mimascota
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -52,6 +53,11 @@ class MainActivity : ComponentActivity() {
             val adminViewModel: AdminViewModel = viewModel()
             val recomendacionesViewModel: RecomendacionesViewModel = viewModel()
 
+            // Handles the intent that started the activity, and any new intents received
+            LaunchedEffect(navController) {
+                handleIntent(intent, navController, cartViewModel)
+            }
+
             NavHost(navController, startDestination = "register") {
                 composable("register") { RegisterScreen(navController, authViewModel) }
                 composable("login") { LoginScreen(navController, authViewModel) }
@@ -98,7 +104,28 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 composable("Carrito") { CarritoScreen(navController, cartViewModel) }
-                composable("compraExitosa") { CompraExitosaScreenWrapper(navController, cartViewModel, authViewModel) }
+                composable(
+                    route = "compraExitosa?numeroOrden={numeroOrden}&items={items}",
+                    arguments = listOf(
+                        navArgument("numeroOrden") { 
+                            type = NavType.StringType
+                            nullable = true 
+                        },
+                        navArgument("items") { 
+                            type = NavType.StringType
+                            nullable = true
+                        }
+                    )
+                ) { backStackEntry ->
+                    val numeroOrden = backStackEntry.arguments?.getString("numeroOrden")
+                    val itemsJson = backStackEntry.arguments?.getString("items")
+                    CompraExitosaScreenWrapper(
+                        navController = navController,
+                        authViewModel = authViewModel,
+                        numeroOrden = numeroOrden,
+                        itemsJson = itemsJson
+                    )
+                }
                 composable("compraRechazada/{tipoError}") { backStack ->
                     val tipoError = backStack.arguments?.getString("tipoError") ?: "PAGO"
                     CompraRechazadaScreenWrapper(navController, tipoError, cartViewModel, authViewModel)
@@ -132,6 +159,28 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 composable("fotoDePerfil") { FotoDePerfil(navController, authViewModel) }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        recreate()
+    }
+
+    private fun handleIntent(intent: Intent?, navController: NavHostController, cartViewModel: CartViewModel) {
+        intent?.let {
+            if (it.getBooleanExtra("CLEAR_CART", false)) {
+                cartViewModel.vaciarCarrito()
+                it.removeExtra("CLEAR_CART")
+            }
+            val navigateTo = it.getStringExtra("NAVIGATE_TO")
+            if (navigateTo == "Catalogo") {
+                navController.navigate("Catalogo") {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                }
+                it.removeExtra("NAVIGATE_TO")
             }
         }
     }
