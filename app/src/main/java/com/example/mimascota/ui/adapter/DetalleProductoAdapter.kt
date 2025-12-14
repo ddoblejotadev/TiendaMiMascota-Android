@@ -30,18 +30,23 @@ class DetalleProductoAdapter : ListAdapter<ProductoHistorial, DetalleProductoAda
             binding.tvProductoCantidad.text = "Cantidad: ${producto.cantidad}"
             binding.tvProductoPrecio.text = CurrencyUtils.formatAsCLP(producto.precioUnitario * producto.cantidad)
 
-            if (producto.imagen.startsWith("data:image")) {
-                val bitmap = ImageUtils.decodeBase64ToBitmap(producto.imagen)
-                if (bitmap != null) {
-                    binding.ivProductoImagen.setImageBitmap(bitmap)
-                } else {
-                    binding.ivProductoImagen.load(R.drawable.placeholder_product)
+            val imageUrl = producto.imagen
+
+            // Intenta decodificar como Base64 primero
+            val bitmap = ImageUtils.decodeBase64ToBitmap(imageUrl)
+
+            if (bitmap != null) {
+                // Si la decodificación es exitosa, es una imagen Base64
+                binding.ivProductoImagen.setImageBitmap(bitmap)
+            } else if (!imageUrl.isNullOrBlank()) {
+                // Si no es un Base64 válido, se asume que es una URL y se carga con Coil
+                binding.ivProductoImagen.load(imageUrl) {
+                    placeholder(R.drawable.logo1)
+                    error(R.drawable.logo1)
                 }
             } else {
-                binding.ivProductoImagen.load(producto.imagen) {
-                    placeholder(R.drawable.placeholder_product)
-                    error(R.drawable.placeholder_product)
-                }
+                // Si la URL de la imagen está vacía o nula, se carga la imagen de respaldo
+                binding.ivProductoImagen.load(R.drawable.logo1)
             }
         }
     }

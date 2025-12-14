@@ -82,7 +82,7 @@ data class OrdenHistorial(
     val usuarioId: Long?,
     @SerializedName("datosEnvio")
     val datosEnvio: DatosEnvioResponse?,
-    @SerializedName("items") // Correctly maps JSON 'items' field to 'productos' property
+    @SerializedName(value = "productos", alternate = ["items"]) // Handles both "productos" and "items"
     val productos: List<ProductoOrden>?
 )
 
@@ -102,12 +102,13 @@ data class DatosEnvioResponse(
 data class ProductoOrden(
     @SerializedName("productoId")
     val productoId: Int,
-    @SerializedName("productoNombre") // Maps JSON 'productoNombre' to 'nombre'
+    @SerializedName("productoNombre")
     val nombre: String?,
     val cantidad: Int?,
     @SerializedName("precioUnitario")
     val precioUnitario: Double?,
-    @SerializedName("productoImagen") // Maps JSON 'productoImagen' to 'imagen'
+    // This is the definitive fix: handles "imagen", "productoImagen", and "imageUrl" from server
+    @SerializedName(value = "imagen", alternate = ["productoImagen", "imageUrl"])
     val imagen: String?
 )
 
