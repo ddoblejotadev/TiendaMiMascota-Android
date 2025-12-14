@@ -23,13 +23,23 @@ class HuachitosViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
 
-    fun cargarAnimales(comunaId: Int, tipo: String? = null, estado: String? = null) {
+    fun cargarAnimales(comunaId: Int, tipo: String? = null, estado: String? = null, genero: String? = null) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            repository.getAnimales(comunaId, tipo, estado)
+            repository.getAnimales(comunaId, tipo, estado, genero)
                 .onSuccess { listaDeAnimales ->
-                    _animales.value = listaDeAnimales
+                    var filteredList = listaDeAnimales
+                    if (tipo != null) {
+                        filteredList = filteredList.filter { it.tipo?.lowercase() == tipo.lowercase() }
+                    }
+                    if (estado != null) {
+                        filteredList = filteredList.filter { it. estado?.lowercase() == estado.lowercase() }
+                    }
+                    if (genero != null) {
+                        filteredList = filteredList.filter { it.genero?.lowercase() == genero.lowercase() }
+                    }
+                    _animales.value = filteredList
                 }
                 .onFailure { throwable ->
                     _error.value = throwable.message ?: "Error desconocido"

@@ -9,15 +9,11 @@ class HuachitosRepository {
     suspend fun getAnimales(
         comunaId: Int,
         tipo: String? = null,
-        estado: String? = null
+        estado: String? = null,
+        genero: String? = null
     ): Result<List<Animal>> {
         return try {
-            val response = when {
-                tipo != null && estado != null -> apiService.getAnimalesPorComunaTipoYEstado(comunaId, tipo, estado)
-                tipo != null -> apiService.getAnimalesPorComunaYTipo(comunaId, tipo)
-                estado != null -> apiService.getAnimalesPorComunaYEstado(comunaId, estado)
-                else -> apiService.getAnimalesPorComuna(comunaId)
-            }
+            val response = apiService.getAnimales(comunaId, tipo, estado, genero)
 
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.data)

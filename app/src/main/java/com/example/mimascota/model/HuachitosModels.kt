@@ -21,6 +21,7 @@ data class Animal(
     val genero: String?,
     val comuna: String?,
     val region: String?,
+    val estado: String?,
     @SerializedName("desc_fisica") val descFisica: String?,
     @SerializedName("desc_personalidad") val descPersonalidad: String?,
     @SerializedName("desc_adicional") val descAdicional: String?,
