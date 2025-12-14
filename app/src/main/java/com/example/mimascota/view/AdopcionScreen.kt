@@ -65,7 +65,12 @@ fun AdopcionScreen(navController: NavController, huachitosViewModel: HuachitosVi
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).padding(horizontal = 16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(horizontal = 16.dp)
+                .fillMaxSize() // Asegura que la columna ocupe toda la pantalla
+        ) {
             // --- Sección de Filtros ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -137,40 +142,43 @@ fun AdopcionScreen(navController: NavController, huachitosViewModel: HuachitosVi
             Spacer(modifier = Modifier.height(16.dp))
 
             // --- Lista de Resultados ---
-            when {
-                isLoading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+            Box(modifier = Modifier.weight(1f)) { // Ocupa el espacio restante
+                when {
+                    isLoading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
                     }
-                }
-                error != null -> {
-                    val errorMessage = if (error?.contains("404") == true) {
-                        "No se encontraron animales con estos criterios."
-                    } else {
-                        "Ocurrió un error al buscar. Por favor, intenta de nuevo."
+                    error != null -> {
+                        val errorMessage = if (error?.contains("404") == true) {
+                            "No se encontraron animales con estos criterios."
+                        } else {
+                            "Ocurrió un error al buscar. Por favor, intenta de nuevo."
+                        }
+                        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = errorMessage,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
-                    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = errorMessage,
-                            textAlign = TextAlign.Center
-                        )
+                    animales.isEmpty() -> {
+                        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (hasSearched) "No se encontraron animales con los filtros seleccionados." else "Usa los filtros para buscar un huachito.",
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
-                }
-                animales.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = if (hasSearched) "No se encontraron animales con los filtros seleccionados." else "Usa los filtros para buscar un huachito.",
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-                else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        items(animales) { animal ->
-                            AdopcionAnimalCard(animal) { animalId ->
-                                navController.navigate("animalDetail/$animalId")
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(), // Rellena el espacio del Box
+                            contentPadding = PaddingValues(bottom = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            items(animales) { animal ->
+                                AdopcionAnimalCard(animal) { animalId ->
+                                    navController.navigate("animalDetail/$animalId")
+                                }
                             }
                         }
                     }
