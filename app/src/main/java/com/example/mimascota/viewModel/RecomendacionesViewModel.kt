@@ -84,14 +84,13 @@ class RecomendacionesViewModel : ViewModel() {
     }
 
     fun buscarRecomendaciones() {
-        Log.d(TAG, "--- 🚀 Iniciando Búsqueda de Recomendaciones (v_FINAL_EXPERTO) ---")
-        Log.d(TAG, "Inputs: Tipo=${_tipoAnimalSeleccionado.value}, Cat=${_categoriaSeleccionada.value}, Raza=${_raza.value}, Edad=${_edad.value}, Peso=${_peso.value}")
+        Log.d(TAG, "--- 🚀 Iniciando Búsqueda de Recomendaciones (v_ESTANDAR) ---")
+        Log.d(TAG, "Inputs: Tipo=${_tipoAnimalSeleccionado.value}, Cat=${_categoriaSeleccionada.value}, Raza/Tamaño=${_raza.value}, Edad=${_edad.value}")
 
-        // 1. FILTRO PRIMARIO INQUEBRANTABLE: Por tipo de animal.
         val productosPorTipo = _allProductos.value.filter { producto ->
             _tipoAnimalSeleccionado.value.isBlank() ||
             producto.tipoMascota?.equals(_tipoAnimalSeleccionado.value, ignoreCase = true) == true ||
-            producto.tipoMascota.isNullOrBlank() || producto.tipoMascota.equals("Otro", ignoreCase = true)
+            producto.tipoMascota.isNullOrBlank() || producto.tipoMascota.equals("Otro", ignoreCase = true) || producto.tipoMascota.equals("Ambos", ignoreCase = true)
         }
         Log.d(TAG, "Productos tras filtro primario (Tipo Animal): ${productosPorTipo.size}")
 
@@ -101,71 +100,47 @@ class RecomendacionesViewModel : ViewModel() {
             return
         }
 
-        // 2. PUNTUACIÓN DE RELEVANCIA
         val scoredProducts = productosPorTipo.map { producto ->
             producto to calculateScore(producto)
-        }.filter { it.second > 0 } // <-- CERO TOLERANCIA: Solo productos con puntuación > 0
+        }.filter { it.second > 0 } 
 
         Log.d(TAG, "Productos con score > 0: ${scoredProducts.size}")
 
-        // 3. ORDENAR Y MOSTRAR
         _recomendaciones.value = scoredProducts
-            .sortedByDescending { it.second } // Ordenar por la mejor puntuación
-            .map { it.first } // Obtener solo el producto
+            .sortedByDescending { it.second } 
+            .map { it.first } 
 
-        Log.d(TAG, "🏆 Total de recomendaciones FINALES y RELEVANTES: ${_recomendaciones.value.size}")
-        Log.d(TAG, "--- ✅ Búsqueda Finalizada (v_FINAL_EXPERTO) ---")
+        Log.d(TAG, "🏆 Total de recomendaciones FINALES: ${_recomendaciones.value.size}")
+        Log.d(TAG, "--- ✅ Búsqueda Finalizada (v_ESTANDAR) ---")
     }
 
     private fun calculateScore(producto: Producto): Int {
         var score = 0
-        val textoProducto = (producto.producto_nombre + " " + (producto.description ?: "")).lowercase()
+        val textoProducto = "${producto.producto_nombre} ${producto.description} ${producto.edad} ${producto.raza}".lowercase()
         
-        val isSpecificSearch = _categoriaSeleccionada.value.isNotBlank() || _raza.value.isNotBlank() || _edad.value.isNotBlank() || _peso.value.isNotBlank()
+        val isSpecificSearch = _categoriaSeleccionada.value.isNotBlank() || _raza.value.isNotBlank() || _edad.value.isNotBlank()
         
-        // Si es una búsqueda general (solo tipo de animal), todo es relevante.
-        if (!isSpecificSearch) {
-            return 1
+        if (!isSpecificSearch) return 1
+
+        // Criterio 1: Categoría (muy importante)
+        if (_categoriaSeleccionada.value.isNotBlank() && producto.category.contains(_categoriaSeleccionada.value, ignoreCase = true)) {
+            score += 10
         }
 
-        // Criterio 1: Categoría (el más importante)
-        if (_categoriaSeleccionada.value.isNotBlank()) {
-            val categoriasProducto = producto.category.split(',').map { it.trim().lowercase() }
-            if (categoriasProducto.contains(_categoriaSeleccionada.value.lowercase())) {
-                score += 10 // Puntuación muy alta por coincidencia de categoría
-            }
+        // Criterio 2: Edad (importante)
+        if (_edad.value.isNotBlank() && textoProducto.contains(_edad.value.lowercase().split("/")[0].trim())) {
+            score += 5
+        } else if (textoProducto.contains("todas las edades")) {
+            score += 1
         }
 
-        // Criterio 2: Edad
-        val edadNum = _edad.value.toIntOrNull()
-        if (edadNum != null) {
-            val edadTerm = when {
-                edadNum < 2 -> "cachorro"
-                edadNum <= 7 -> "adulto"
-                else -> "senior"
-            }
-            if (textoProducto.contains(edadTerm)) score += 5
-            else if (textoProducto.contains("todas las edades")) score += 2
+        // Criterio 3: Raza/Tamaño (importante)
+        if (_raza.value.isNotBlank() && textoProducto.contains(_raza.value.lowercase().replace("raza", "").trim())) {
+            score += 5
+        } else if (textoProducto.contains("todas las razas")) {
+            score += 1
         }
 
-        // Criterio 3: Raza
-        if (_raza.value.isNotBlank()) {
-            if (textoProducto.contains(_raza.value.lowercase())) score += 5
-            else if (textoProducto.contains("todas las razas")) score += 2
-        }
-
-        // Criterio 4: Peso
-        val pesoNum = _peso.value.toDoubleOrNull()
-        if (pesoNum != null) {
-            val pesoTerm = when {
-                pesoNum <= 10 -> "raza pequeña"
-                pesoNum <= 25 -> "raza mediana"
-                else -> "raza grande"
-            }
-            if (textoProducto.contains(pesoTerm)) score += 5
-            else if (textoProducto.contains("todos los pesos")) score += 2
-        }
-        
         return score
     }
 }

@@ -27,9 +27,8 @@ fun RecomendacionesScreen(
 
     val tipoAnimalSeleccionado by recomendacionesViewModel.tipoAnimalSeleccionado.collectAsState()
     val categoriaSeleccionada by recomendacionesViewModel.categoriaSeleccionada.collectAsState()
-    val raza by recomendacionesViewModel.raza.collectAsState()
-    val edad by recomendacionesViewModel.edad.collectAsState()
-    val peso by recomendacionesViewModel.peso.collectAsState()
+    val razaSeleccionada by recomendacionesViewModel.raza.collectAsState()
+    val edadSeleccionada by recomendacionesViewModel.edad.collectAsState()
 
     val recomendaciones by recomendacionesViewModel.recomendaciones.collectAsState()
     val cartItems by cartViewModel.items.collectAsState()
@@ -57,12 +56,18 @@ fun RecomendacionesScreen(
             Dropdown(label = "Tipo de Animal", options = tiposAnimal, selected = tipoAnimalSeleccionado, onSelected = recomendacionesViewModel::onTipoAnimalChange)
             Spacer(Modifier.height(8.dp))
             Dropdown(label = "Categoría", options = categorias, selected = categoriaSeleccionada, onSelected = recomendacionesViewModel::onCategoriaChange)
+            Spacer(Modifier.height(16.dp))
+
+            // Filtros con Chips
+            Text("Filtros Adicionales", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(value = raza, onValueChange = recomendacionesViewModel::onRazaChange, label = { Text("Raza") }, modifier = Modifier.fillMaxWidth())            
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(value = edad, onValueChange = recomendacionesViewModel::onEdadChange, label = { Text("Edad (años)") }, modifier = Modifier.fillMaxWidth())            
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(value = peso, onValueChange = recomendacionesViewModel::onPesoChange, label = { Text("Peso (kg)") }, modifier = Modifier.fillMaxWidth())            
+
+            val edades = listOf("Cachorro/Gatito", "Adulto", "Senior", "Todas las edades")
+            FilterChips(title = "Edad", options = edades, selected = edadSeleccionada, onSelected = recomendacionesViewModel::onEdadChange)
+
+            val razas = listOf("Raza Pequeña", "Raza Mediana", "Raza Grande", "Todas las razas")
+            FilterChips(title = "Raza/Tamaño", options = razas, selected = razaSeleccionada, onSelected = recomendacionesViewModel::onRazaChange)
+
             Spacer(Modifier.height(16.dp))
             
             Button(onClick = { 
@@ -117,6 +122,24 @@ private fun Dropdown(label: String, options: List<String>, selected: String, onS
                         onSelected(option)
                         expanded = false
                     }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun FilterChips(title: String, options: List<String>, selected: String, onSelected: (String) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(text = title, style = MaterialTheme.typography.labelLarge)
+        Spacer(modifier = Modifier.height(4.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEach { option ->
+                FilterChip(
+                    selected = selected == option,
+                    onClick = { onSelected(if (selected == option) "" else option) }, // Permite deseleccionar
+                    label = { Text(option) }
                 )
             }
         }

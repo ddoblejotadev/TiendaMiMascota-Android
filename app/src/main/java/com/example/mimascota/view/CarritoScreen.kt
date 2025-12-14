@@ -16,16 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.mimascota.model.CartItem
 import com.example.mimascota.ui.activity.CheckoutActivity
-import com.example.mimascota.util.AppConfig
 import com.example.mimascota.util.CurrencyUtils
 import com.example.mimascota.viewModel.CartViewModel
 import com.google.gson.Gson
@@ -35,11 +32,9 @@ import kotlinx.coroutines.delay
 @Composable
 fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
     val items by viewModel.items.collectAsState()
-    // `total` del viewModel es el precio CON IVA
     val totalConIva by viewModel.total.collectAsState()
     val context = LocalContext.current
 
-    // Calcular Subtotal (base) e IVA a partir del total
     val iva = CurrencyUtils.getIVAFromTotalPrice(totalConIva)
     val subtotal = totalConIva - iva
 
@@ -85,7 +80,6 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                         Text("Subtotal: ${CurrencyUtils.formatAsCLP(subtotal)}", style = MaterialTheme.typography.bodyMedium)
                         Text("IVA (19%): ${CurrencyUtils.formatAsCLP(iva)}", style = MaterialTheme.typography.bodyMedium)
                         Spacer(modifier = Modifier.height(4.dp))
-                        // El total que se muestra al usuario es el que incluye el IVA
                         Text("Total: ${CurrencyUtils.formatAsCLP(totalConIva)}", style = MaterialTheme.typography.titleLarge)
                     }
                     Button(onClick = {
@@ -96,7 +90,6 @@ fun CarritoScreen(navController: NavController, viewModel: CartViewModel) {
                         try {
                             val gson = Gson()
                             val itemsJson = gson.toJson(items)
-                            // Pasamos el total con IVA al checkout
                             val intent = Intent(context, CheckoutActivity::class.java).apply {
                                 putExtra("cart_items_json", itemsJson)
                                 putExtra("cart_total", totalConIva)
@@ -140,15 +133,22 @@ fun CartItemView(item: CartItem, viewModel: CartViewModel) {
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val imageUrl = AppConfig.toAbsoluteImageUrl(item.producto.imageUrl)
-        AsyncImage(
-            model = imageUrl,
+        val imageUrl = item.producto.imageUrl
+        val finalImageUrl = remember(imageUrl) {
+             if (imageUrl != null && !imageUrl.startsWith("data:image") && !imageUrl.startsWith("http")) {
+                "data:image/jpeg;base64,$imageUrl"
+            } else {
+                imageUrl
+            }
+        }
+
+        ProductImage(
+            imageUrl = finalImageUrl,
             contentDescription = item.producto.producto_nombre,
             modifier = Modifier.size(64.dp),
-            placeholder = painterResource(id = com.example.mimascota.R.drawable.placeholder_product),
-            error = painterResource(id = com.example.mimascota.R.drawable.placeholder_product),
             contentScale = ContentScale.Crop
         )
+
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(item.producto.producto_nombre, style = MaterialTheme.typography.titleMedium)

@@ -34,7 +34,11 @@ data class ItemOrden(
     val productoId: Int,
     val cantidad: Int,
     @SerializedName("precio_unitario")
-    val precioUnitario: Double
+    val precioUnitario: Double,
+    @SerializedName("producto_nombre")
+    val productoNombre: String?,
+    @SerializedName("producto_imagen")
+    val productoImagen: String?
 )
 
 data class DatosEnvio(

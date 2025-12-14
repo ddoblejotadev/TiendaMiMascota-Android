@@ -161,9 +161,24 @@ fun AdminProductCreateScreen(navController: NavController, adminViewModel: Admin
 
             // Campos para recomendaciones
             Text("Campos para Recomendaciones", style = MaterialTheme.typography.titleMedium)
-            OutlinedTextField(value = tipoMascota, onValueChange = { tipoMascota = it }, label = { Text("Tipo de Mascota (ej. Perro, Gato)") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = raza, onValueChange = { raza = it }, label = { Text("Raza (ej. Pastor Alemán)") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = edad, onValueChange = { edad = it }, label = { Text("Edad (ej. 3 años)") }, modifier = Modifier.fillMaxWidth())
+
+            // Editable Dropdown for Tipo de Mascota
+            val tiposMascotaSugeridos = listOf("Perro", "Gato", "Ambos", "Otro")
+            EditableDropdownMenu(
+                label = "Tipo de Mascota",
+                options = tiposMascotaSugeridos,
+                value = tipoMascota,
+                onValueChange = { tipoMascota = it }
+            )
+
+            // Dropdown for Raza/Tamaño
+            val razas = listOf("Raza Pequeña", "Raza Mediana", "Raza Grande", "Todas las razas")
+            DropdownMenu(label = "Raza/Tamaño", options = razas, selected = raza, onSelected = { raza = it })
+
+            // Dropdown for Edad
+            val edades = listOf("Cachorro/Gatito", "Adulto", "Senior", "Todas las edades")
+            DropdownMenu(label = "Edad", options = edades, selected = edad, onSelected = { edad = it })
+
             OutlinedTextField(value = pesoMascota, onValueChange = { pesoMascota = it }, label = { Text("Peso en Kg (ej. 4)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -197,12 +212,71 @@ fun AdminProductCreateScreen(navController: NavController, adminViewModel: Admin
                         pesoMascota = pesoMascota.toDoubleOrNull()
                     )
                     adminViewModel.createProducto(nuevoProducto)
+                    Toast.makeText(context, "Producto creado exitosamente", Toast.LENGTH_SHORT).show()
                     navController.popBackStack()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = nombre.isNotBlank() && precio.isNotBlank()
             ) {
                 Text("Crear Producto")
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DropdownMenu(label: String, options: List<String>, selected: String, onSelected: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+        OutlinedTextField(
+            value = selected,
+            onValueChange = {},
+            label = { Text(label) },
+            readOnly = true,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor()
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onSelected(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditableDropdownMenu(label: String, options: List<String>, value: String, onValueChange: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth().menuAnchor(),
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onValueChange(option)
+                        expanded = false
+                    }
+                )
             }
         }
     }

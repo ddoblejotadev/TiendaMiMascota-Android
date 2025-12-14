@@ -12,7 +12,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.mimascota.model.Producto
-import com.example.mimascota.util.AppConfig
 import com.example.mimascota.util.CurrencyUtils
 import kotlinx.coroutines.launch
 
@@ -36,9 +35,17 @@ fun ProductoCard(producto: Producto, onProductoClick: () -> Unit, onAddToCart: (
         onClick = onProductoClick
     ) {
         Column(modifier = Modifier.padding(8.dp).scale(scale)) {
-            val imageUrl = AppConfig.toAbsoluteImageUrl(producto.imageUrl)
+            val imageUrl = producto.imageUrl
+            val finalImageUrl = remember(imageUrl) {
+                if (imageUrl != null && !imageUrl.startsWith("data:image") && !imageUrl.startsWith("http")) {
+                    "data:image/jpeg;base64,$imageUrl"
+                } else {
+                    imageUrl
+                }
+            }
+            
             ProductImage(
-                imageUrl = imageUrl,
+                imageUrl = finalImageUrl,
                 contentDescription = producto.producto_nombre,
                 modifier = Modifier
                     .fillMaxWidth()

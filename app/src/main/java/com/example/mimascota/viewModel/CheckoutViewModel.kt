@@ -40,7 +40,15 @@ class CheckoutViewModel(private val tokenManager: TokenManager) : ViewModel() {
                         return@launch
                     }
 
-                    val orderItems = cartItems.map { ItemOrden(productoId = it.producto.producto_id, cantidad = it.cantidad, precioUnitario = it.producto.price) }
+                    val orderItems = cartItems.map { cartItem ->
+                        ItemOrden(
+                            productoId = cartItem.producto.producto_id,
+                            cantidad = cartItem.cantidad,
+                            precioUnitario = cartItem.producto.price,
+                            productoNombre = cartItem.producto.producto_nombre,
+                            productoImagen = cartItem.producto.imageUrl
+                        )
+                    }
 
                     when (val ordenResult = checkoutRepository.crearOrden(
                         usuarioId = userId.toLong(),
