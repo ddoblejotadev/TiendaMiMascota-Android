@@ -149,9 +149,8 @@ fun AdopcionAnimalCard(animal: Animal, onClick: (Int) -> Unit) {
                 model = animal.imagen,
                 contentDescription = animal.nombre ?: "Animal en adopción",
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-                contentScale = ContentScale.Crop
+                    .fillMaxWidth(),
+                contentScale = ContentScale.Fit
             )
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(animal.nombre ?: "Sin nombre", style = MaterialTheme.typography.titleLarge)

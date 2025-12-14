@@ -106,9 +106,8 @@ fun AnimalDetailScreen(navController: NavController, animalId: Int, huachitosVie
                         contentDescription = animalData.nombre ?: "",
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(300.dp)
                             .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Fit
                     )
 
                     Column(modifier = Modifier.padding(16.dp)) {
