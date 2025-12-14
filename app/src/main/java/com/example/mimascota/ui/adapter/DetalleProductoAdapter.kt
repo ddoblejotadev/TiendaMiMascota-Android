@@ -1,3 +1,4 @@
+
 package com.example.mimascota.ui.adapter
 
 import android.view.LayoutInflater
@@ -10,6 +11,7 @@ import com.example.mimascota.R
 import com.example.mimascota.databinding.ItemDetalleOrdenBinding
 import com.example.mimascota.model.ProductoHistorial
 import com.example.mimascota.util.CurrencyUtils
+import com.example.mimascota.util.ImageUtils
 
 class DetalleProductoAdapter : ListAdapter<ProductoHistorial, DetalleProductoAdapter.DetalleProductoViewHolder>(DiffCallback()) {
 
@@ -27,10 +29,19 @@ class DetalleProductoAdapter : ListAdapter<ProductoHistorial, DetalleProductoAda
             binding.tvProductoNombre.text = producto.nombre
             binding.tvProductoCantidad.text = "Cantidad: ${producto.cantidad}"
             binding.tvProductoPrecio.text = CurrencyUtils.formatAsCLP(producto.precioUnitario * producto.cantidad)
-            
-            binding.ivProductoImagen.load(producto.imagen) {
-                placeholder(R.drawable.placeholder_product)
-                error(R.drawable.placeholder_product)
+
+            if (producto.imagen.startsWith("data:image")) {
+                val bitmap = ImageUtils.decodeBase64ToBitmap(producto.imagen)
+                if (bitmap != null) {
+                    binding.ivProductoImagen.setImageBitmap(bitmap)
+                } else {
+                    binding.ivProductoImagen.load(R.drawable.placeholder_product)
+                }
+            } else {
+                binding.ivProductoImagen.load(producto.imagen) {
+                    placeholder(R.drawable.placeholder_product)
+                    error(R.drawable.placeholder_product)
+                }
             }
         }
     }
