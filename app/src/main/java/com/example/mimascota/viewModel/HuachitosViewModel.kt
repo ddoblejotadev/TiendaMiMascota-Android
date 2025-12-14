@@ -23,18 +23,19 @@ class HuachitosViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
 
-    fun cargarAnimales(comunaId: Int, tipo: String? = null, estado: String? = null, genero: String? = null) {
+    fun cargarAnimales(comunaId: Int, comunaNombre: String, tipo: String? = null, estado: String? = null, genero: String? = null) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            repository.getAnimales(comunaId, tipo, estado, genero)
+            repository.getAnimales(comunaId)
                 .onSuccess { listaDeAnimales ->
-                    var filteredList = listaDeAnimales
+                    var filteredList = listaDeAnimales.filter { it.comuna?.lowercase() == comunaNombre.lowercase() }
+
                     if (tipo != null) {
                         filteredList = filteredList.filter { it.tipo?.lowercase() == tipo.lowercase() }
                     }
                     if (estado != null) {
-                        filteredList = filteredList.filter { it. estado?.lowercase() == estado.lowercase() }
+                        filteredList = filteredList.filter { it.estado?.lowercase() == estado.lowercase() }
                     }
                     if (genero != null) {
                         filteredList = filteredList.filter { it.genero?.lowercase() == genero.lowercase() }

@@ -121,8 +121,14 @@ fun AdopcionScreen(navController: NavController, huachitosViewModel: HuachitosVi
             Button(
                 onClick = {
                     hasSearched = true
-                    huachitosViewModel.cargarAnimales(selectedComuna.id, selectedTipo?.lowercase(), selectedEstado?.lowercase(), selectedGenero?.lowercase())
-                          },
+                    huachitosViewModel.cargarAnimales(
+                        comunaId = selectedComuna.id,
+                        comunaNombre = selectedComuna.nombre,
+                        tipo = selectedTipo,
+                        estado = selectedEstado,
+                        genero = selectedGenero
+                    )
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
                 Text("Buscar", style = MaterialTheme.typography.titleMedium)
