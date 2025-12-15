@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -167,7 +168,7 @@ fun HtmlText(html: String?, title: String) {
         Column(modifier = Modifier.padding(bottom = 16.dp)) {
             Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
-            val textColor = if (isSystemInDarkTheme()) "white" else "#444444"
+            val textColor = String.format("#%06X", (0xFFFFFF and MaterialTheme.colorScheme.onSurface.toArgb()));
             val htmlContent = """
                 <html><head>
                 <style>

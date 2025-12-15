@@ -14,12 +14,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.mimascota.model.Animal
 import com.example.mimascota.viewModel.HuachitosViewModel
 
@@ -236,8 +238,13 @@ fun AdopcionAnimalCard(animal: Animal, onClick: (Int) -> Unit) {
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column {
+            val imageRequest = ImageRequest.Builder(LocalContext.current)
+                .data(animal.imagen)
+                .crossfade(true)
+                .size(600, 400) // Redimensiona la imagen para mejorar el rendimiento
+                .build()
             AsyncImage(
-                model = animal.imagen,
+                model = imageRequest,
                 contentDescription = animal.nombre ?: "Animal en adopción",
                 modifier = Modifier.fillMaxWidth().height(200.dp),
                  contentScale = ContentScale.Crop
